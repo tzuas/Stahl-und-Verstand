@@ -169,6 +169,11 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 .mid{width:32px;height:32px;border-radius:50%;background:#ffd400;color:#000;display:flex;align-items:center;justify-content:center;font:800 15px var(--f-display)}
 .mtxt{display:flex;flex-direction:column;min-width:0}.mtxt small{color:var(--muted);font-size:12.5px;line-height:1.35}
 @media (max-width:520px){.mrow{grid-template-columns:36px minmax(0,1fr)}.mrow .unit{grid-column:1/-1}}
+.pricebox{border:2px solid var(--ok);border-radius:6px;padding:12px 14px}
+.pbig{font:800 clamp(28px,4vw,40px)/1.1 var(--f-display);font-stretch:85%;color:var(--ok);font-variant-numeric:tabular-nums}
+.pdet summary{cursor:pointer;font-weight:600;font-size:14px;margin:6px 0}
+.ptab{width:100%;border-collapse:collapse;font-size:13.5px;font-variant-numeric:tabular-nums}.ptab td{padding:6px 4px;border-bottom:1px solid var(--line);vertical-align:top}.ptab td:last-child{text-align:right;white-space:nowrap}.ptab small{color:var(--muted)}.ptab .sum td{font-weight:700}
+.prform fieldset{margin-bottom:16px}
 .pngs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px}
 @media (prefers-reduced-motion:no-preference){.tile,.chip,button{transition:border-color .12s,background .12s}}
 </style>
@@ -177,11 +182,13 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
   <header class="top">
     <div class="brand" data-logo>Stahl <span>&amp;</span> Verstand<small>Zaun · Tor · Geländer · Sichtschutz — Beratung vor Ort</small></div>
     <div class="top-actions">
+      <button type="button" id="prHead">EK-Preise</button>
       <button type="button" id="btnNew">Neue Beratung</button>
     </div>
   </header>
 
   <nav class="steps" id="steps" aria-label="Schritte"></nav>
+  <section id="prDlg" class="card" hidden></section>
 
   <div class="main">
     <section class="card" id="panel" aria-live="polite"></section>
@@ -431,6 +438,7 @@ function renderPanel(){
   <fieldset><legend>Bearbeitungszeit</legend>${check("express","Expressfertigung gewünscht (gegen Aufpreis)")}${timeline()}</fieldset>
   <fieldset><legend>Zahlung laut ELEO</legend><p class="hint" style="margin:0">50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu.</p></fieldset>
   ${positionsHtml()}
+  ${typeof priceHtml==="function"?priceHtml():""}
   <fieldset class="sendbox"><legend>An ELEO senden</legend>
    <p class="hint" style="margin-top:0">1. Bilder vorbereiten, 2. senden. Die Mail-App öffnet sich mit dem Anfrage-Text und allen Bildern im Anhang. Die Empfängeradresse ist dann in der Zwischenablage, im Feld „An“ einfach einfügen.</p>
    <div class="row"><button type="button" id="btnPrep">1. Bilder vorbereiten</button><button type="button" class="primary" id="btnShare" disabled>2. Mit Bildern an ELEO senden</button><button type="button" id="btnSave">Beratung speichern</button></div>
@@ -1371,6 +1379,81 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset.mval===undefined||!S.mplan)return;
  S.mplan.items[+t.dataset.mval].wert=t.value;save();layoutPhoto();
  const all=S.mplan.items.every(m=>+m.wert>0),a=$("#mApply");if(a)a.disabled=!all;
+});
+/* ---------- Preisspanne aus EK (nur auf diesem Gerät gespeichert) ---------- */
+const PR_DEF={
+ zaun:0, gelaender:0, sichtschutz:0,            /* EK € je laufendem Meter bei 100 cm Höhe (Sichtschutz: bei 180 cm) */
+ torGrund:0, torMeter:0, gartentor:0, balkon:0, /* Tor: Grundpreis + € je m Breite; Gartentor/Franz. Balkon € je Stück */
+ eck:0, platte:0,                               /* € je Eckpfosten, € je Aufschraubplatte */
+ zVerzinkt:0, zRal:0, zForm:0, zExpress:0,      /* Zuschläge in % */
+ fracht:0,                                      /* € pauschal je Auftrag */
+ montLfm:0, montTor:0,                          /* deine Montagepreise (Verkauf, netto) */
+ margeMin:20, margeMax:35, mwst:19, modelle:{}  /* Marge in %, Modell-Abweichungen € je lfm */
+};
+function prices(){const p=Object.assign({},PR_DEF,load("sv-prices",{}));p.margeMin=Math.max(20,+p.margeMin||20);p.margeMax=Math.max(p.margeMin,+p.margeMax||p.margeMin);return p}
+const eur=v=>(Math.round(v)).toLocaleString("de-DE")+" €";
+const r50=v=>Math.ceil(v/50)*50;
+function posCost(o){
+ return withPos(o,()=>{
+  const P=prices(),L=layout(),H=(+S.height||100)/100,m=model(),out={ek:0,mont:0,fehlt:"",teile:[]};
+  const lfm=L.total/100;
+  const rateM=P.modelle&&+P.modelle[S.model]>0?+P.modelle[S.model]:0;
+  if(S.product==="Zaun"){const r=rateM||+P.zaun;if(!r)out.fehlt="Zaun € je lfm";out.ek=lfm*r*H;out.teile.push(`${lfm.toLocaleString("de-DE")} lfm × ${eur(r)} × Höhe ${Math.round(H*100)} cm`)}
+  else if(S.product==="Geländer"){const r=rateM||+P.gelaender;if(!r)out.fehlt="Geländer € je lfm";out.ek=lfm*r*H;out.teile.push(`${lfm.toLocaleString("de-DE")} lfm Geländer`)}
+  else if(S.product==="Sichtschutz"){const r=+P.sichtschutz;if(!r)out.fehlt="Sichtschutz € je lfm";out.ek=lfm*r*((+S.height||180)/180);out.teile.push(`${lfm.toLocaleString("de-DE")} lfm Sichtschutz`)}
+  else if(S.product==="Tor"){if(!(+P.torGrund||+P.torMeter))out.fehlt="Tor-Preise";out.ek=(+P.torGrund+(L.total/100)*+P.torMeter)*Math.max(1,H);out.teile.push(`Tor ${cm(L.total)} breit`)}
+  else if(S.product==="Gartentor"){if(!+P.gartentor)out.fehlt="Gartentor € je Stück";out.ek=+P.gartentor*Math.max(1,H);out.teile.push("Gartentor")}
+  else if(S.product==="Französischer Balkon"){if(!+P.balkon)out.fehlt="Franz. Balkon € je Stück";out.ek=+P.balkon*Math.max(1,lfm/1.2);out.teile.push("Franz. Balkon")}
+  if(!L.gate&&L.corners&&L.corners.length&&+P.eck){out.ek+=L.corners.length*+P.eck;out.teile.push(`${L.corners.length} Eckpfosten`)}
+  if(S.posts==="Zum Aufschrauben"&&+P.platte){const n=L.gate?2:L.n+1;out.ek+=n*+P.platte;out.teile.push(`${n} Aufschraubplatten`)}
+  let z=0;if(S.coat==="Feuerverzinkt")z+=+P.zVerzinkt;if(S.coat==="Sonderfarbe RAL")z+=+P.zRal;if(m.f>1&&S.form!=="Gerade")z+=+P.zForm;if(S.express)z+=+P.zExpress;
+  if(z){out.ek*=1+z/100;out.teile.push(`Zuschläge +${z} %`)}
+  out.mont=L.gate?+P.montTor:lfm*+P.montLfm;
+  return out;
+ });
+}
+function priceCalc(){
+ const P=prices(),pos=allPositions(),items=pos.map(o=>({label:posLabel(o),...posCost(o)}));
+ const fehlt=items.filter(i=>i.fehlt).map(i=>i.fehlt);
+ const ek=items.reduce((a,i)=>a+i.ek,0)+ +P.fracht;
+ const mont=items.reduce((a,i)=>a+i.mont,0);
+ const vkMin=ek*(1+P.margeMin/100),vkMax=ek*(1+P.margeMax/100),f=1+P.mwst/100;
+ return {P,items,fehlt,ek,mont,vkMin,vkMax,f};
+}
+function priceHtml(){
+ const c=priceCalc(),ok=c.ek>0&&!c.fehlt.length;
+ return `<fieldset class="pricebox"><legend>Preisspanne für den Kunden</legend>
+  ${ok?`<div class="pbig">${eur(r50(c.vkMin*c.f))} – ${eur(r50(c.vkMax*c.f))}</div>
+   <p class="hint" style="margin:2px 0 8px">inkl. ${c.P.mwst} % MwSt. · netto ${eur(r50(c.vkMin))} – ${eur(r50(c.vkMax))} · Material inkl. Lieferung${c.mont>0?`, zzgl. Montage ca. ${eur(r50(c.mont*c.f))} brutto`:""}. Unverbindliche Schätzung, der genaue Preis folgt mit dem Angebot.</p>
+   <details class="pdet"><summary>Details nur für dich (EK und Marge)</summary>
+    <table class="ptab">${c.items.map((i,n)=>`<tr><td>Pos. ${n+1}: ${esc(i.label)}<br><small>${esc(i.teile.join(" · "))}</small></td><td>${eur(i.ek)}</td></tr>`).join("")}
+    ${+c.P.fracht?`<tr><td>Fracht pauschal</td><td>${eur(+c.P.fracht)}</td></tr>`:""}
+    <tr class="sum"><td>EK netto gesamt</td><td>${eur(c.ek)}</td></tr>
+    <tr><td>VK netto bei ${c.P.margeMin} % (Minimum)</td><td>${eur(c.vkMin)}</td></tr>
+    <tr><td>VK netto bei ${c.P.margeMax} %</td><td>${eur(c.vkMax)}</td></tr>
+    <tr><td>Dein Rohertrag</td><td>${eur(c.vkMin-c.ek)} – ${eur(c.vkMax-c.ek)}</td></tr></table>
+    <p class="hint">Die Spanne liegt immer mindestens 20 % über deinem EK. Sobald das echte ELEO-Angebot da ist, gilt dessen EK.</p></details>`
+  :`<p class="warn" style="margin:0 0 8px">${c.fehlt.length?"Für diese Berechnung fehlen noch EK-Preise: "+esc([...new Set(c.fehlt)].join(", "))+".":"Noch keine EK-Preise hinterlegt."}</p>`}
+  <button type="button" id="prOpen">EK-Preise ${ok?"anpassen":"eintragen"}</button></fieldset>`;
+}
+function priceForm(){
+ const P=prices(),f=(k,l,u="€")=>`<label class="f">${l}<span class="unit"><input type="number" inputmode="decimal" step="any" data-pr="${k}" value="${esc(P[k]||"")}"><span>${u}</span></span></label>`;
+ return `<div class="prform"><h2>EK-Preise</h2><p class="lede">Nur auf diesem iPad gespeichert, nicht online und nicht im GitHub-Projekt. Alle Werte netto.</p>
+ <fieldset><legend>Laufmeter-Preise (bei 100 cm Höhe, wird nach Höhe hochgerechnet)</legend><div class="grid2">${f("zaun","Zaun, Standard für alle Modelle","€/lfm")}${f("gelaender","Geländer","€/lfm")}${f("sichtschutz","Sichtschutz (bei 180 cm)","€/lfm")}</div>
+ <details style="margin-top:8px"><summary>Abweichender Preis je Modell (optional)</summary><div class="grid2" style="margin-top:8px">${MODELS.map(m=>`<label class="f">${m.n}<span class="unit"><input type="number" inputmode="decimal" step="any" data-prm="${m.n}" value="${esc((P.modelle||{})[m.n]||"")}"><span>€/lfm</span></span></label>`).join("")}</div></details></fieldset>
+ <fieldset><legend>Stückpreise</legend><div class="grid2">${f("torGrund","Tor: Grundpreis")}${f("torMeter","Tor: je Meter Breite","€/m")}${f("gartentor","Gartentor je Stück")}${f("balkon","Franz. Balkon je Stück (bis 1,2 m)")}${f("eck","Eckpfosten je Stück")}${f("platte","Aufschraubplatte je Pfosten")}</div></fieldset>
+ <fieldset><legend>Zuschläge</legend><div class="grid2">${f("zVerzinkt","Feuerverzinkt","%")}${f("zRal","Sonderfarbe RAL","%")}${f("zForm","Bogen / Geschwungen / U-Form","%")}${f("zExpress","Expressfertigung","%")}${f("fracht","Fracht pauschal je Auftrag")}</div></fieldset>
+ <fieldset><legend>Deine Montage (Verkaufspreis netto, optional)</legend><div class="grid2">${f("montLfm","Montage je lfm","€/lfm")}${f("montTor","Montage je Tor")}</div></fieldset>
+ <fieldset><legend>Marge</legend><div class="grid2">${f("margeMin","Mindestaufschlag (nie unter 20)","%")}${f("margeMax","Oberer Aufschlag","%")}${f("mwst","Mehrwertsteuer","%")}</div></fieldset>
+ <div class="row"><button type="button" class="primary" id="prClose">Fertig</button></div></div>`;
+}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="prOpen"||b.id==="prHead"){const d=$("#prDlg");d.innerHTML=priceForm();d.hidden=false;window.scrollTo({top:0});return}
+ if(b.id==="prClose"){const d=$("#prDlg");d.hidden=true;d.innerHTML="";refresh(true);return}
+});
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.dataset.pr!==undefined){const p=load("sv-prices",{});p[t.dataset.pr]=t.value===""?0:+t.value;if(t.dataset.pr==="margeMin"&&p.margeMin<20&&t.value!=="")t.setCustomValidity("Mindestens 20 %");else t.setCustomValidity("");store("sv-prices",p)}
+ if(t.dataset.prm!==undefined){const p=load("sv-prices",{});p.modelle=p.modelle||{};if(t.value==="")delete p.modelle[t.dataset.prm];else p.modelle[t.dataset.prm]=+t.value;store("sv-prices",p)}
 });
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
