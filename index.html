@@ -1115,6 +1115,20 @@ document.addEventListener("change",e=>{const t=e.target;
  if(t.id==="aiRate"){store("sv-ai-rate",+t.value)}
  if(t.id==="aiConvo"){AI.convo=t.checked;store("sv-ai-convo",AI.convo)}
 });
+/* ---------- Import aus Kunden-Anfrage (?k=…) ---------- */
+(function importFromLink(){
+ try{
+  const k=new URLSearchParams(location.search).get("k");if(!k)return;
+  const json=decodeURIComponent(escape(atob(k.replace(/-/g,"+").replace(/_/g,"/"))));
+  const data=JSON.parse(json);
+  S=Object.assign(DEF(),data,{step:4,view:"look",_id:null});
+  history.replaceState(null,"",location.pathname);
+  refresh(true);
+  const n=document.createElement("p");n.className="toast importnote";n.textContent="Kundenanfrage übernommen"+(S.cLast?": "+[S.cFirst,S.cLast].filter(Boolean).join(" "):"")+". Prüfen Sie die Maße und speichern Sie die Beratung.";
+  n.style.cssText="position:fixed;left:50%;transform:translateX(-50%);top:16px;z-index:60;background:var(--steel);color:var(--bg);padding:12px 18px;border-radius:8px;max-width:calc(100% - 32px)";
+  document.body.appendChild(n);setTimeout(()=>n.remove(),6000);
+ }catch(e){console.warn("Import fehlgeschlagen",e)}
+})();
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">

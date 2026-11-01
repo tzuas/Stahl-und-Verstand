@@ -1,0 +1,803 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Ihr Projekt · Stahl & Verstand</title>
+<meta name="description" content="Bereiten Sie Ihren Zaun, Ihr Tor oder Geländer in wenigen Minuten vor. Unser Assistent hilft beim Aufmessen.">
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<script src="config.js"></script>
+<style>
+/* Layout: eine Spalte wie ein Messenger; oben die mitlaufende Vorschau, unten die Eingabeleiste. */
+:root{
+  --bg:#eef0f1;--panel:#ffffff;--ink:#1d2328;--muted:#5d6972;--line:#d3d9dd;--steel:#2c3a44;--accent:#c4561f;--accent-ink:#ffffff;
+  --sheet:#f6f8f9;--grid:#dfe5e9;--draw:#22313b;--dim:#c4561f;--ok:#2e7d4f;--warn:#b06d00;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;--f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;--f-mono:"IBM Plex Mono",ui-monospace,Menlo,monospace;
+  padding-top:env(safe-area-inset-top,0px);
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#14181b;--panel:#1c2226;--ink:#e7ebee;--muted:#98a4ad;--line:#323b42;--steel:#cfd8de;--accent:#e8743a;--accent-ink:#14181b;--sheet:#182025;--grid:#26323a;--draw:#d9e2e8;--dim:#f08a50;--ok:#5cc28a;--warn:#e3a43a;color-scheme:dark}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:16px/1.5 var(--f-body)}
+[hidden]{display:none!important}
+img{max-width:100%}
+.wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+header.k{border-bottom:3px solid var(--steel);padding-block:14px 10px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
+.brand{font:800 26px/1 var(--f-display);font-stretch:75%;text-transform:uppercase;letter-spacing:-.01em}.brand span{color:var(--accent)}
+.brand small{display:block;font:500 11px var(--f-mono);letter-spacing:.12em;color:var(--muted);margin-top:4px}
+button,.btn{font:600 15px var(--f-body);border-radius:6px;border:1.5px solid var(--steel);background:transparent;color:var(--ink);padding:10px 16px;cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+button.primary,.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button:disabled{opacity:.55}
+button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.big{width:100%;min-height:56px;font-size:17px}
+input,select,textarea{font:16px var(--f-body);color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:6px;padding:10px;min-height:46px;width:100%}
+.f{display:flex;flex-direction:column;gap:4px;font-size:14px;font-weight:500;min-width:0}
+.unit{display:flex;align-items:center;gap:6px}.unit span{font:13px var(--f-mono);color:var(--muted)}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.zip{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
+.hint{font-size:13.5px;color:var(--muted)}.warn{color:var(--warn);font-weight:500;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;min-height:42px;font-weight:500;background:var(--panel)}
+.chip[aria-pressed="true"]{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+fieldset{border:none;margin:0;padding:0;min-width:0}legend{font:500 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:6px;padding:0}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden}
+.filebtn{cursor:pointer}
+
+/* Intro */
+.intro{padding-block:28px 40px;display:flex;flex-direction:column;gap:18px}
+.intro h1{font:800 clamp(30px,8vw,46px)/1 var(--f-display);font-stretch:78%;text-transform:uppercase;margin:0;text-wrap:balance}
+.intro p{margin:0;max-width:56ch}
+.steps3{list-style:none;padding:0;margin:0;display:grid;gap:10px}
+.steps3 li{display:grid;grid-template-columns:34px 1fr;gap:12px;align-items:start;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.steps3 b{font:700 18px var(--f-display);color:var(--accent)}
+.consent{display:flex;gap:10px;align-items:flex-start;font-size:14px;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:12px 14px}
+.consent input{width:22px;height:22px;min-height:0;flex:none;accent-color:var(--accent);margin-top:2px}
+details{font-size:13.5px;color:var(--muted)}details summary{cursor:pointer;font-weight:600;color:var(--ink)}
+
+/* App */
+.pv{position:sticky;top:0;z-index:5;background:var(--bg);padding-block:10px 6px}
+.pvcard{background:var(--panel);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.pvhead{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:6px 8px 6px 12px;border-bottom:1px solid var(--line)}
+#pvLine{font:500 12px var(--f-mono);color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
+.seg{display:flex;border:1.5px solid var(--steel);border-radius:6px;overflow:hidden;flex:none}
+.seg button{border:none;border-radius:0;min-height:32px;padding:4px 10px;font-size:12px}
+.seg button[aria-pressed="true"]{background:var(--steel);color:var(--bg)}
+#look,#sketch{display:block;width:100%;height:auto;max-height:30vh}
+#look{background:#eef3f4}#sketch{background:var(--sheet)}
+#kLog{display:flex;flex-direction:column;gap:12px;padding-block:12px 120px}
+.km{display:flex;flex-direction:column;gap:8px;max-width:100%}
+.km.user{align-self:flex-end;max-width:85%;background:var(--accent);color:var(--accent-ink);padding:10px 14px;border-radius:16px 16px 4px 16px}
+.km.bot .bub{align-self:flex-start;max-width:88%;background:var(--panel);border:1px solid var(--line);padding:10px 14px;border-radius:16px 16px 16px 4px}
+.km.err .bub{border-color:var(--warn)}
+.mini{display:flex;gap:4px;margin-bottom:6px}.mini img{width:56px;height:56px;object-fit:cover;border-radius:6px}
+.typing{display:flex;gap:5px}.typing i{width:8px;height:8px;border-radius:50%;background:var(--muted);animation:kb 1s infinite}.typing i:nth-child(2){animation-delay:.15s}.typing i:nth-child(3){animation-delay:.3s}
+@keyframes kb{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.kopts .chip{background:var(--panel);border-color:var(--accent);color:var(--accent)}
+.kw{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:12px;display:flex;flex-direction:column;gap:10px}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1.5px solid var(--line);border-radius:8px;padding:10px;background:var(--panel);min-height:0}
+.tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tile strong{font:700 15px var(--f-display);text-transform:uppercase}.tile span{font-weight:400;font-size:12px;color:var(--muted);line-height:1.3}
+.tile svg{width:100%;height:40px;color:var(--draw)}.tile svg.thumb{height:auto;border-radius:4px}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.swb{justify-content:flex-start;text-align:left;font-weight:500;border:1.5px solid var(--line);background:var(--panel)}
+.swb i{width:28px;height:28px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.swb[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ral{display:grid;grid-template-columns:repeat(auto-fill,minmax(104px,1fr));gap:6px}
+.ralb{justify-content:flex-start;gap:8px;padding:6px 8px;text-align:left;border:1.5px solid var(--line);background:var(--panel);min-height:44px}
+.ralb i{width:22px;height:22px;border-radius:3px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.ralb span{display:flex;flex-direction:column;font:500 12px var(--f-mono);line-height:1.2}.ralb small{font:400 10px var(--f-body);color:var(--muted)}
+.ralb[aria-pressed="true"]{border-color:var(--accent)}
+.side{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:6px 10px;align-items:center;border:1px dashed var(--line);border-radius:8px;padding:8px}
+.side b{font:700 14px var(--f-display);text-transform:uppercase}.side .unit{grid-column:1/-1}.side select{grid-column:2}
+.side .xs{grid-column:3;grid-row:1}
+.xs{min-height:30px;padding:2px 8px;font-size:13px;border-color:var(--line)}
+.thumbs{display:flex;flex-wrap:wrap;gap:8px}.thumbs span{position:relative}.thumbs img{width:84px;height:84px;object-fit:cover;border-radius:6px;display:block}.thumbs .xs{position:absolute;top:2px;right:2px;background:var(--panel)}
+.spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}.spec dt{font:500 11px var(--f-mono);text-transform:uppercase;color:var(--muted);padding-top:3px}.spec dd{margin:0}
+.mh{font:700 16px var(--f-display);text-transform:uppercase;margin:10px 0 0}
+.bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding-bottom:max(10px,env(safe-area-inset-bottom,0px));padding-top:10px}
+.bar form{display:flex;gap:8px;align-items:center}
+.bar input{flex:1;min-width:0;border-radius:999px;padding-inline:16px}
+#kMic{border-radius:50%;width:48px;min-width:48px;padding:0;background:var(--steel);color:var(--bg);border-color:var(--steel)}
+#kMic.on{background:#c62828;border-color:#c62828;color:#fff;animation:kb 1.2s infinite}
+#kSend2{border-radius:999px}
+.bar .tools{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+.linkbtn{border:none;min-height:0;padding:0;color:var(--accent);text-decoration:underline;font-weight:600}
+#kSpk[aria-pressed="true"]{background:var(--steel);color:var(--bg)}
+#kToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:9;background:var(--steel);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:calc(100% - 32px);font-size:14px}
+.done{padding-block:40px;display:flex;flex-direction:column;gap:14px}.done h2{font:800 32px/1.05 var(--f-display);font-stretch:80%;text-transform:uppercase;margin:0}
+footer{padding-block:18px 30px;font-size:12.5px;color:var(--muted);display:flex;gap:14px;flex-wrap:wrap}footer a{color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap"><header class="k"><div class="brand">Stahl <span>&amp;</span> Verstand<small>Ihr Projekt-Assistent</small></div></header></div>
+
+<main>
+ <section id="kIntro" class="wrap intro">
+  <h1>Ihr Zaun in fünf Minuten vorbereitet</h1>
+  <p>Unser digitaler Assistent fragt kurz nach, was Sie sich vorstellen, hilft Ihnen beim Aufmessen und zeigt Ihnen Ihre Anlage gleich in Farbe. Danach haben wir alles für Ihr Angebot, oft ganz ohne Vor-Ort-Termin.</p>
+  <ol class="steps3">
+   <li><b>1</b><span><strong>Wünsche</strong><br><span class="hint">Zaun, Tor oder Geländer, Modell und Farbe aussuchen.</span></span></li>
+   <li><b>2</b><span><strong>Aufmaß</strong><br><span class="hint">Schritt für Schritt messen, ein paar Fotos machen.</span></span></li>
+   <li><b>3</b><span><strong>Absenden</strong><br><span class="hint">Wir prüfen alles und melden uns bei Ihnen.</span></span></li>
+  </ol>
+  <label class="consent"><input type="checkbox" id="kConsent"><span>Ich bin einverstanden, dass meine Angaben und Fotos zur Erstellung eines Angebots verarbeitet werden. Dabei hilft ein KI-Assistent. <a href="#ds" onclick="document.getElementById('ds').open=true">Datenschutzhinweis</a></span></label>
+  <button type="button" class="primary big" id="kStart">Los geht's</button>
+  <details id="ds"><summary>Datenschutzhinweis</summary><p>Ihre Eingaben, Fotos und Kontaktdaten werden ausschließlich zur Vorbereitung Ihres Angebots verwendet. Für den Gesprächs-Assistenten werden Ihre Antworten und Fotos an den KI-Dienst Anthropic (USA) übermittelt; Name, Telefon und E-Mail werden dem Assistenten nicht übergeben. Die fertige Anfrage wird per E-Mail an uns gesendet (Dienstleister: Cloudflare, Resend). Die Seite selbst liegt bei GitHub. Auf Ihrem Gerät wird Ihr Zwischenstand gespeichert, damit Sie später weitermachen können. Weitere Informationen und Ihre Rechte finden Sie in unserer Datenschutzerklärung.</p></details>
+ </section>
+
+ <section id="kApp" hidden>
+  <div class="pv"><div class="wrap"><div class="pvcard">
+   <div class="pvhead"><span id="pvLine"></span><div class="seg" role="group" aria-label="Darstellung"><button type="button" data-pv="look" aria-pressed="true">Ansicht</button><button type="button" data-pv="tech" aria-pressed="false">Skizze</button></div></div>
+   <svg id="look" viewBox="0 0 820 400" role="img" aria-label="Ihre Anlage in Farbe"></svg>
+   <svg id="sketch" viewBox="0 0 820 400" role="img" aria-label="Skizze mit Maßen" hidden></svg>
+  </div></div></div>
+  <div id="kChat" class="wrap"><div id="kLog" aria-live="polite"></div><div id="kEnd"></div></div>
+  <div id="kDone" class="wrap done" hidden></div>
+  <div class="bar" id="kBar"><div class="wrap">
+   <div class="tools"><button type="button" id="kSpk" class="xs" aria-pressed="false">Vorlesen</button><button type="button" id="kSumBtn" class="xs" hidden>Zusammenfassung &amp; absenden</button></div>
+   <form id="kForm"><button type="button" id="kMic" aria-label="Antwort sprechen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><input id="kText" placeholder="Antwort schreiben …" autocomplete="off" enterkeyhint="send"><button type="submit" class="primary" id="kSend2">Senden</button></form>
+  </div></div>
+ </section>
+ <div class="wrap"><footer id="kFoot"></footer></div>
+</main>
+<p id="kToast" role="status" hidden></p>
+<script>
+const ALL=["Zaun","Geländer","Tor","Gartentor","Französischer Balkon"];
+const ZTG=["Zaun","Tor","Gartentor"];
+const PRODUCTS=[
+ {id:"Zaun",name:"Zaun",d:"Zaunfelder zwischen Pfosten",max:360},
+ {id:"Tor",name:"Tor",d:"Zweiflügeliges Einfahrtstor",max:400},
+ {id:"Gartentor",name:"Gartentor",d:"Einflügelige Tür im Zaun",max:150},
+ {id:"Geländer",name:"Geländer",d:"Balkon-, Terrassen- oder Treppengeländer",max:200},
+ {id:"Französischer Balkon",name:"Franz. Balkon",d:"Absturzsicherung vor bodentiefem Fenster",max:200},
+ {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200}
+];
+const BOTH=["16 mm Hohlrohr","12 mm Massiv"], VK=["12 × 12 mm Vierkant massiv"];
+const MODELS=[
+ {n:"Lucca",sp:1,st:BOTH,f:4,av:ALL,deco:"c",t:"Kurze Zwischenstäbe und C-Dekore"},
+ {n:"Padua",sp:0,st:VK,f:4,av:ALL,deco:"plain",t:"Schlicht, zwei Traversen, Vierkantstäbe"},
+ {n:"Belluno",sp:1,st:["12 mm Massiv"],f:4,av:ALL,deco:"circle",t:"Kreisdekore zwischen den Traversen"},
+ {n:"Lugano",sp:1,st:BOTH,f:4,av:ZTG,deco:"c",t:"Klassisch-romantisch mit C-Dekoren"},
+ {n:"Ancona",sp:1,st:BOTH,f:4,av:ALL,deco:"plain",t:"Klassiker mit schlichtem Grunddesign"},
+ {n:"Perugia",sp:0,st:VK,f:4,av:ALL,deco:"short",t:"Klare Linien, kurze Zwischenstäbe"},
+ {n:"Aquila",sp:1,st:["16 mm Hohlrohr"],f:4,av:ZTG,deco:"orn",t:"Ornamente an den Stäben",noZink:1},
+ {n:"Modena",sp:0,st:["12 × 12 mm Vierkant + 25 × 6 mm Flachstahl"],f:4,av:ALL,deco:"modena",t:"Modern, Flachstahl-Trennelemente"},
+ {n:"Salerno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"salerno",t:"Senkrechte und waagerechte Profile"},
+ {n:"Sarno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:["Zaun","Tor","Gartentor","Geländer","Französischer Balkon"],deco:"frame",t:"Reduziertes Rahmendesign"},
+ {n:"Sanremo",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"horiz",t:"Waagerechte Profile, moderne Baustile"},
+ {n:"Monza",sp:0,st:["25 × 6 mm Massiv"],f:1,av:["Zaun","Geländer"],deco:"plain",t:"Reduziert, Flachstahlstäbe"},
+ {n:"Molveno",sp:0,st:["25 × 6 mm Massiv"],f:1,av:["Geländer","Französischer Balkon"],deco:"molveno",t:"Aussparung oben für Blumenkästen"},
+ {n:"Avelino",sp:1,st:BOTH,f:4,av:ZTG,deco:"orn",t:"Filigrane Dekore an den Stäben"},
+ {n:"Lana",sp:1,st:BOTH,f:4,av:ZTG,deco:"lana",t:"Lange und kurze Stäbe, C-Dekore"},
+ {n:"Bologna",sp:1,st:BOTH,f:4,av:ALL,deco:"volute",t:"Voluten zwischen den oberen Traversen"},
+ {n:"Balerna",sp:1,st:BOTH,f:4,av:ZTG,deco:"s",t:"Geschwungene S-Dekore"},
+ {n:"Portofino",sp:0,st:VK,f:4,av:ALL,deco:"rhomb",t:"Geometrische Rauten in den Stäben"},
+ {n:"Pescara",sp:0,st:VK,f:1,av:ALL,deco:"x",t:"Drei Traversen mit X-Dekoren"},
+ {n:"Roma",sp:0,st:VK,f:4,av:ZTG,deco:"plain",t:"Traversen aus Hespeneisen"},
+ {n:"Ravenna",sp:1,st:BOTH,f:4,av:ZTG,deco:"plain",t:"Hespeneisen-Traversen, Zierspitzen"}
+];
+const SCREENS=[
+ {n:"Adda",p:"Amato",pat:"geo",t:"Geometrisches Muster"},
+ {n:"Arno",p:"Agri",pat:"wave",t:"Dynamische Wellen"},
+ {n:"Livenza",p:"Liro",pat:"leaf",t:"Detailreiche Blätter"},
+ {n:"Piave",p:"Panaro",pat:"leaf2",t:"Exotisches Blattmuster"},
+ {n:"Reno",p:"Rienza",pat:"rhomb",t:"Rautenmuster"},
+ {n:"Roya",p:"Romna",pat:"flower",t:"Florales Muster"},
+ {n:"Tanaro",p:"Taro",pat:"palm",t:"Abstrakte Palmenblätter"},
+ {n:"Pesa",p:null,pat:"none",t:"Blickdicht ohne Muster"}
+];
+const FORMS=["Gerade","Bogen","Geschwungen","U-Form"];
+const TIPS=["Kreuzlilie","Kugellilie","Kugelstab","Lanze","Lilie","Lotus","Pinie","Stab","Ohne Spitze"];
+const COATS=["Unbeschichtet (Edelrost)","Feuerverzinkt","Anthrazit DB 703","Sonderfarbe RAL"];
+const FILLS=["Wie Modell","Ohne Dekore (nur Stäbe)","Ohne Füllung (nur Rahmen)"];
+const RAL={"9005":["Tiefschwarz","#111214"],"7016":["Anthrazitgrau","#383e42"],"6005":["Moosgrün","#114232"],"6009":["Tannengrün","#27352a"],"8017":["Schokoladenbraun","#45322e"],"9001":["Cremeweiß","#e9e0d2"],"9010":["Reinweiß","#f1ece1"],"7035":["Lichtgrau","#c5c7c4"],"7030":["Steingrau","#8b8c7a"],"9006":["Weißaluminium","#a1a1a0"],"9007":["Graualuminium","#878581"],"3004":["Purpurrot","#6b1c23"],"5011":["Stahlblau","#1a2b3c"],"1013":["Perlweiß","#e3d9c6"]};
+const WISHES=["Briefkasten-Durchwurf","Hausnummer / Initialen","Engerer Stababstand (Hund, Kinder)","Torantrieb vorbereiten","Wunschmotiv (Sichtschutz)","Bodenfreiheit nach Wunsch"];
+const STEPS=["Produkt","Modell","Ausführung","Wünsche","Maße","Foto","Kunde","Anfrage"];
+const MAIL="kundenservice@eleo-zaun.de";
+/* Zeiten laut ELEO-Website / Katalog (Stand Okt. 2026, unverbindlich, saisonabhängig) */
+const TIMES={offer:[1,2],std:[8,10],exp:[6,7]};
+
+const DEF=()=>({step:0,product:"Zaun",model:"Lucca",form:"Gerade",tip:"Lanze",bar:"",coat:"Anthrazit DB 703",ral:"7016",
+ fill:"Wie Modell",wishes:[],wishText:"",express:false,
+ screenVar:"voll",screenMat:"Metall",backwall:"ohne Design",screenUse:"Zaun",handrail:"",
+ total:1000,height:100,fields:0,posts:"Zum Einbetonieren",slope:"",slopeUnit:"cm",
+ hinge:"links",swing:"nach innen",lock:"Drückergarnitur Modern + Schließzylinder",
+ cSal:"",cFirst:"",cLast:"",cStreet:"",cZip:"",cCity:"",cPhone:"",cMail:"",
+ altShip:false,sName:"",sStreet:"",sZip:"",sCity:"",
+ shipNote:"",mount:"Aufgesetzt",slab:18,pts:[],lens:[],photo:"",place:[],activePart:0,unload:"Bordsteinkante",install:"Selbstmontage",measure:"Kunde misst selbst",notes:"",view:"look"});
+let S=DEF();
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k)||"null");return v??d}catch(e){return d}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+S=Object.assign(DEF(),load("sv-draft",{}));
+if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
+function save(){store("sv-draft",S)}
+
+const isScreen=()=>S.product==="Sichtschutz";
+const prod=()=>PRODUCTS.find(p=>p.id===S.product);
+const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
+function modelsFor(p){return p==="Sichtschutz"?SCREENS:MODELS.filter(m=>m.av.includes(p))}
+function fixState(){
+ const ms=modelsFor(S.product);
+ if(!ms.find(m=>m.n===S.model))S.model=ms[0].n;
+ const m=model();
+ if(!isScreen()){
+  if(m.f===1)S.form="Gerade";
+  if(!m.sp)S.tip="Ohne Spitze"; else if(S.tip==="Ohne Spitze")S.tip="Lanze";
+  if(!m.st.includes(S.bar))S.bar=m.st[0];
+  if(m.noZink&&S.coat==="Feuerverzinkt")S.coat="Anthrazit DB 703";
+ }else{
+  if(!["Unbeschichtet (Edelrost)","Anthrazit DB 703"].includes(S.coat))S.coat="Anthrazit DB 703";
+  if(!m.p)S.screenVar="voll";
+ }
+ if(S.product==="Gartentor"&&S.total>200)S.total=100;
+ if(S.product==="Tor"&&(S.total<200||S.total>600))S.total=350;
+ if(S.product==="Tor"&&S.height<100)S.height=120;
+ if(!Array.isArray(S.wishes))S.wishes=[];
+}
+function modelLabel(){const m=model();return isScreen()?(S.screenVar==="teil"&&m.p?m.p:m.n):m.n}
+function coatLabel(){return S.coat==="Sonderfarbe RAL"?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
+/* Farbe der Anlage für die Ansicht */
+function finish(){
+ if(isScreen()&&S.screenMat==="Cortenstahl")return{c:"#9c4f24",hi:"#d0773d",rust:1,name:"Cortenstahl"};
+ if(S.coat.startsWith("Unbeschichtet"))return{c:"#6e4029",hi:"#b06a3c",rust:1};
+ if(S.coat==="Feuerverzinkt")return{c:"#8e979c",hi:"#d7dde0",zink:1};
+ if(S.coat==="Sonderfarbe RAL"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
+ return{c:"#3d4043",hi:"#73787d"};
+}
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.round(v+(255-v)*a);return"#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
+
+function layout(){
+ const p=prod(),gate=S.product==="Tor"||S.product==="Gartentor";
+ const post=gate?10:5;
+ if(gate){const total=Math.max(30,+S.total||0),clear=total-2*post,per=S.product==="Tor"?clear/2:clear;return{n:S.product==="Tor"?2:1,post,clear,per,total,gate,width:total,segs:[],fields:[clear],corners:[]}}
+ const planned=S.pts.length>=2&&S.lens.slice(0,S.pts.length-1).every(v=>+v>0);
+ const lens=planned?S.lens.slice(0,S.pts.length-1).map(Number):[Math.max(30,+S.total||0)];
+ const segs=lens.map(len=>{const n=(lens.length===1&&+S.fields)||Math.max(1,Math.ceil((len-post)/(p.max+post)));return{len,n,per:(len-(n+1)*post)/n}});
+ const fields=[],corners=[];segs.forEach((g,i)=>{for(let k=0;k<g.n;k++)fields.push(g.per);if(i<segs.length-1)corners.push(fields.length)});
+ const n=fields.length,clear=fields.reduce((a,b)=>a+b,0);
+ return{n,post,per:Math.max(...fields),clear,total:lens.reduce((a,b)=>a+b,0),gate,segs,fields,corners,width:clear+(n+1)*post,planned};
+}
+const cm=v=>(Math.round(v*10)/10).toLocaleString("de-DE")+" cm";
+/* Zeitplan */
+function addWorkdays(d,n){d=new Date(d);while(n>0){d.setDate(d.getDate()+1);if(d.getDay()%6)n--}return d}
+function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil(((d-y)/864e5+1)/7)}
+function plan(){
+ const now=new Date(),w=S.express?TIMES.exp:TIMES.std;
+ const offer=addWorkdays(now,TIMES.offer[1]);
+ const from=new Date(offer);from.setDate(from.getDate()+w[0]*7);
+ const to=new Date(offer);to.setDate(to.getDate()+w[1]*7);
+ const f=d=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
+ return{w,offer:f(offer),from:f(from),to:f(to),kw:`KW ${isoWeek(from)}–${isoWeek(to)}`};
+}
+/* ---------- Geometrie ---------- */
+const VB={w:820,h:400,l:80,r:30,t:56,b:78};
+function curveOff(t,H,s,form){
+ const k=Math.min(H*.18,22*s);
+ switch(form){case"Bogen":return -k*Math.sin(Math.PI*t);case"Geschwungen":return -k*Math.pow(Math.sin(Math.PI*t),2);case"U-Form":return k*Math.sin(Math.PI*t);default:return 0}
+}
+function tipShape(tip,x,y,s){
+ const r=Math.max(2.2,3*s);if(tip==="Ohne Spitze")return"";
+ if(tip.startsWith("Kugel"))return `<circle cx="${x}" cy="${y-r}" r="${r}" class="fillD"/>`+(tip==="Kugellilie"?`<path d="M${x} ${y-2*r} l-${r} -${r*1.6} M${x} ${y-2*r} l${r} -${r*1.6} M${x} ${y-2*r} v-${r*2}"/>`:"");
+ if(tip==="Lilie"||tip==="Kreuzlilie")return `<path class="fillD" d="M${x} ${y-r*3.4} l${r*.8} ${r*2.2} h-${r*1.6}z"/><path d="M${x-r*1.6} ${y-r*2.2} q${r*.6} ${r*1.4} ${r*1.6} ${r*1.2} q${r} .2 ${r*1.6} -${r*1.2}"/>`+(tip==="Kreuzlilie"?`<line x1="${x-r*1.4}" y1="${y-r*1.2}" x2="${x+r*1.4}" y2="${y-r*1.2}"/>`:"");
+ if(tip==="Lotus"||tip==="Pinie")return `<path class="fillD" d="M${x-r*.9} ${y} q-.2 -${r*2.4} ${r*.9} -${r*3.4} q${r*1.1} ${r} ${r*.9} ${r*3.4}z"/>`;
+ if(tip==="Stab")return `<path class="fillD" d="M${x-r*.5} ${y} l${r*.5} -${r*3} l${r*.5} ${r*3}z"/><circle cx="${x}" cy="${y-r*.6}" r="${r*.7}" class="fillD"/>`;
+ return `<path class="fillD" d="M${x-r} ${y} l${r} -${r*3.2} l${r} ${r*3.2}z"/>`;
+}
+function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
+ const fill=o.fill||"Wie Modell",noDeco=fill!=="Wie Modell",empty=fill.startsWith("Ohne Füllung");
+ const d=m.deco,out=[];
+ const base=y0-6*s, botRail=base-8*s;
+ const top=xx=>y0-H+curveOff((xx-spanX)/spanW,H,s,o.form);
+ const spikes=m.sp&&o.tip!=="Ohne Spitze"&&!empty;
+ const railDrop=spikes?14*s:0;
+ const line=(off,n=24)=>{let a=[];for(let i=0;i<=n;i++){const xx=x+w*i/n;a.push(`${xx.toFixed(1)},${(top(xx)+railDrop+off).toFixed(1)}`)}return `<polyline points="${a.join(" ")}" class="rail"/>`};
+ const box=["frame","salerno","horiz"].includes(d);
+ if(empty){out.push(line(0),`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,`<line x1="${x}" y1="${top(x)+railDrop}" x2="${x}" y2="${botRail}" class="rail"/>`,`<line x1="${x+w}" y1="${top(x+w)+railDrop}" x2="${x+w}" y2="${botRail}" class="rail"/>`);return out.join("")}
+ if(box)out.push(`<rect x="${x}" y="${top(x)}" width="${w}" height="${base-top(x)}" class="thick"/>`);
+ else{
+  out.push(`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,line(0));
+  if(!noDeco&&["x","circle","c","s","volute"].includes(d))out.push(line(20*s));
+  if(d==="molveno")out.push(line(7*s));
+  if(!noDeco&&d==="x")out.push(line(40*s));
+ }
+ const gap=(d==="modena"||d==="molveno"||m.st[0].startsWith("25"))?11:(m.st[0].startsWith("40")?13:12);
+ const n=Math.max(2,Math.round(w/(gap*s)));
+ if(d==="horiz"){for(let yy=top(x)+10*s;yy<base-4*s;yy+=10*s)out.push(`<line x1="${x}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ if(d==="salerno"){const mid=x+w*.45;for(let i=1;i<6;i++){const xx=x+(mid-x)*i/6;out.push(`<line x1="${xx}" y1="${top(x)}" x2="${xx}" y2="${base}" class="bar"/>`)}out.push(`<line x1="${mid}" y1="${top(x)}" x2="${mid}" y2="${base}" class="thick"/>`);for(let yy=top(x)+12*s;yy<base-4*s;yy+=12*s)out.push(`<line x1="${mid}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ for(let i=1;i<n;i++){
+  const xx=x+w*i/n;let ty=box?top(x):top(xx);
+  if(!noDeco&&d==="lana"&&i%2===0)ty+=10*s;
+  out.push(`<line x1="${xx}" y1="${ty}" x2="${xx}" y2="${box?base:botRail}" class="${d==="modena"&&i%6===0?"thick":"bar"}"/>`);
+  if(spikes)out.push(tipShape(o.tip,xx,ty,s));
+  if(noDeco)continue;
+  const ry=top(xx)+railDrop,cx=xx+w/n/2,r=Math.min(w/n/2,9*s)*.85,cy=ry+10*s;
+  if(d==="short"||m.n==="Lucca")out.push(`<line x1="${cx}" y1="${botRail}" x2="${cx}" y2="${botRail-Math.min(28*s,H*.3)}" class="bar"/>`);
+  if(d==="circle"&&i%2)out.push(`<circle cx="${cx}" cy="${cy}" r="${r}"/>`);
+  if(d==="c"&&i%2)out.push(`<path d="M${cx-r} ${cy-r} a${r} ${r} 0 1 0 0 ${2*r} M${cx+r} ${cy-r} a${r} ${r} 0 1 1 0 ${2*r}"/>`);
+  if(d==="s"&&i%2)out.push(`<path d="M${cx-r*1.6} ${cy+r} c0 -${r*2} ${r*1.6} -${r*2} ${r*1.6} 0 s${r*1.6} ${r*2} ${r*1.6} 0"/>`);
+  if(d==="volute"&&i%3===1)out.push(`<path d="M${cx-r*2} ${cy} a${r} ${r} 0 1 1 ${r*.8} ${r*.8} M${cx+r*2} ${cy} a${r} ${r} 0 1 0 -${r*.8} ${r*.8} M${cx-r*1.2} ${cy+r*.8} q${r*1.2} -${r*1.8} ${r*2.4} 0"/>`);
+  if(d==="x")out.push(`<path d="M${xx} ${ry+20*s} L${xx+w/n} ${ry+40*s} M${xx+w/n} ${ry+20*s} L${xx} ${ry+40*s}"/>`);
+  const midY=(ry+botRail)/2;
+  if(d==="rhomb"&&i%3===2){const q=Math.max(4,7*s);out.push(`<path d="M${xx} ${midY-q*1.4} l${q} ${q*1.4} l-${q} ${q*1.4} l-${q} -${q*1.4}z"/>`)}
+  if(d==="orn"&&i%2)out.push(`<ellipse cx="${xx}" cy="${midY}" rx="${Math.max(2.5,4*s)}" ry="${Math.max(5,9*s)}"/>`);
+ }
+ return out.join("");
+}
+function patternDef(m,id,sc=1){
+ const p=m.pat;let b="";const z=24*sc;
+ if(p==="geo")b=`<path d="M0 24 L24 0 M0 12 L12 0 M12 24 L24 12"/>`;
+ if(p==="wave")b=`<path d="M0 6 q6 -6 12 0 t12 0 M0 18 q6 -6 12 0 t12 0"/>`;
+ if(p==="leaf"||p==="leaf2"||p==="palm")b=`<ellipse cx="12" cy="12" rx="${p==="palm"?3:4}" ry="10" transform="rotate(${p==="leaf2"?25:-30} 12 12)"/><line x1="4" y1="20" x2="20" y2="4"/>`;
+ if(p==="rhomb")b=`<path d="M12 2 L22 12 L12 22 L2 12z M12 7 L17 12 L12 17 L7 12z"/>`;
+ if(p==="flower")b=`<circle cx="12" cy="12" r="2.5"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="12" cy="6.5" rx="2" ry="3.6" transform="rotate(${a} 12 12)"/>`).join("")}`;
+ return `<pattern id="${id}" width="${z}" height="${z}" patternUnits="userSpaceOnUse"><g class="pat" transform="scale(${sc})">${b}</g></pattern>`;
+}
+/* Anlage als SVG-Gruppe (ohne Bemaßung) */
+function fieldXs(L,s,x0){const pw=Math.max(3,L.post*s);let x=x0;const posts=[],starts=[];for(let i=0;i<L.n;i++){posts.push(x);x+=pw;starts.push(x);x+=L.fields[i]*s}posts.push(x);return{posts,starts,pw}}
+function fence(m,o,L,s,x0,y0,H,patId){
+ const g=[],pw=Math.max(3,L.post*s),postH=H+(o.product==="Tor"?12:4)*s;
+ const X=L.gate?null:fieldXs(L,s,x0);
+ if(o.screen){
+  X.starts.forEach((x,i)=>{const w=L.fields[i]*s,top=y0-H,base=y0-4*s;
+   const pt=o.screenVar==="teil"&&m.p?top+(base-top)*.3:base;
+   g.push(`<rect x="${x}" y="${top}" width="${w}" height="${base-top}" class="panel"/>`);
+   if(m.pat!=="none")g.push(`<rect x="${x+3}" y="${top+3}" width="${w-6}" height="${pt-top-6}" style="fill:url(#${patId});stroke:none" class="patfill"/>`);
+   g.push(`<rect x="${x}" y="${top}" width="${w}" height="${base-top}" class="thick"/>`)});
+ }else if(L.gate){
+  const span=x0+pw,spanW=L.clear*s,cv=xx=>y0-H+curveOff((xx-span)/spanW,H,s,o.form);
+  const leaves=o.product==="Tor"?[[span+2*s,(spanW-4*s)/2-2*s],[span+(spanW-4*s)/2+4*s,(spanW-4*s)/2-2*s]]:[[span+2*s,spanW-4*s]];
+  leaves.forEach(([lx,lw])=>{g.push(drawRailing(m,o,lx,lw,H,y0,s,span,spanW));[lx,lx+lw].forEach(xx=>g.push(`<line x1="${xx}" y1="${cv(xx)}" x2="${xx}" y2="${y0-6*s}" class="thick"/>`))});
+  const lk=o.product==="Tor"?span+spanW/2-3:(o.hinge==="links"?span+spanW-8:span+2);
+  if(o.lock!=="Ohne Schloss")g.push(`<rect x="${lk}" y="${y0-H*.55}" width="6" height="${Math.max(10,14*s)}" class="lock"/>`);
+ }else{
+  X.starts.forEach((x,i)=>g.push(drawRailing(m,o,x,L.fields[i]*s,H,y0,s,x,L.fields[i]*s)));
+ }
+ const rail=o.product==="Geländer"||o.product==="Französischer Balkon",front=o.mount==="Stirnseitig"||o.mount==="Vor der Fassade";
+ if(o.posts!=="Keine Pfosten"||rail){
+  const ps=L.gate?[x0,x0+L.width*s-pw]:X.posts;
+  ps.forEach((x,i)=>{
+   const yb=front?y0+(o.slabPx||14)*.9:y0;
+   g.push(`<rect x="${x}" y="${y0-postH}" width="${pw}" height="${yb-y0+postH}" class="post${!L.gate&&L.corners.includes(i)?" corner":""}"/>`);
+   g.push(`<rect x="${x-pw*.15}" y="${y0-postH-Math.max(1.5,1.2*s)}" width="${pw*1.3}" height="${Math.max(1.5,1.2*s)}" class="fillD"/>`);
+   if(rail&&!front)g.push(`<rect x="${x-pw*.6}" y="${y0-Math.max(1.5,1*s)}" width="${pw*2.2}" height="${Math.max(1.5,1*s)}" class="fillD"/>`);
+   if(rail&&front&&o.product==="Geländer")[.3,.7].forEach(t=>g.push(`<rect x="${x-pw*.3}" y="${y0+(o.slabPx||14)*t-1.5}" width="${pw*1.6}" height="3" class="fillD"/>`));
+  });
+ }
+ return g.join("");
+}
+function opts(slabPx){return{product:S.product,form:S.form,tip:S.tip,fill:S.fill,screen:isScreen(),screenVar:S.screenVar,posts:S.posts,hinge:S.hinge,lock:S.lock,mount:isRail()?S.mount:"",slabPx}}
+function postGrad(id,f){return `<linearGradient id="pg${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${f.c}"/><stop offset=".35" stop-color="${f.hi}"/><stop offset=".6" stop-color="${f.c}"/><stop offset="1" stop-color="${f.c}" stop-opacity=".85"/></linearGradient>`}
+function rustFilter(id){return `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" values="0 0 0 0 .72  0 0 0 0 .36  0 0 0 0 .16  0 0 0 1.6 -.55" result="spots"/><feComposite in="spots" in2="SourceGraphic" operator="in" result="rs"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rs"/></feMerge></filter>`}
+function css(scope,c,hi,inner=" .fx"){
+ const q=scope+inner;
+ return `${q} line,${q} path,${q} polyline,${q} circle,${q} ellipse,${q} rect{stroke:${c};stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+${q} .rail{stroke-width:3}${q} .bar{stroke-width:1.7}${q} .thick{stroke-width:3.2}${q} .post{fill:${c};stroke:none}
+${q} .fillD{fill:${c};stroke:none}${q} .lock{fill:#b9bec2;stroke:none}${q} .panel{fill:${c};stroke:none;opacity:.14}${scope} .pat *{stroke:${c};stroke-width:1.7;fill:none}
+${scope} .hl *{stroke:${hi};stroke-width:.7;opacity:.75}${scope} .hl .post,${scope} .hl .fillD{fill:none;stroke:${hi}}${scope} .hl .panel,${scope} .hl .patfill{display:none}
+${scope} .shd *{stroke:#000;opacity:1}${scope} .shd .post,${scope} .shd .fillD,${scope} .shd .panel{fill:#000;opacity:1}${scope} .shd .patfill{display:none}`;
+}
+function fit(L,H0,aw,ah){return Math.min(aw/(L.width||L.total),(ah-20)/(H0+10))}
+
+/* ---------- Technische Skizze ---------- */
+function drawSketch(){
+ const L=layout(),H0=Math.max(40,+S.height||100),m=model(),rail=isRail();
+ const aw=VB.w-VB.l-VB.r,ah=VB.h-VB.t-VB.b,s=fit(L,H0,aw,ah)*(rail?.92:1);
+ const W=L.width*s,H=H0*s,x0=VB.l+(aw-W)/2,y0=VB.h-VB.b-(rail?10:0),slabPx=Math.max(8,(+S.slab||18)*s),o=opts(slabPx);
+ const g=[`<defs>${isScreen()?patternDef(m,"pat-sk"):""}</defs>`];
+ g.push(`<text x="20" y="26" class="ttl">${esc(prodShort()+" "+modelLabel())}</text><text x="20" y="44" class="sub">${esc(subLine())}</text>`);
+ if(S.product==="Geländer"){g.push(`<rect x="${x0-24}" y="${y0}" width="${W+(S.mount==="Stirnseitig"?24:48)}" height="${slabPx}" class="slab"/>`)}
+ else{g.push(`<line x1="${x0-20}" y1="${y0}" x2="${x0+W+20}" y2="${y0}" class="ground"/>`);for(let gx=x0-20;gx<x0+W+20;gx+=10)g.push(`<line x1="${gx}" y1="${y0+6}" x2="${gx+6}" y2="${y0}" class="hatch"/>`)}
+ g.push(`<g class="fx">${fence(m,o,L,s,x0,y0,H,"pat-sk")}</g>`);
+ const fd=Math.min(40,60*s),X=L.gate?null:fieldXs(L,s,x0),pw=Math.max(3,L.post*s);
+ const ps=L.gate?[x0,x0+W-pw]:X.posts;
+ if(!rail&&S.posts!=="Keine Pfosten")ps.forEach(x=>{
+  if(S.posts==="Zum Einbetonieren")g.push(`<rect x="${x-pw*.6}" y="${y0}" width="${pw*2.2}" height="${fd}" class="found"/>`);
+  if(S.posts==="Zum Aufschrauben")g.push(`<rect x="${x-pw*.5}" y="${y0-2}" width="${pw*2}" height="3" class="fillD"/>`)});
+ if(L.gate){const hx=S.hinge==="links"?x0+pw+4:x0+W-pw-4;g.push(`<circle cx="${hx}" cy="${y0-H*.8}" r="3" class="hinge"/><circle cx="${hx}" cy="${y0-H*.2}" r="3" class="hinge"/>`)}
+ if(!L.gate)L.corners.forEach((ci,k)=>{const x=X.posts[ci]+pw/2;g.push(`<line x1="${x}" y1="${y0-H-26}" x2="${x}" y2="${y0+4}" class="cornerln"/><text x="${x}" y="${y0-H-30}" text-anchor="middle" class="dimS">Ecke ${cornerAngle(k+1)??""}°</text>`)});
+ const dy=y0+(rail?slabPx+20:S.posts==="Zum Einbetonieren"?fd+18:22);
+ if(!L.gate&&L.segs.length>1){L.segs.forEach((sg,i)=>{const a=X.posts[L.fields.slice(0,0).length+L.segs.slice(0,i).reduce((t,q)=>t+q.n,0)],b=X.posts[L.segs.slice(0,i+1).reduce((t,q)=>t+q.n,0)]+pw;g.push(dim(a,b,dy,"Seite "+segName(i)+" "+cm(sg.len)))});}
+ else g.push(dim(x0,x0+W,dy,(L.gate?"Gesamt ":"Gesamtstrecke ")+cm(L.total)));
+ if(L.gate)g.push(dim(x0+pw,x0+W-pw,dy+22,"lichte Weite "+cm(L.clear)));
+ else X.starts.forEach((x,i)=>{const w=L.fields[i]*s;g.push(dim(x,x+w,dy+22,w<60?Math.round(L.fields[i])+"":cm(L.fields[i]),true))});
+ g.push(vdim(x0-22,y0,y0-H,cm(H0)));
+ if(+S.slope)g.push(`<text x="${x0+W}" y="${y0-H-14}" text-anchor="end" class="sub">Gefälle ${esc(S.slope)} ${esc(S.slopeUnit)} über die Strecke</text>`);
+ if(S.product==="Geländer")g.push(mountDetail());
+ $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style>`+g.join("");
+}
+function mountDetail(){
+ const x=680,y=12,st=S.mount==="Stirnseitig",g=[`<rect x="${x}" y="${y}" width="128" height="118" class="inset"/><text x="${x+8}" y="${y+16}" class="dimS" style="fill:var(--muted)">SCHNITT · ${st?"STIRNSEITIG":"AUFGESETZT"}</text>`];
+ const sx=x+14,sy=y+78,sw=st?82:100,sh=16;
+ g.push(`<rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" class="slabS"/>`);
+ if(st){const px=sx+sw+4;g.push(`<rect x="${px}" y="${y+28}" width="6" height="${sy+sh+6-(y+28)}" class="fillD"/><line x1="${px}" y1="${sy+4}" x2="${px-16}" y2="${sy+4}" class="anchor"/><line x1="${px}" y1="${sy+12}" x2="${px-16}" y2="${sy+12}" class="anchor"/><text x="${sx}" y="${sy+sh+14}" class="dimS">Platte ${esc(S.slab)} cm</text>`)}
+ else{const px=sx+sw-16;g.push(`<rect x="${px}" y="${y+28}" width="6" height="${sy-(y+28)}" class="fillD"/><rect x="${px-6}" y="${sy-3}" width="18" height="3" class="fillD"/><line x1="${px-3}" y1="${sy}" x2="${px-3}" y2="${sy+10}" class="anchor"/><line x1="${px+9}" y1="${sy}" x2="${px+9}" y2="${sy+10}" class="anchor"/><text x="${sx}" y="${sy+sh+14}" class="dimS">Platte ${esc(S.slab)} cm</text>`)}
+ return g.join("");
+}
+const prodShort=()=>S.product==="Französischer Balkon"?"Franz. Balkon":S.product;
+function subLine(){return (isScreen()?coatLabel()+" · "+S.screenMat:[S.form,model().sp?S.tip:"",coatLabel(),S.fill!=="Wie Modell"?S.fill:""].filter(Boolean).join(" · "))+(custName()?" · "+custName():"")}
+function custName(){return [S.cSal,S.cFirst,S.cLast].filter(Boolean).join(" ")}
+function dim(a,b,y,label,small){return `<g class="dim"><line x1="${a}" y1="${y-6}" x2="${a}" y2="${y+6}"/><line x1="${b}" y1="${y-6}" x2="${b}" y2="${y+6}"/><line x1="${a}" y1="${y}" x2="${b}" y2="${y}"/><path d="M${a+5} ${y-3} L${a} ${y} L${a+5} ${y+3} M${b-5} ${y-3} L${b} ${y} L${b-5} ${y+3}"/><text x="${(a+b)/2}" y="${y-4}" text-anchor="middle" class="${small?"dimS":"dimT"}">${label}</text></g>`}
+function vdim(x,a,b,label){return `<g class="dim"><line x1="${x}" y1="${a}" x2="${x}" y2="${b}"/><line x1="${x-6}" y1="${a}" x2="${x+6}" y2="${a}"/><line x1="${x-6}" y1="${b}" x2="${x+6}" y2="${b}"/><text transform="translate(${x-6} ${(a+b)/2}) rotate(-90)" text-anchor="middle" class="dimT">${label}</text></g>`}
+const SK_EXTRA=`#sketch .ground{stroke-width:2}#sketch .slab{fill:var(--grid);stroke:var(--draw);stroke-width:1.4}#sketch .inset{fill:var(--sheet);stroke:var(--line)}#sketch .slabS{fill:var(--grid);stroke:var(--draw)}#sketch .anchor{stroke:var(--dim);stroke-width:2}#sketch .cornerln{stroke:var(--dim);stroke-dasharray:4 3;stroke-width:1}#sketch .hatch{stroke-width:1;opacity:.5}#sketch .found{fill:var(--grid);stroke:var(--muted);stroke-dasharray:3 2}
+#sketch .hinge{fill:var(--dim);stroke:none}#sketch .dim line,#sketch .dim path{stroke:var(--dim);stroke-width:1}#sketch text{font-family:"IBM Plex Mono",monospace;fill:var(--draw);stroke:none}
+#sketch .dimT{font-size:13px;fill:var(--dim)}#sketch .dimS{font-size:11px;fill:var(--dim)}#sketch .ttl{font:700 19px "Archivo","Arial Narrow",sans-serif;text-transform:uppercase}#sketch .sub{font-size:11.5px;fill:var(--muted)}`;
+
+/* ---------- Farbige Ansicht ---------- */
+function rng(seed){return()=>{seed=(seed*16807)%2147483647;return seed/2147483647}}
+function scene(kind,y0,H,x0,W){
+ const r=rng(7),g=[];
+ g.push(`<rect width="820" height="400" fill="url(#sky)"/>`);
+ if(kind==="wall"){
+  g.push(`<rect x="0" y="40" width="820" height="${y0-40}" fill="#e9e4dc"/>`);
+  for(let y=60;y<y0;y+=26)g.push(`<line x1="0" y1="${y}" x2="820" y2="${y}" stroke="#ddd6cc" stroke-width="1"/>`);
+  const inL=S.mount==="In der Laibung",ex=inL?14:-W*.08;if(S.product==="Französischer Balkon")g.push(`<rect x="${x0-ex}" y="${y0-H*1.9}" width="${W+2*ex}" height="${H*2.1}" fill="#5d6a72"/><rect x="${x0-ex+8}" y="${y0-H*1.85}" width="${W+2*ex-16}" height="${H*2}" fill="url(#glass)"/><line x1="${x0+W/2}" y1="${y0-H*1.85}" x2="${x0+W/2}" y2="${y0+H*.15}" stroke="#eef1f3" stroke-width="5"/>`);
+  if(S.product!=="Geländer")g.push(`<rect x="0" y="${y0}" width="820" height="${400-y0}" fill="#b9b4ab"/><rect x="0" y="${y0}" width="820" height="7" fill="#d6d1c8"/>`);else g.push(`<rect x="0" y="${y0}" width="820" height="${400-y0}" fill="#ddd7cd"/>`);
+ }else{
+  g.push(`<rect x="0" y="${y0-150}" width="820" height="150" fill="#4f7a43"/>`);
+  for(let i=0;i<46;i++){const cx=r()*840-10,cy=y0-110-r()*70,rx=30+r()*40;g.push(`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${rx*.8}" fill="${["#45703a","#5a8a4b","#3d6533","#6b9a55"][i%4]}"/>`)}
+  g.push(`<rect x="0" y="${y0-4}" width="820" height="${404-y0}" fill="url(#lawn)"/>`);
+  if(kind==="drive")g.push(`<path d="M${x0+W*.08} ${y0} L${x0+W*.92} ${y0} L${x0+W*1.1} 400 L${x0-W*.1} 400z" fill="#a8a59e"/>${Array.from({length:8},(_,i)=>`<line x1="0" y1="${y0+8+i*12}" x2="820" y2="${y0+8+i*12}" stroke="#97948d" stroke-width="1" clip-path="url(#dclip)"/>`).join("")}`);
+ }
+ return g.join("");
+}
+function viewLayout(){const L=layout();if(L.gate||L.n<=3)return L;const fields=L.fields.slice(0,3),corners=L.corners.filter(c=>c<3);return Object.assign({},L,{n:3,fields,corners,per:Math.max(...fields),width:fields.reduce((a,b)=>a+b,0)+4*L.post,crop:true})}
+function drawLook(){
+ const L=viewLayout(),H0=Math.max(40,+S.height||100),m=model(),o=opts(),f=finish();
+ const rail=isRail(),s=fit(L,H0,700,rail?250:300),W=L.width*s,H=H0*s,x0=(820-W)/2,y0=rail?300:330,slabPx=Math.max(18,(+S.slab||18)*s);o.mount=rail?S.mount:"";o.slabPx=slabPx;
+ const kind=["Geländer","Französischer Balkon"].includes(S.product)?"wall":L.gate&&S.product==="Tor"?"drive":"garden";
+ const shM=`matrix(1 0 -0.55 -0.2 ${0.55*y0} ${1.2*y0})`;
+ const fg=fence(m,o,L,s,x0,y0,H,"pat-lk"),fgP=fg.replace(/class="post( corner)?"/g,'class="post$1" style="fill:url(#pglk)"');
+ const defs=`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd4e2"/><stop offset="1" stop-color="#eef3f4"/></linearGradient>
+ <linearGradient id="lawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9b4f"/><stop offset="1" stop-color="#4e7a37"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fb7c4"/><stop offset=".5" stop-color="#d8e4ea"/><stop offset="1" stop-color="#8fa9b7"/></linearGradient>
+ <clipPath id="dclip"><path d="M${x0+W*.08} ${y0} L${x0+W*.92} ${y0} L${x0+W*1.1} 400 L${x0-W*.1} 400z"/></clipPath>
+ ${postGrad("lk",f)}<filter id="blur"><feGaussianBlur stdDeviation="1.6"/></filter>
+ <filter id="rust" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" values="0 0 0 0 .72  0 0 0 0 .36  0 0 0 0 .16  0 0 0 1.6 -.55" result="spots"/><feComposite in="spots" in2="SourceGraphic" operator="in" result="rs"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rs"/></feMerge></filter>
+ ${isScreen()?patternDef(m,"pat-lk"):""}</defs>`;
+ const svg=`${defs}${scene(kind,y0,H,x0,W)}
+ <!--SLAB--><g class="fx shd" opacity=".16" filter="url(#blur)" transform="${shM}">${fg}</g>
+ <ellipse cx="${x0+W/2}" cy="${y0+2}" rx="${W/2+10}" ry="5" fill="#000" opacity=".12" filter="url(#blur)"/><g class="fx" ${f.rust?'filter="url(#rust)"':""}>${fgP}</g><g class="fx hl" transform="translate(-.8 -.6)">${fg}</g>
+ <rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
+ <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc(prodShort()+" "+modelLabel())}</text>
+ ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
+ const _=0;$("#look").innerHTML=`<style>${css("#look",f.c,f.hi)}</style>`+svg.replace("<!--SLAB-->",slabSvg(x0,W,y0,slabPx));
+}
+function slabSvg(x0,W,y0,h){
+ if(S.product!=="Geländer")return"";
+ const st=S.mount==="Stirnseitig",r=st?x0+W+4:x0+W+40;
+ return `<polygon points="${x0-40},${y0} ${r},${y0} ${r+30},${y0-14} ${x0-10},${y0-14}" fill="#c9c3b9"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="${h}" fill="#bdb7ad"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="2" fill="#e2ddd5"/><polygon points="${r},${y0} ${r+30},${y0-14} ${r+30},${y0-14+h} ${r},${y0+h}" fill="#a9a399"/><rect x="${x0-40}" y="${y0+h}" width="${r-x0+70}" height="14" fill="#000" opacity=".13" filter="url(#blur)"/>`;
+}
+function modelThumb(m){
+ const f=finish(),screen=isScreen(),o={product:"Zaun",form:m.f>1?S.form:"Gerade",tip:m.sp?(S.tip==="Ohne Spitze"?"Lanze":S.tip):"Ohne Spitze",fill:"Wie Modell",screen,screenVar:"voll",posts:"Zum Einbetonieren"};
+ const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
+ const id="th-"+m.n,sc="#"+id;
+ return `<svg id="${id}" class="thumb" viewBox="0 0 160 100" aria-hidden="true"><style>${css(sc,f.c,f.hi)}</style><defs>${screen?patternDef(m,"p"+id,.55):""}</defs><rect width="160" height="100" fill="#e7edf0"/><rect y="${y0}" width="160" height="8" fill="#7ea35f"/><g class="fx">${fence(m,o,L,s,x0,y0,H,"p"+id)}</g></svg>`;
+}
+
+/* ---------- Spezifikation & Anfrage ---------- */
+function specRows(){
+ const L=layout(),r=[];
+ r.push(["Produkt",S.product],["Modell",modelLabel()]);
+ if(isScreen()){r.push(["Muster",S.screenVar==="teil"?"teilflächig (nur oben)":"vollflächig"],["Material",S.screenMat+", 1,5 mm"],["Einsatz",S.screenUse],["Rückwand",S.backwall])}
+ else{r.push(["Form",S.form]);if(model().sp)r.push(["Spitze",S.tip]);r.push(["Stäbe",S.bar],["Füllung",S.fill]);if(S.handrail)r.push(["Handlauf",S.handrail])}
+ if(!(isScreen()&&S.screenMat==="Cortenstahl"))r.push(["Beschichtung",coatLabel()+(["Anthrazit DB 703","Sonderfarbe RAL"].includes(S.coat)?" (Duplex)":"")]);
+ r.push([L.gate?"Gesamtbreite":"Gesamtstrecke",cm(L.total)],["Höhe",cm(+S.height)]);
+ if(L.gate)r.push(["Lichte Weite",cm(L.clear)],["Anschlag","Bänder "+S.hinge+", öffnet "+S.swing],["Schloss",S.lock]);
+ else r.push(["Felder",L.n+" × ca. "+cm(L.per)+" lichte Weite"]);
+ if(isRail())r.push(["Montage",S.mount+(S.product==="Geländer"?", Plattenstärke "+(S.slab||"?")+" cm":"")]);else if(!L.gate)r.push(["Pfosten",S.posts+(L.corners.length?`, davon ${L.corners.length} Eckpfosten`:"")]);else r.push(["Pfosten",S.posts]);
+ if(!L.gate&&L.segs.length>1)L.segs.forEach((g,i)=>r.push(["Seite "+segName(i),cm(g.len)+" · "+g.n+" Felder"+(i>0?" · Ecke "+(cornerAngle(i)??"?")+"°":"")]));
+ if(+S.slope)r.push(["Gefälle",S.slope+" "+S.slopeUnit]);
+ if(S.wishes.length)r.push(["Wünsche",S.wishes.join(", ")]);
+ if(S.wishText)r.push(["Freitext",S.wishText]);
+ r.push(["Fertigung",S.express?"Express gewünscht":"Standard"]);
+ return r;
+}
+function svgToImg(el,light,cb){
+ let src=new XMLSerializer().serializeToString(el).replace(/var\((--[a-z]+)\)/g,(m,k)=>light[k]||"#22313b");
+ if(!src.includes('xmlns="http://www.w3.org/2000/svg"'))src=src.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');
+ const img=new Image();
+ img.onload=()=>{const c=document.createElement("canvas");c.width=1640;c.height=800;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+  const out=new Image();out.src=c.toDataURL("image/png");cb(out)};
+ img.onerror=()=>cb(null);
+ img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(src);
+}
+/* ===== Kunden-Seite: KI-gestützte Projektvorbereitung ===== */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
+const segName=i=>String.fromCharCode(65+i);
+function cornerAngle(i){const p=S.pts,a=p[i-1],b=p[i],c=p[i+1];if(!a||!c)return null;
+ const v1=[a[0]-b[0],a[1]-b[1]],v2=[c[0]-b[0],c[1]-b[1]];
+ return Math.round(Math.acos(Math.max(-1,Math.min(1,(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)))))*180/Math.PI/5)*5}
+const CFG=Object.assign({worker:"",whatsapp:"",firma:"Stahl & Verstand",inhaber:"",telefon:"",impressum:"",datenschutz:""},window.SV_CONFIG||{});
+
+/* eigener Speicher, getrennt vom Berater-Tool */
+const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:""},load("svk-meta",{}));
+S=Object.assign(DEF(),load("svk-draft",{}),{step:0,view:"look"});
+function save(){store("svk-draft",S);try{store("svk-meta",Object.assign({},K,{fotos:K.fotos.slice(0,6)}))}catch(e){store("svk-meta",Object.assign({},K,{fotos:[]}))}}
+
+/* ---------- Seiten aus Kundenangaben ---------- */
+function applySides(){
+ const sd=K.sides.filter(s=>+s.len>0);
+ if(sd.length<2){S.pts=[];S.lens=[];if(sd.length===1)S.total=+sd[0].len;return}
+ let x=100,y=300,h=0;const pts=[[x,y]];
+ sd.forEach((s,i)=>{if(i>0)h+=s.turn==="links"?-90:s.turn==="rechts"?90:0;const r=h*Math.PI/180;x+=Math.cos(r)*s.len/100*20;y+=Math.sin(r)*s.len/100*20;pts.push([Math.round(x),Math.round(y)])});
+ S.pts=pts;S.lens=sd.map(s=>+s.len);
+}
+
+/* ---------- Vorschau ---------- */
+function drawPreview(){
+ fixState();
+ try{drawLook()}catch(e){console.warn(e)}
+ try{drawSketch()}catch(e){console.warn(e)}
+ $("#look").toggleAttribute("hidden",S.view!=="look");$("#sketch").toggleAttribute("hidden",S.view!=="tech");
+ document.querySelectorAll("[data-pv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.pv===S.view));
+ $("#pvLine").textContent=[S.product,modelLabel(),coatLabel(),layout().total?Math.round(layout().total)/100+" m":"",S.height?(+S.height/100).toLocaleString("de-DE")+" m hoch":""].filter(Boolean).join(" · ");
+}
+
+/* ---------- KI ---------- */
+function sysPrompt(){
+ const ms=MODELS.map(m=>`${m.n}: ${m.t}; ${m.sp?"Zierspitzen":"ohne Spitzen"}; ${m.av.join("/")}`).join("\n");
+ const sc=SCREENS.map(m=>`${m.n}: ${m.t}`).join("\n");
+ return `Du bist der digitale Projekt-Assistent von „${CFG.firma}“${CFG.inhaber?" (Inhaber "+CFG.inhaber+")":""}, einem Fachbetrieb für Metallzäune, Tore, Geländer und Sichtschutz (Hersteller ELEO, Fertigung nach Maß). Ein Interessent hat einen Link bekommen und bereitet hier sein Projekt vor, damit der Betrieb ohne Anfahrt ein Angebot erstellen kann.
+
+DEIN STIL: Deutsch, per Sie, herzlich, kurz und klar wie ein guter Handwerksmeister. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Lob und Bestätigung sparsam und ehrlich. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot.
+
+DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
+1. Was soll entstehen? (aktion "produkt")
+2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino.
+3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik.
+4. Aufmaß (aktion "masse"): erkläre einfach, wie man misst. Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern; Gefälle auf der Strecke grob schätzen (Zollstock + Wasserwaage oder Augenmaß).
+5. Untergrund und Umgebung erfragen: Rasen/Erde, Pflaster, Mauer/Sockel, vorhandene Pfosten; Hindernisse (Leitungen, Bäume); Zufahrt für die Spedition.
+6. Fotos (aktion "foto"): ein Übersichtsfoto der ganzen Strecke, Detailfotos von Anfang und Ende, bei Toren die Pfeiler, gern mit Zollstock im Bild.
+7. Ganz natürlich im Gespräch klären (nie verhörartig, nie drängen, jede Frage freiwillig, verteilt über das Gespräch): Bis wann soll es fertig sein? Ist es Ihr eigenes Grundstück? Montage selbst oder durch uns? Gibt es schon einen Budgetrahmen (ausdrücklich optional)? Wie sind Sie auf uns aufmerksam geworden?
+   Frage NIEMALS direkt, ob schon andere Angebote vorliegen oder ob Preise verglichen werden. Erschließe das nur indirekt, z. B.: „Wie weit sind Sie mit Ihrer Planung, haben Sie sich schon einen Überblick verschafft, oder fangen Sie gerade erst an?“ oder „Was ist Ihnen bei der Umsetzung besonders wichtig, eher Qualität und Beratung oder vor allem ein schneller, günstiger Abschluss?“
+   Triff im Gespräch KEINE Zu- oder Absage und bewerte den Kunden nie sichtbar. Jeder bekommt dieselbe freundliche Hilfe.
+8. Kontaktdaten (aktion "kontakt").
+9. Abschluss (aktion "abschluss"): kurze Zusammenfassung und bitte den Kunden, auf „Projekt absenden“ zu tippen. Versprich keinen Termin und keinen Rückruf.
+
+Wenn Fotos kommen, beschreibe kurz, was du erkennst, und frag nach, was für das Angebot wichtig ist (z. B. Sockelmauer, Gefälle).
+
+PRODUKTE: ${PRODUCTS.map(p=>p.id).join(", ")}
+MODELLE:\n${ms}
+SICHTSCHUTZ:\n${sc}
+BESCHICHTUNGEN: ${COATS.join(", ")} (bei Sonderfarbe RAL-Nummer in "ral").
+FORMEN: ${FORMS.join(", ")}. SPITZEN: ${TIPS.join(", ")}. FÜLLUNG: ${FILLS.join(", ")}.
+LIEFERZEIT laut Hersteller: Fertigung 8–10 Wochen, Express 6–7 Wochen, unverbindlich.
+
+AKTUELLER STAND:
+${specRows().map(([k,v])=>k+": "+v).join("\n")}
+Seiten: ${K.sides.length?K.sides.map((s,i)=>segName(i)+" "+(s.len||"?")+" cm"+(i?" ("+(s.turn||"gerade")+")":"")).join(", "):"noch keine"}
+Fotos: ${K.fotos.length}
+Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
+
+ANTWORTFORMAT: ausschließlich ein JSON-Objekt, nichts davor oder danach:
+{"sagen":"Text","optionen":["kurze Antwort 1","kurze Antwort 2"],"aktion":"produkt|modell|farbe|masse|foto|kontakt|abschluss|null","aendern":{…}|null}
+"optionen": 2–4 kurze Antwortvorschläge zum Antippen (max. 4 Wörter), oder [] wenn ein Eingabefeld angezeigt wird.
+"aendern" erlaubt: product, model, coat, ral, form, tip, fill, height (cm), total (cm), posts, mount, screenMat, notes (Untergrund, Hindernisse, Gefälle als kurzer Text ergänzen), wunsch (Wunschtermin). Werte exakt in obiger Schreibweise.`;
+}
+const ALLOW=["product","model","coat","ral","form","tip","fill","height","total","posts","mount","screenMat","notes","wunsch"];
+function applyChanges(ch){
+ if(!ch||typeof ch!=="object")return;
+ for(const k of ALLOW){if(!(k in ch))continue;let v=ch[k];
+  if(k==="wunsch"){K.wunsch=String(v);continue}
+  if(k==="notes"){S.notes=[S.notes,String(v)].filter(Boolean).join(" · ").slice(0,600);continue}
+  if(k==="height"||k==="total"){v=+v;if(!(v>0))continue}
+  if(k==="product"&&!PRODUCTS.some(p=>p.id===v))continue;
+  if(k==="coat"&&!COATS.includes(v))continue;
+  if(k==="ral")v=String(v).replace(/\D/g,"").slice(0,4);
+  S[k]=v;
+ }
+}
+let busy=false;
+async function callAI(){
+ const msgs=[];
+ K.chat.forEach(m=>{
+  if(m.role==="user"){
+   const content=[];
+   (m.img||[]).forEach(src=>content.push({type:"image",source:{type:"base64",media_type:"image/jpeg",data:src.split(",")[1]}}));
+   content.push({type:"text",text:m.text||"(Foto)"});
+   msgs.push({role:"user",content});
+  }else msgs.push({role:"assistant",content:m.json||JSON.stringify({sagen:m.text})});
+ });
+ if(!msgs.length||msgs[0].role!=="user")msgs.unshift({role:"user",content:"Hallo, ich möchte mein Projekt vorbereiten."});
+ if(!CFG.worker)throw new Error("noch nicht eingerichtet");
+ const r=await fetch(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:sysPrompt(),messages:msgs.slice(-30)})});
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(j.error||"Fehler "+r.status);
+ return j.text||"";
+}
+async function ask(text,img){
+ if(busy)return;
+ if(text!==null)K.chat.push({role:"user",text,img:img||null});
+ busy=true;renderChat();
+ try{
+  const raw=await callAI();
+  let out={sagen:raw,optionen:[],aktion:null,aendern:null};
+  const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=Object.assign(out,JSON.parse(m[0]))}catch(e){}}
+  applyChanges(out.aendern);
+  K.chat.push({role:"assistant",text:out.sagen||"",opts:(out.optionen||[]).slice(0,4),act:out.aktion||null,json:JSON.stringify(out)});
+  speak(out.sagen);
+ }catch(e){
+  K.chat.push({role:"assistant",text:String(e.message).includes("eingerichtet")?"Der Assistent ist gerade nicht erreichbar. Sie können Ihr Projekt trotzdem unten Schritt für Schritt eingeben und absenden.":"Da hat die Verbindung nicht geklappt. Bitte tippen Sie auf „Nochmal versuchen“.",opts:["Nochmal versuchen"],act:null,err:true,fallback:String(e.message).includes("eingerichtet")});
+ }
+ busy=false;drawPreview();renderChat();save();
+}
+/* ---------- Oberfläche ---------- */
+const ICON_MIC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+function widget(act,live){
+ if(!live)return"";
+ if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-kprod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}</div>`;
+ if(act==="modell")return `<div class="kw tiles mt">${modelsFor(S.product).map(m=>`<button type="button" class="tile" data-kmodel="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}</strong><span>${m.t}</span></button>`).join("")}</div>`;
+ if(act==="farbe"){const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
+  return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]])=>`<button type="button" class="ralb" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
+ if(act==="masse"){
+  if(!K.sides.length)K.sides=[{len:S.pts.length?"":(S.total||""),turn:""}];
+  const gate=S.product==="Tor"||S.product==="Gartentor";
+  return `<div class="kw kform">
+  ${gate?`<label class="f">Breite zwischen den Pfeilern (lichte Weite)<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(S.total)}"><span>cm</span></span></label>`:
+  `<p class="hint" style="margin:0">Messen Sie jede gerade Seite einzeln, inklusive Pfosten. Bei einer Ecke fügen Sie eine neue Seite hinzu.</p>
+  ${K.sides.map((s,i)=>`<div class="side"><b>Seite ${segName(i)}</b>${i?`<select data-sturn="${i}"><option value="gerade" ${s.turn==="gerade"?"selected":""}>gerade weiter</option><option value="links" ${s.turn==="links"?"selected":""}>Ecke nach links</option><option value="rechts" ${s.turn==="rechts"?"selected":""}>Ecke nach rechts</option></select>`:""}<span class="unit"><input type="number" inputmode="decimal" data-slen="${i}" value="${esc(s.len)}" placeholder="Länge"><span>cm</span></span>${i?`<button type="button" class="xs" data-sdel="${i}" aria-label="Seite entfernen">✕</button>`:""}</div>`).join("")}
+  <button type="button" data-sadd="1">+ Weitere Seite (Ecke)</button>`}
+  <label class="f">Gewünschte Höhe<span class="unit"><input type="number" inputmode="decimal" id="kHeight" value="${esc(S.height)}"><span>cm</span></span></label>
+  <p class="hint" style="margin:0">Unsicher? Ungefähre Werte reichen erst einmal. Wir prüfen alles vor der Bestellung.</p>
+  <button type="button" class="primary kok" data-kdone="masse">Maße übernehmen</button></div>`;
+ }
+ if(act==="foto")return `<div class="kw"><label class="btn primary filebtn" for="kFoto">Fotos aufnehmen oder auswählen</label><input type="file" id="kFoto" accept="image/*" multiple class="vh">
+  <div class="thumbs">${K.fotos.map((f,i)=>`<span><img src="${f}" alt="Foto ${i+1}"><button type="button" class="xs" data-fdel="${i}" aria-label="Foto entfernen">✕</button></span>`).join("")}</div>
+  <div class="row">${K.fotos.length?`<button type="button" class="primary" data-kdone="foto">${K.fotos.length} Foto${K.fotos.length>1?"s":""} senden</button>`:""}<button type="button" data-kskip="foto">Später / keine Fotos</button></div></div>`;
+ if(act==="kontakt")return `<form class="kw kform" id="kContact">
+  <div class="grid2"><label class="f">Vorname<input id="kc-cFirst" value="${esc(S.cFirst)}" autocomplete="given-name"></label><label class="f">Nachname<input id="kc-cLast" value="${esc(S.cLast)}" autocomplete="family-name" required></label></div>
+  <label class="f">Straße, Hausnr.<input id="kc-cStreet" value="${esc(S.cStreet)}" autocomplete="street-address"></label>
+  <div class="grid2 zip"><label class="f">PLZ<input id="kc-cZip" value="${esc(S.cZip)}" inputmode="numeric" autocomplete="postal-code" required></label><label class="f">Ort<input id="kc-cCity" value="${esc(S.cCity)}" autocomplete="address-level2"></label></div>
+  <div class="grid2"><label class="f">Telefon<input id="kc-cPhone" type="tel" value="${esc(S.cPhone)}" autocomplete="tel"></label><label class="f">E-Mail<input id="kc-cMail" type="email" value="${esc(S.cMail)}" autocomplete="email"></label></div>
+  <fieldset><legend>Wie sollen wir uns melden?</legend><div class="chips">${["WhatsApp","Anruf","E-Mail"].map(o=>`<button type="button" class="chip" data-kpref="${o}" aria-pressed="${K.contactPref===o}">${o}</button>`).join("")}</div></fieldset>
+  <p class="warn" id="kcErr" hidden></p><button type="submit" class="primary kok">Kontaktdaten speichern</button></form>`;
+ if(act==="abschluss")return summaryHtml();
+ return"";
+}
+function summaryHtml(){
+ return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
+ ${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Projekt absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
+}
+function renderChat(){
+ const log=$("#kLog");if(!log)return;
+ const lastA=[...K.chat].reverse().find(m=>m.role==="assistant");
+ log.innerHTML=K.chat.map(m=>{
+  if(m.role==="user")return `<div class="km user">${m.img&&m.img.length?`<div class="mini">${m.img.map(s=>`<img src="${s}" alt="">`).join("")}</div>`:""}${esc(m.text)}</div>`;
+  const live=m===lastA&&!K.sent;
+  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map(o=>`<button type="button" class="chip" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live)}${live&&m.fallback?manualHtml():""}</div>`;
+ }).join("")+(busy?'<div class="km bot"><div class="bub typing"><i></i><i></i><i></i></div></div>':"")+(K.show?`<div class="km bot"><div class="bub">Hier können Sie es eintragen:</div>${widget(K.show,true)}</div>`:"");
+ const end=$("#kEnd");if(end)end.scrollIntoView({block:"end",behavior:"smooth"});
+ $("#kSumBtn").hidden=!(S.cLast||K.chat.length>8)||K.sent;
+}
+function manualHtml(){return ["produkt","modell","farbe","masse","foto","kontakt","abschluss"].map(a=>`<h3 class="mh">${{produkt:"1. Was soll entstehen?",modell:"2. Modell",farbe:"3. Farbe",masse:"4. Maße",foto:"5. Fotos",kontakt:"6. Kontakt",abschluss:"7. Absenden"}[a]}</h3>${widget(a,true)}`).join("")}
+function coatSwatches(opts){
+ return `<div class="sw">${opts.map(o=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
+  return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Sonderfarbe RAL"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
+}
+function miniIcon(id){
+ const b='stroke="currentColor" fill="none" stroke-width="2"',bars=(x0,x1,y0,y1,st=10)=>{let s="";for(let x=x0;x<=x1;x+=st)s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;return s};let g="";
+ if(id==="Zaun")g=`<rect x="4" y="8" width="5" height="36"/><rect x="111" y="8" width="5" height="36"/>${bars(18,104,10,42)}<line x1="9" y1="18" x2="111" y2="18"/><line x1="9" y1="38" x2="111" y2="38"/>`;
+ if(id==="Tor")g=`<rect x="4" y="4" width="6" height="40"/><rect x="110" y="4" width="6" height="40"/><path d="M12 14 Q36 4 59 10 M61 10 Q84 4 108 14"/>${bars(18,52,12,42,8)}${bars(68,104,12,42,8)}<line x1="12" y1="40" x2="108" y2="40"/>`;
+ if(id==="Gartentor")g=`<rect x="30" y="6" width="6" height="38"/><rect x="84" y="6" width="6" height="38"/><path d="M38 14 Q60 4 82 14"/>${bars(44,78,12,42,8)}<line x1="38" y1="40" x2="82" y2="40"/>`;
+ if(id==="Geländer")g=`<line x1="4" y1="44" x2="116" y2="44"/><line x1="4" y1="10" x2="116" y2="10" stroke-width="4"/>${bars(8,112,10,44,9)}`;
+ if(id==="Französischer Balkon")g=`<rect x="28" y="2" width="64" height="44" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;
+ if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
+ return `<svg viewBox="0 0 120 48" ${b} aria-hidden="true">${g}</svg>`;
+}
+
+/* ---------- Fotos ---------- */
+function shrink(file,max,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};im.onerror=()=>res(null);im.src=r.result};r.readAsDataURL(file)})}
+function smallCopy(src){return new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,768/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.src=src})}
+
+/* ---------- Sprache ---------- */
+const SRk=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
+function listen(){
+ if(listening){rec&&rec.stop();return}
+ if(!SRk){toast("Spracheingabe gibt es in diesem Browser nicht. Bitte tippen Sie.");return}
+ rec=new SRk();rec.lang="de-DE";rec.interimResults=true;let fin="";
+ rec.onresult=e=>{let t="";for(const x of e.results){t+=x[0].transcript;if(x.isFinal)fin=t}$("#kText").value=t};
+ rec.onend=()=>{listening=false;$("#kMic").classList.remove("on");const t=($("#kText").value||fin).trim();if(t){$("#kText").value="";ask(t)}};
+ rec.onerror=e=>{listening=false;$("#kMic").classList.remove("on");if(e.error!=="no-speech"&&e.error!=="aborted")toast("Mikrofon nicht verfügbar. Bitte tippen Sie Ihre Antwort.")};
+ try{rec.start();listening=true;$("#kMic").classList.add("on")}catch(e){}
+}
+let speakOn=false;
+function speak(t){if(!speakOn||!t||!("speechSynthesis" in window))return;try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="de-DE";const v=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));u.voice=v.find(x=>/premium|erweitert|enhanced/i.test(x.name))||v[0]||null;speechSynthesis.speak(u)}catch(e){}}
+function toast(t){const el=$("#kToast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,4000)}
+
+/* ---------- Absenden ---------- */
+function b64url(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
+function importLink(){
+ const keep=["product","model","form","tip","bar","coat","ral","fill","screenVar","screenMat","backwall","handrail","total","height","fields","posts","slope","slopeUnit","hinge","swing","lock","mount","slab","pts","lens","cSal","cFirst","cLast","cStreet","cZip","cCity","cPhone","cMail","notes","wishText"];
+ const o={};keep.forEach(k=>{if(S[k]!==undefined&&S[k]!=="")o[k]=S[k]});
+ return (CFG.berater||location.href.replace(/kunde\.html.*$/,""))+"?k="+b64url(JSON.stringify(o));
+}
+function svgPng(sel){return new Promise(res=>{const light={"--draw":"#22313b","--dim":"#c4561f","--grid":"#dfe5e9","--muted":"#5d6972"};S.view==="look"?null:null;const el=$(sel),wasHidden=el.hasAttribute("hidden");el.removeAttribute("hidden");svgToImg(el,light,img=>{if(wasHidden)el.setAttribute("hidden","");res(img?img.src:null)})})}
+async function send(){
+ const btn=$("#kSend");if(btn){btn.disabled=true;btn.textContent="Wird gesendet …"}
+ try{
+  if(!CFG.worker)throw new Error("Das Absenden ist noch nicht eingerichtet.");
+  const [look,sketch]=await Promise.all([svgPng("#look"),svgPng("#sketch")]);
+  const payload={
+   kunde:{vorname:S.cFirst,nachname:S.cLast,strasse:S.cStreet,plz:S.cZip,ort:S.cCity,telefon:S.cPhone,email:S.cMail,kontaktweg:K.contactPref,wunschtermin:K.wunsch},
+   spec:specRows().filter(([k])=>k!=="Fertigung"),hinweise:S.notes,
+   seiten:K.sides.filter(s=>+s.len>0).map((s,i)=>({seite:segName(i),laenge:+s.len,ecke:i?s.turn||"gerade":""})),
+   verlauf:K.chat.map(m=>({rolle:m.role==="user"?"Kunde":"Assistent",text:m.text})),
+   fotos:K.fotos,bilder:{ansicht:look,skizze:sketch},link:importLink()
+  };
+  const r=await fetch(CFG.worker.replace(/\/$/,"")+"/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
+  K.sent=true;K.absage=!!j.absage;save();showDone();
+ }catch(e){if(btn){btn.disabled=false;btn.textContent="Projekt absenden"}toast(String(e.message||e))}
+}
+function showDone(){
+ $("#kChat").hidden=true;$("#kDone").hidden=false;
+ $("#kDone").innerHTML=K.absage?`<h2>Vielen Dank für Ihr Interesse</h2><p>Es tut uns leid, aber wir sind derzeit komplett ausgebucht und können leider keine neuen Projekte annehmen.</p><p>Wir wünschen Ihnen viel Erfolg bei der Umsetzung.</p>`
+ :`<h2>Vielen Dank, ${esc(S.cFirst||S.cLast||"")}!</h2><p>Ihr Projekt ist bei ${esc(CFG.firma)} angekommen. Wir sehen uns Ihre Angaben und Fotos an und melden uns${K.contactPref?" per "+esc(K.contactPref):""} bei Ihnen.</p>${CFG.whatsapp?`<p><a class="btn" href="https://wa.me/${CFG.whatsapp.replace(/\D/g,"")}" target="_blank" rel="noopener">Fragen? Schreiben Sie uns auf WhatsApp</a></p>`:""}`;
+ $("#kDone").insertAdjacentHTML("beforeend",`<p class="hint" style="margin-top:24px"><button type="button" id="kRestart" class="linkbtn">Neues Projekt beginnen</button></p>`);
+}
+
+/* ---------- Ereignisse ---------- */
+document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kMic")return listen();
+ if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
+ if(b.dataset.pv){S.view=b.dataset.pv;drawPreview();return}
+ if(b.id==="kSumBtn"){K.show="abschluss";renderChat();return}
+ if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
+ if(b.id==="kSend")return send();
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
+ if(b.dataset.kprod){S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
+ if(b.dataset.kmodel){S.model=b.dataset.kmodel;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
+ if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;fixState();drawPreview();renderChat();save();return}
+ if(b.dataset.kdone==="farbe"){K.show=null;return ask("Ich nehme die Farbe "+coatLabel()+".")}
+ if(b.dataset.sadd){K.sides.push({len:"",turn:"rechts"});renderChat();return}
+ if(b.dataset.sdel){K.sides.splice(+b.dataset.sdel,1);applySides();drawPreview();renderChat();return}
+ if(b.dataset.kdone==="masse"){
+  const gate=S.product==="Tor"||S.product==="Gartentor";
+  if(gate){const v=+$("#kTotal").value;if(v>0)S.total=v}
+  const h=+$("#kHeight").value;if(h>0)S.height=h;
+  applySides();drawPreview();K.show=null;
+  const txt=gate?`Breite ${S.total} cm, Höhe ${S.height} cm.`:`Meine Maße: ${K.sides.filter(s=>+s.len>0).map((s,i)=>`Seite ${segName(i)} ${s.len} cm${i?" ("+(s.turn==="gerade"?"gerade weiter":"Ecke nach "+s.turn)+")":""}`).join(", ")}; Höhe ${S.height} cm.`;
+  return ask(txt);
+ }
+ if(b.dataset.fdel){K.fotos.splice(+b.dataset.fdel,1);renderChat();save();return}
+ if(b.dataset.kdone==="foto"){const sent=K.fotosSent||0,neu=K.fotos.slice(sent,sent+3);K.fotosSent=K.fotos.length;K.show=null;const small=await Promise.all(neu.map(smallCopy));return ask(`Hier ${K.fotos.length>1?"sind meine Fotos":"ist mein Foto"}.`,small)}
+ if(b.dataset.kskip==="foto"){K.show=null;return ask("Fotos schicke ich später.")}
+ if(b.dataset.kpref){K.contactPref=b.dataset.kpref;renderChat();save();return}
+});
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.dataset.slen!==undefined){K.sides[+t.dataset.slen].len=t.value;applySides();drawPreview();save()}
+ if(t.id==="kHeight"&&+t.value>0){S.height=+t.value;drawPreview()}
+ if(t.id==="kTotal"&&+t.value>0){S.total=+t.value;drawPreview()}
+ if(t.id&&t.id.startsWith("kc-")){S[t.id.slice(3)]=t.value;save()}
+});
+document.addEventListener("change",async e=>{const t=e.target;
+ if(t.dataset.sturn!==undefined){K.sides[+t.dataset.sturn].turn=t.value;applySides();drawPreview();save()}
+ if(t.id==="kFoto"){const files=[...t.files].slice(0,Math.max(0,8-K.fotos.length));for(const f of files){const d=await shrink(f,1280,.8);if(d)K.fotos.push(d)}renderChat();save()}
+});
+document.addEventListener("submit",e=>{
+ if(e.target.id==="kForm"){e.preventDefault();const v=$("#kText").value.trim();if(v){$("#kText").value="";ask(v)}}
+ if(e.target.id==="kContact"){e.preventDefault();const err=$("#kcErr");
+  if(!S.cLast||!S.cZip||!(S.cPhone||S.cMail)){err.textContent="Bitte Nachname, PLZ und Telefon oder E-Mail eintragen.";err.hidden=false;return}
+  K.show=null;ask(`Meine Kontaktdaten sind eingetragen (PLZ ${S.cZip}${S.cCity?" "+S.cCity:""}). Ich möchte per ${K.contactPref} kontaktiert werden.`)}
+});
+
+/* ---------- Start ---------- */
+function boot(){
+ $("#kIntro").hidden=true;$("#kApp").hidden=false;
+ drawPreview();
+ if(K.sent){showDone();return}
+ renderChat();
+ if(!K.chat.length)ask(null);
+}
+if(K.started&&K.consent)boot();
+(function foot(){const f=$("#kFoot");if(!f)return;const l=[];if(CFG.impressum)l.push(`<a href="${esc(CFG.impressum)}" target="_blank" rel="noopener">Impressum</a>`);if(CFG.datenschutz)l.push(`<a href="${esc(CFG.datenschutz)}" target="_blank" rel="noopener">Datenschutz</a>`);if(CFG.website)l.push(`<a href="${esc(CFG.website)}" target="_blank" rel="noopener">${esc(CFG.website.replace(/^https?:\/\//,""))}</a>`);f.innerHTML=`<span>© ${esc(CFG.firma)}</span>`+l.join("")})();
+const _showDone=showDone;showDone=function(){_showDone();const b=$("#kBar");if(b)b.hidden=true;const p=$(".pv");if(p&&K.absage)p.hidden=true};
+</script></body></html>
