@@ -1,0 +1,13 @@
+{
+  // Cloudflare-Einstellungen für die Zwischenstation von Stahl & Verstand
+  "name": "stahl-assistent",
+  "main": "worker.js",
+  "compatibility_date": "2025-06-01",
+  "observability": { "enabled": true },
+  // Nicht geheime Einstellungen. Die Schlüssel (ANTHROPIC_KEY, RESEND_KEY) werden in Cloudflare als Secret eingetragen.
+  "vars": {
+    "TO_EMAIL": "info@stahlundverstand.de",
+    "BASE_ADDRESS": "Friedrichstraße 41, 73770 Denkendorf"
+  },
+  "keep_vars": true
+}
