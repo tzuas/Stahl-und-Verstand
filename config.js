@@ -8,6 +8,6 @@ window.SV_CONFIG = {
   impressum: "https://www.stahlundverstand.de",
   datenschutz: "https://www.stahlundverstand.de",
   whatsapp: "",            /* z. B. "4917612345678" */
-  worker: "",              /* Adresse der Zwischenstation, z. B. "https://stahl-assistent.xyz.workers.dev" */
+  worker: "https://stahl-assistent.holy-thunder-702d.workers.dev",
   berater: "https://tzuas.github.io/Stahl-und-Verstand/"
 };
