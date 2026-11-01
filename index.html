@@ -156,6 +156,7 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 #aiMic .pulse{width:14px;height:14px;border-radius:50%;background:#fff;animation:aib 1s infinite}
 .aihr{border:none;border-top:1px solid var(--line);margin:12px 0}
 #aiForm{display:flex;gap:8px}#aiForm input{flex:1;min-width:0}#aiForm button{flex:none}
+#liveMsg:empty,#partBar:empty{display:none}
 @media (prefers-reduced-motion:reduce){.aim.busy i,#aiMic .pulse{animation:none}}
 .posbox{border:1.5px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--sheet)}
 .poslist{margin:0 0 10px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
@@ -488,10 +489,11 @@ function photoStepHtml(){
  return `<h2>Vor Ort zeigen</h2><p class="lede">${live?"Tablet ruhig halten, am besten auf ein Stativ. Ziehen Sie die vier Eckpunkte auf die Stelle: unten auf den Boden, oben auf die gewünschte Höhe. Der Kunde sieht die Anlage live im Kamerabild. Dann Foto schießen.":"Starten Sie die Live-Kamera oder fotografieren Sie die Stelle. Dann ziehen Sie die vier Eckpunkte: unten auf den Boden, oben auf die gewünschte Höhe. Zum Verschieben in die Fläche tippen und ziehen."}</p>
  <div class="row">${live?`<button type="button" class="primary" id="liveSnap">Foto schießen</button><button type="button" id="liveStop">Kamera beenden</button>`:`<button type="button" class="primary" id="liveStart">Live-Kamera</button><label class="btn filebtn2" for="photoIn">${S.photo?"Neues Foto":"Foto aufnehmen oder wählen"}</label><input type="file" accept="image/*" capture="environment" id="photoIn" class="vh">${S.photo?'<button type="button" id="photoDel">Foto entfernen</button>':""}`}${S.photo||live?'<button type="button" id="photoReset">Position zurücksetzen</button>':""}</div>
  <p id="liveMsg" class="warn" role="status"></p>
- ${S.photo||live?`<div class="row" style="margin-top:10px"><button type="button" class="primary" id="aiDetectBtn">KI: Aufmaß planen</button><span class="hint">Die KI zeigt im Foto, welche Maße du messen musst. Danach erstellt sie den Zaun genau mit diesen Maßen.</span></div><div id="aiDetect"></div>`:""}
+ 
  ${live?"":`<fieldset class="arcard" style="margin-top:14px"><legend>Echtes AR auf dem iPad</legend><p>Die Anlage steht in Originalgröße auf dem Boden und bleibt an ihrem Platz, wenn Sie mit dem iPad herumgehen. Mit Ecken aus dem Grundriss, in der gewählten Farbe.</p>${arButton()}<p class="hint" data-arhint hidden style="margin-top:10px">AR öffnet Apples AR-Ansicht. Das klappt in Safari auf iPad oder iPhone, wenn die Seite als eigene Datei über https geöffnet ist. In der Claude-Ansicht steht es nicht zur Verfügung.</p></fieldset>`}
  <div id="partBar" style="margin-top:12px"></div>
  <div class="stage" id="stage" hidden><img id="photoImg" alt="Foto des Grundstücks"><video id="liveVid" playsinline muted autoplay hidden></video><div id="layers"></div><svg id="handles" aria-label="Eckpunkte ziehen"></svg>${live?'<span class="livebadge">LIVE</span>':""}</div>
+ ${S.photo||live?`<div class="row" style="margin-top:10px"><button type="button" class="primary" id="aiDetectBtn">KI: Aufmaß planen</button><span class="hint">Die KI zeigt im Foto, welche Maße du messen musst. Danach erstellt sie den Zaun genau mit diesen Maßen.</span></div><div id="aiDetect"></div>`:""}
  ${S.photo&&!live?`<div class="row" style="margin-top:12px"><button type="button" id="photoPng">Fotomontage als Bild erzeugen</button></div><div id="photoOut" class="pngs"></div>`:live?"":'<p class="hint">Tipp: Möglichst gerade auf die Linie halten, an der der Zaun stehen soll. Bei mehreren Seiten platzieren Sie jede Seite einzeln.</p>'}`;
 }
 
@@ -1318,14 +1320,14 @@ function captureLiveToPhoto(){
  S.photo=c.toDataURL("image/jpeg",.85);stopLive();return true;
 }
 async function planMeasure(btn){
- const box=$("#aiDetect");btn.disabled=true;btn.textContent="KI plant das Aufmaß …";box.innerHTML="";
+ const lbl=btn.textContent,box=$("#aiDetect");btn.disabled=true;btn.textContent="KI plant das Aufmaß …";box.innerHTML="";
  try{
   if(LIVE){captureLiveToPhoto();save();refresh(true);btn=$("#aiDetectBtn")||btn;}
   const jpeg=await frameData();if(!jpeg)throw new Error("Kein Bild vorhanden. Erst Foto machen oder Live-Kamera starten.");
   const want=prodShort(),gate=S.product==="Tor"||S.product==="Gartentor",rail=isRail();
   const raw=await aiVision(`Du bist ein erfahrener Metallbauer und planst das Aufmaß für einen neuen ${want} anhand dieses Fotos.
 1) Finde die Stelle, an die der neue ${want} kommt (vorhandener Zaun/Tor/Geländer, Mauer, Rasenkante, Balkonkante).
-2) Lege fest, welche Maße der Händler vor Ort mit dem Zollstock/Laser messen muss, damit das Angebot exakt wird. Schätze NICHTS, frage die Maße ab.
+2) Lege fest, welche Maße vor Ort mit Zollstock, Maßband oder Laser gemessen werden müssen, damit das Angebot exakt wird. Schätze NICHTS, frage die Maße ab.
 Pflicht: ${gate?"lichte Weite zwischen den Pfeilern/Mauern (typ 'laenge'), gewünschte Torhöhe (typ 'hoehe')":rail?"Länge der Absturzkante je gerader Seite (typ 'laenge'), Geländerhöhe ab Oberkante Boden (typ 'hoehe'), Stärke der Balkonplatte (typ 'platte')":"Länge je gerader Seite entlang der geplanten Linie (typ 'laenge', bei Ecken mehrere), gewünschte Zaunhöhe (typ 'hoehe')"}.
 Zusätzlich nur wenn im Bild relevant: Höhenunterschied/Gefälle über die Strecke (typ "gefaelle"), Höhe von Sockel/Mauer (typ "sonstiges"), Pfeilerhöhe, Abstand zu Hindernissen (typ "sonstiges"). Höchstens 6 Maße.
 Antworte ausschließlich mit JSON:
@@ -1343,13 +1345,14 @@ Alle Koordinaten als Anteile von Bildbreite und -höhe (0 bis 1). "punkte" = Fl�
   S.mplan={pending:true,art:j.art||"",hinweis:j.hinweis||"",place,items};
   save();renderPhotoStep();renderPlanBox();
  }catch(e){box.innerHTML=`<p class="warn">${esc(e.message||e)}</p>`}
- const b2=$("#aiDetectBtn");if(b2){b2.disabled=false;b2.textContent="KI: Aufmaß planen"}
+ const b2=$("#aiDetectBtn");if(b2){b2.disabled=false;b2.textContent=lbl}
 }
+function mReady(p){const req=p.items.filter(m=>m.typ==="laenge"||m.typ==="hoehe");return (req.length?req:p.items.slice(0,1)).every(m=>+m.wert>0)}
 function renderPlanBox(){
  const box=$("#aiDetect");if(!box||!S.mplan||!S.mplan.items)return;
- const p=S.mplan,all=p.items.every(m=>+m.wert>0);
+ const p=S.mplan,all=mReady(p);
  box.innerHTML=`<div class="aibox mplan"><b>${p.pending?"Bitte diese Maße messen":"Aufmaß übernommen"}</b>${p.art?" · erkannt: "+esc(p.art):""}
-  <p class="hint" style="margin:4px 0 8px">${p.pending?"Die gelben Linien im Foto zeigen, wo gemessen wird. Erst wenn alle Werte eingetragen sind, wird der Zaun erstellt.":"Die Werte stehen im Konfigurator und im Aufmaß-Protokoll der Anfrage."}</p>
+  <p class="hint" style="margin:4px 0 8px">${p.pending?"Die gelben Linien im Foto zeigen, wo gemessen wird. Länge und Höhe sind Pflicht, die übrigen Werte helfen zusätzlich. Danach wird der Zaun erstellt.":"Die Werte stehen im Konfigurator und im Aufmaß-Protokoll der Anfrage."}</p>
   <div class="mlist">${p.items.map((m,i)=>`<label class="mrow"><span class="mid">${esc(m.id)}</span><span class="mtxt"><b>${esc(m.titel)}</b><small>${esc(m.anleitung)}</small></span><span class="unit"><input type="number" inputmode="decimal" data-mval="${i}" value="${esc(m.wert)}" placeholder="cm"><span>cm</span></span></label>`).join("")}</div>
   <div class="row" style="margin-top:10px"><button type="button" class="primary" id="mApply" ${all?"":"disabled"}>${p.pending?"Maße übernehmen und Zaun erstellen":"Maße aktualisieren"}</button><button type="button" id="mDiscard">Aufmaßplan verwerfen</button></div></div>`;
 }
@@ -1367,8 +1370,8 @@ function applyMeasure(){
  if(H.length)S.height=H[0];
  if(G.length){S.slope=G[0];S.slopeUnit="cm"}
  if(P.length)S.slab=P[0];
- const proto="Aufmaß vor Ort ("+new Date().toLocaleDateString("de-DE")+"): "+p.items.map(m=>`${m.id} ${m.titel} ${m.wert} cm`).join("; ")+(gate&&L.length?" (Gesamtbreite inkl. Torpfosten = lichte Weite + 2 × 10 cm)":"");
- S.notes=[String(S.notes||"").replace(/Aufmaß vor Ort \([^)]*\):[^\n·]*/g,"").replace(/^[\s·]+|[\s·]+$/g,""),proto].filter(Boolean).join(" · ");
+ const proto=(p.art?"Bestand laut Foto: "+p.art+". ":"")+"Aufmaß vor Ort ("+new Date().toLocaleDateString("de-DE")+"): "+p.items.filter(m=>+m.wert>0).map(m=>`${m.id} ${m.titel} ${m.wert} cm`).join("; ")+(gate&&L.length?" (Gesamtbreite inkl. Torpfosten = lichte Weite + 2 × 10 cm)":"");
+ S.notes=[String(S.notes||"").replace(/(Bestand laut Foto: [^.]*\. )?Aufmaß vor Ort \([^)]*\):[^\n·]*/g,"").replace(/^[\s·]+|[\s·]+$/g,""),proto].filter(Boolean).join(" · ");
  ensurePlace();if(p.place)S.place[S.activePart||0]=p.place;
  p.pending=false;save();refresh(false);renderPhotoStep();renderPlanBox();
 }
@@ -1378,7 +1381,7 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
 },true);
 document.addEventListener("input",e=>{const t=e.target;if(t.dataset.mval===undefined||!S.mplan)return;
  S.mplan.items[+t.dataset.mval].wert=t.value;save();layoutPhoto();
- const all=S.mplan.items.every(m=>+m.wert>0),a=$("#mApply");if(a)a.disabled=!all;
+ const all=mReady(S.mplan),a=$("#mApply");if(a)a.disabled=!all;
 });
 /* ---------- Preisspanne aus EK (nur auf diesem Gerät gespeichert) ---------- */
 const PR_DEF={
