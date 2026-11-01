@@ -127,6 +127,13 @@ body.noscroll{overflow:hidden}
 .mtxt{display:flex;flex-direction:column;min-width:0}.mtxt small{color:var(--muted);font-size:12.5px;line-height:1.35}
 @media (max-width:520px){.mrow{grid-template-columns:36px minmax(0,1fr)}.mrow .unit{grid-column:1/-1}}
 #liveMsg:empty,#partBar:empty{display:none}
+.studio.rep #layers,.studio.rep #handles,.studio.rep #partBar{display:none}
+.reptile{border-style:dashed}
+.shotlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.shotlist li{display:grid;grid-template-columns:30px minmax(0,1fr) auto auto;gap:10px;align-items:center;background:var(--sheet);border:1px solid var(--line);border-radius:6px;padding:8px}
+.shotlist li.done{border-color:var(--ok)}.shotlist .sn{width:28px;height:28px;border-radius:50%;background:var(--steel);color:var(--bg);display:flex;align-items:center;justify-content:center;font:700 13px var(--f-mono)}
+.shotlist li.done .sn{background:var(--ok)}.shotlist .st{display:flex;flex-direction:column;min-width:0}.shotlist small{color:var(--muted);font-size:12.5px}
+.shotlist img{width:52px;height:52px;object-fit:cover;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
 </style>
 </head>
@@ -135,8 +142,8 @@ body.noscroll{overflow:hidden}
 
 <main>
  <section id="kIntro" class="wrap intro">
-  <h1>Ihr Zaun in fünf Minuten vorbereitet</h1>
-  <p>Unser digitaler Assistent fragt kurz nach, was Sie sich vorstellen, hilft Ihnen beim Aufmessen und zeigt Ihnen Ihre Anlage gleich in Farbe. Danach haben wir alles für Ihr Angebot, oft ganz ohne Vor-Ort-Termin.</p>
+  <h1>Ihr Projekt in fünf Minuten vorbereitet</h1>
+  <p>Ob neuer Zaun, Tor, Geländer oder eine Reparatur: Unser digitaler Assistent fragt kurz nach, hilft Ihnen beim Aufmessen und Fotografieren und zeigt Ihnen neue Anlagen gleich in Farbe. Danach haben wir alles für Ihr Angebot, oft ganz ohne Vor-Ort-Termin.</p>
   <ol class="steps3">
    <li><b>1</b><span><strong>Wünsche</strong><br><span class="hint">Zaun, Tor oder Geländer, Modell und Farbe aussuchen.</span></span></li>
    <li><b>2</b><span><strong>Aufmaß</strong><br><span class="hint">Schritt für Schritt messen, ein paar Fotos machen.</span></span></li>
@@ -566,6 +573,7 @@ function applySides(){
 
 /* ---------- Vorschau ---------- */
 function drawPreview(){
+ const pv=document.querySelector(".pv");if(pv)pv.hidden=typeof isRep==="function"&&isRep();
  fixState();
  try{drawLook()}catch(e){console.warn(e)}
  try{drawSketch()}catch(e){console.warn(e)}
@@ -644,7 +652,7 @@ async function callAI(){
  });
  if(!msgs.length||msgs[0].role!=="user")msgs.unshift({role:"user",content:"Hallo, ich möchte mein Projekt vorbereiten."});
  if(!CFG.worker)throw new Error("noch nicht eingerichtet");
- const r=await fetch(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:sysPrompt(),messages:msgs.slice(-30)})});
+ const r=await fetch(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:(typeof isRep==="function"&&isRep())?sysPromptRep():sysPrompt(),messages:msgs.slice(-30)})});
  const j=await r.json().catch(()=>({}));
  if(!r.ok)throw new Error(j.error||"Fehler "+r.status);
  return j.text||"";
@@ -657,8 +665,9 @@ async function ask(text,img){
   const raw=await callAI();
   let out={sagen:raw,optionen:[],aktion:null,aendern:null};
   const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=Object.assign(out,JSON.parse(m[0]))}catch(e){}}
-  applyChanges(out.aendern);
-  K.chat.push({role:"assistant",text:out.sagen||"",opts:(out.optionen||[]).slice(0,4),act:out.aktion||null,json:JSON.stringify(out)});
+  if(!(typeof isRep==="function"&&isRep()))applyChanges(out.aendern);
+  if(out.zusammenfassung&&K.rep)K.rep.summary=String(out.zusammenfassung);if(out.dringend&&K.rep)K.rep.dringend=true;
+  K.chat.push({role:"assistant",text:out.sagen||"",opts:(out.optionen||[]).slice(0,4),act:out.aktion||null,check:Array.isArray(out.checkliste)?out.checkliste:null,felder:Array.isArray(out.felder)?out.felder:null,json:JSON.stringify(out)});
   speak(out.sagen);
  }catch(e){
   K.chat.push({role:"assistant",text:String(e.message).includes("eingerichtet")?"Der Assistent ist gerade nicht erreichbar. Sie können Ihr Projekt trotzdem unten Schritt für Schritt eingeben und absenden.":"Da hat die Verbindung nicht geklappt. Bitte tippen Sie auf „Nochmal versuchen“.",opts:["Nochmal versuchen"],act:null,err:true,fallback:String(e.message).includes("eingerichtet")});
@@ -982,6 +991,93 @@ document.addEventListener("input",e=>{const t=e.target;if(t.dataset.mval===undef
  S.mplan.items[+t.dataset.mval].wert=t.value;save();layoutPhoto();
  const all=mReady(S.mplan),a=$("#mApply");if(a)a.disabled=!all;
 });
+/* ---------- Reparatur & Instandhaltung ---------- */
+const isRep=()=>K.mode==="reparatur";
+if(!K.rep)K.rep={masse:{},fotos:[]};
+function sysPromptRep(){
+ const m=Object.entries(K.rep.masse||{}).filter(([,v])=>v!=="").map(([k,v])=>k+": "+v).join("; ");
+ return `Du bist der digitale Service-Assistent von „${CFG.firma}“${CFG.inhaber?" (Inhaber "+CFG.inhaber+")":""}, einem Metallbau-Fachbetrieb. Ein Kunde meldet einen Schaden oder Reparaturbedarf (Zaun, Tor, Geländer, Treppe, Schloss, Scharnier, Torantrieb, Schweißnaht, Rost, verbogene oder gebrochene Teile, Pulverbeschichtung). Dein Ziel: so viele genaue Infos, Maße und Fotos, dass ${CFG.firma} Material und Aufwand einschätzen kann, ohne extra hinzufahren.
+
+DEIN STIL: Deutsch, per Sie, locker und sympathisch wie ein gut gelaunter Handwerksmeister, beruhigend bei Schäden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage oder Aufgabe. Fachbegriffe kurz erklären. Keine Emojis. Keine Preise, keine Reparaturanleitungen zum Selbermachen bei tragenden oder sicherheitsrelevanten Teilen. Bei akuter Gefahr (Geländer locker, Tor kippt, scharfe Bruchkanten) zuerst sagen: Bereich absichern und nicht benutzen.
+
+ABLAUF (überspringe, was bekannt ist):
+1. Was ist betroffen und was ist passiert? Seit wann? Material (Stahl, verzinkt, pulverbeschichtet, Edelstahl, Aluminium), ungefähres Alter.
+2. Fotos (aktion "repfotos"): Erstelle eine kurze Checkliste mit 2–5 genau beschriebenen Aufnahmen, abgestimmt auf den Schaden. Beispiele: Übersicht aus ca. 3 m; Schadstelle von oben; Schadstelle seitlich; Nahaufnahme mit Zollstock oder Münze als Größenvergleich; Typenschild bei Antrieben; Gewinde/Schraubenkopf von vorn.
+3. Maße (aktion "repmasse"): Frage genau die Maße ab, die für Ersatzteil oder Reparatur nötig sind, mit klarer Messanleitung. Beispiele: Rohr-Außendurchmesser in mm (mit Messschieber oder Maßband um das Rohr, Umfang ÷ 3,14); Wandstärke falls sichtbar; Länge des Teils; Profilmaß bei Vierkant (z. B. 40 × 40 mm); Gewinde (z. B. M10, M12, Zoll) und Schraubenlänge; Scharnier-Lochabstand; Torflügelbreite und -höhe; Spaltmaß.
+4. Live-Hilfe (aktion "live"): Biete an, dass der Kunde die Kamera auf die Stelle hält und du ihm sagst, was du noch brauchst. Das ist besonders hilfreich, wenn er unsicher ist, wo er messen soll.
+5. Dringlichkeit und Wunschtermin.
+6. Vor Ort (aktion "vorort"): Parken und Strom.
+7. Kontakt (aktion "kontakt").
+8. Abschluss (aktion "abschluss"): kurze Zusammenfassung, Kunde soll auf „Absenden“ tippen.
+
+Wenn Fotos kommen: beschreibe kurz, was du erkennst (z. B. „Die Schweißnaht am oberen Scharnier ist gerissen, leichter Rost“), und frage gezielt nach, was noch fehlt.
+
+AKTUELLER STAND:
+Fotos: ${K.fotos.length}${(K.rep.fotos||[]).length?" ("+K.rep.fotos.map(f=>f.titel).join(", ")+")":""}
+Maße: ${m||"noch keine"}
+Parken: ${K.park||"offen"}, Strom: ${K.strom||"offen"}
+Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
+
+ANTWORTFORMAT: ausschließlich ein JSON-Objekt:
+{"sagen":"Text","optionen":["kurze Antwort",…],"aktion":"repfotos|repmasse|live|vorort|kontakt|abschluss|null",
+ "checkliste":[{"id":"f1","titel":"kurz","hilfe":"wie genau fotografieren"}] (nur bei repfotos),
+ "felder":[{"id":"m1","titel":"z. B. Außendurchmesser Rohr","einheit":"mm|cm|Text","hilfe":"wie messen"}] (nur bei repmasse),
+ "zusammenfassung":"1–2 Sätze zum Schaden, immer aktuell halten",
+ "dringend":true|false}
+"optionen": 2–4 kurze Antwortvorschläge (max. 4 Wörter), oder [] wenn ein Eingabefeld angezeigt wird.`;
+}
+function repWidget(act,m){
+ if(act==="repfotos"){const list=(m.check&&m.check.length?m.check:[{id:"f1",titel:"Übersicht",hilfe:"Aus ca. 3 m Entfernung"},{id:"f2",titel:"Schadstelle nah",hilfe:"Mit Zollstock als Größenvergleich"}]).slice(0,6);
+  return `<div class="kw"><ul class="shotlist">${list.map((c,i)=>{const done=(K.rep.fotos||[]).find(f=>f.id===c.id);return `<li class="${done?"done":""}"><span class="sn">${done?"✓":i+1}</span><span class="st"><b>${esc(c.titel)}</b><small>${esc(c.hilfe||"")}</small></span>${done?`<img src="${done.data}" alt="">`:""}<label class="btn ${done?"":"primary"} filebtn" for="rf-${esc(c.id)}">${done?"Neu":"Foto"}</label><input type="file" accept="image/*" capture="environment" class="vh" id="rf-${esc(c.id)}" data-rfid="${esc(c.id)}" data-rftitel="${esc(c.titel)}"></li>`}).join("")}</ul>
+  <div class="row"><button type="button" class="primary" data-repfotos="1" ${(K.rep.fotos||[]).length?"":"disabled"}>Fotos senden</button><button type="button" data-repopen="1">Live-Hilfe mit Kamera</button></div></div>`}
+ if(act==="repmasse"){const fl=(m.felder&&m.felder.length?m.felder:[]).slice(0,8);if(!fl.length)return"";
+  return `<div class="kw"><div class="mlist">${fl.map((f,i)=>`<label class="mrow"><span class="mid">${i+1}</span><span class="mtxt"><b>${esc(f.titel)}</b><small>${esc(f.hilfe||"")}</small></span><span class="unit"><input ${f.einheit==="Text"?'type="text"':'type="number" inputmode="decimal" step="any"'} data-rmk="${esc(f.titel)}" data-rmu="${esc(f.einheit||"")}" value="${esc((K.rep.masse||{})[f.titel+(f.einheit&&f.einheit!=="Text"?" ("+f.einheit+")":"")]||"")}"><span>${esc(f.einheit&&f.einheit!=="Text"?f.einheit:"")}</span></span></label>`).join("")}</div>
+  <p class="hint" style="margin:0">Unsicher, wo gemessen wird? Die Live-Hilfe zeigt es Ihnen.</p>
+  <div class="row"><button type="button" class="primary" data-repmasse="1">Maße senden</button><button type="button" data-repopen="1">Live-Hilfe mit Kamera</button></div></div>`}
+ if(act==="live")return `<div class="kw"><p style="margin:0">Halten Sie die Kamera auf die Stelle. Ich sage Ihnen, was ich noch brauche, und übernehme passende Bilder direkt.</p><div class="row"><button type="button" class="primary" data-repopen="1">Live-Hilfe starten</button></div></div>`;
+ return "";
+}
+/* Live-Hilfe im Studio */
+let liveTalk=[];
+async function liveHelp(btn){
+ const box=$("#aiDetect"),lbl=btn.textContent;btn.disabled=true;btn.textContent="KI schaut hin …";
+ try{
+  const jpeg=await frameData();if(!jpeg)throw new Error("Bitte erst die Kamera starten oder ein Foto machen.");
+  const ctx=K.chat.slice(-8).map(m=>(m.role==="user"?"Kunde: ":"Assistent: ")+m.text).join("\n");
+  const raw=await aiVision(`Du bist der Service-Assistent von ${CFG.firma} und siehst gerade live durch die Kamera des Kunden. Bisheriges Gespräch:\n${ctx}\nBereits gemessen: ${JSON.stringify(K.rep.masse||{})}\nBereits fotografiert: ${(K.rep.fotos||[]).map(f=>f.titel).join(", ")||"nichts"}\n\nSag dem Kunden in 1–2 kurzen, gesprochenen Sätzen genau, was er als Nächstes tun soll (z. B. Kamera näher ran, von oben fotografieren, Zollstock anlegen, Gewinde von vorn zeigen, Typenschild zeigen). Wenn das aktuelle Bild für die Dokumentation gut geeignet ist, setze "bild_ok" auf true und gib ihm einen kurzen Titel.\nAntworte nur mit JSON: {"sagen":"…","bild_ok":true|false,"titel":"…","erkannt":"was du im Bild siehst, kurz"}`,jpeg);
+  const mm=raw.match(/\{[\s\S]*\}/);if(!mm)throw new Error("Keine verwertbare Antwort. Bitte nochmal tippen.");
+  const j=JSON.parse(mm[0]);liveTalk.push(j);window._lastFrame=j.bild_ok?jpeg:null;
+  speakOn=true;speak(j.sagen);
+  box.innerHTML=`<div class="aibox"><b>${esc(j.sagen||"")}</b>${j.erkannt?`<br><span class="hint">Erkannt: ${esc(j.erkannt)}</span>`:""}${j.bild_ok?`<div class="row" style="margin-top:8px"><button type="button" class="primary" id="liveTake">Bild übernehmen: ${esc(j.titel||"Foto")}</button></div>`:""}</div>`;
+ }catch(e){box.innerHTML=`<p class="warn">${esc(e.message||e)}</p>`}
+ btn.disabled=false;btn.textContent=lbl;
+}
+async function takeLiveFrame(){
+ const v=$("#liveVid"),j=liveTalk[liveTalk.length-1]||{};let data=null;
+ if(LIVE&&v&&v.videoWidth){const k=Math.min(1,1280/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement("canvas");c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);c.getContext("2d").drawImage(v,0,0,c.width,c.height);data=c.toDataURL("image/jpeg",.82)}
+ else data=window._lastFrame||S.photo;
+ if(!data)return;
+ K.rep.fotos.push({id:"live"+Date.now(),titel:j.titel||"Live-Bild",data});K.fotos.push(data);save();
+ $("#aiDetect").innerHTML=`<p class="toast">Übernommen: ${esc(j.titel||"Live-Bild")}. Tippen Sie wieder auf „Was brauchen Sie noch?“.</p>`;
+}
+function openRepStudio(){K.repStudio=true;$("#studio").classList.add("rep");$("#studio").hidden=false;document.body.classList.add("noscroll");renderStudio();
+ const b=$("#aiDetectBtn");if(b)b.textContent="KI: Was brauchen Sie noch?";$("#stHint").textContent="Starten Sie die Live-Kamera und halten Sie sie auf die Schadstelle. Tippen Sie dann auf „Was brauchen Sie noch?“.";}
+function closeRepStudio(){if(LIVE)stopLive();$("#studio").hidden=true;$("#studio").classList.remove("rep");document.body.classList.remove("noscroll");K.repStudio=false;
+ const n=(K.rep.fotos||[]).filter(f=>f.id.startsWith("live")).length;save();
+ if(n)ask(`Ich habe mit der Live-Hilfe ${n} Bild${n>1?"er":""} aufgenommen.`,(K.rep.fotos||[]).filter(f=>f.id.startsWith("live")).slice(-3).map(f=>f.data));else renderChat();}
+document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.dataset.krep){e.stopImmediatePropagation();K.mode="reparatur";K.show=null;save();ask("Ich brauche eine Reparatur bzw. Instandhaltung.");return}
+ if(b.dataset.repopen){e.stopImmediatePropagation();openRepStudio();return}
+ if(K.repStudio&&b.id==="stClose"){e.stopImmediatePropagation();closeRepStudio();return}
+ if(K.repStudio&&b.id==="aiDetectBtn"){e.stopImmediatePropagation();liveHelp(b);return}
+ if(b.id==="liveTake"){takeLiveFrame();return}
+ if(b.dataset.repfotos){e.stopImmediatePropagation();const neu=(K.rep.fotos||[]).filter(f=>!f.sent);neu.forEach(f=>f.sent=true);const small=await Promise.all(neu.slice(0,3).map(f=>smallCopy(f.data)));save();ask("Hier die Fotos: "+neu.map(f=>f.titel).join(", ")+".",small);return}
+ if(b.dataset.repmasse){e.stopImmediatePropagation();const t=Object.entries(K.rep.masse).filter(([,v])=>v!=="").map(([k,v])=>k+": "+v).join("; ");ask(t?"Meine Maße: "+t+".":"Die Maße kann ich gerade nicht messen.");return}
+},true);
+document.addEventListener("change",async e=>{const t=e.target;
+ if(t.dataset.rfid){const f=t.files[0];if(!f)return;const d=await shrink(f,1280,.82);if(!d)return;K.rep.fotos=(K.rep.fotos||[]).filter(x=>x.id!==t.dataset.rfid);K.rep.fotos.push({id:t.dataset.rfid,titel:t.dataset.rftitel,data:d});K.fotos=K.rep.fotos.map(x=>x.data);save();renderChat()}
+});
+document.addEventListener("input",e=>{const t=e.target;if(t.dataset.rmk===undefined)return;const u=t.dataset.rmu,key=t.dataset.rmk+(u&&u!=="Text"?" ("+u+")":"");K.rep.masse[key]=t.value;save()});
 /* ---------- Foto-Studio für Kunden: Live-Kamera, KI-Aufmaßplan, Zaun im eigenen Foto ---------- */
 function refresh(){fixState();try{drawPreview()}catch(e){}if(!$("#studio").hidden){renderStudio()}save()}
 function renderStudio(){
@@ -990,7 +1086,12 @@ function renderStudio(){
  $("#stPhotoLbl").textContent=S.photo?"Neues Foto":"Foto aufnehmen";
  $("#stAiRow").hidden=!(S.photo||live);
  $("#stHint").textContent=live?"Halten Sie das Tablet bzw. Handy ruhig auf die Stelle, an der der Zaun stehen soll. Tippen Sie dann auf „Was muss ich messen?“.":S.photo?"Ziehen Sie die runden Punkte, um den Zaun genau anzupassen: unten auf den Boden, oben auf die gewünschte Höhe.":"Fotografieren Sie die Stelle, an der der neue Zaun stehen soll, möglichst gerade von vorn und mit der ganzen Strecke im Bild.";
- renderPhotoStep();if(typeof renderPlanBox==="function")renderPlanBox();
+ renderPhotoStep();
+ const ab=$("#aiDetectBtn");
+ const hd=document.querySelector(".sthead b");if(hd)hd.textContent=K.repStudio?"Live-Hilfe":"Ihr Zaun im Foto";
+ if(K.repStudio){$("#liveSnap").hidden=true;$("#stAiRow").hidden=!(S.photo||live);if(ab)ab.textContent="KI: Was brauchen Sie noch?";$("#stHint").textContent=live?"Halten Sie die Kamera ruhig auf die Schadstelle und tippen Sie auf „Was brauchen Sie noch?“.":"Starten Sie die Live-Kamera und halten Sie sie auf die Schadstelle.";return}
+ if(ab)ab.textContent="KI: Was muss ich messen?";
+ if(typeof renderPlanBox==="function")renderPlanBox();
 }
 /* KI-Bildanalyse über die Zwischenstation */
 async function frameData(){
@@ -1039,9 +1140,10 @@ async function studioImages(){
 }
 /* ---------- Oberfläche ---------- */
 const ICON_MIC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
-function widget(act,live){
+function widget(act,live,m){
  if(!live)return"";
- if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-kprod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}</div>`;
+ if(typeof isRep==="function"&&isRep()){const r=repWidget(act,m||{});if(r)return r}
+ if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-kprod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}<button type="button" class="tile reptile" data-krep="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M30 38 L62 10 M56 8 l10 -2 l-2 10 M44 30 l8 8 M70 26 a10 10 0 1 0 14 14"/></svg><strong>Reparatur</strong><span>Schaden, Instandhaltung, Ersatzteil</span></button></div>`;
  if(act==="modell")return `<div class="kw tiles mt">${modelsFor(S.product).map(m=>`<button type="button" class="tile" data-kmodel="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}</strong><span>${m.t}</span></button>`).join("")}</div>`;
  if(act==="farbe"){const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
   return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]])=>`<button type="button" class="ralb" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
@@ -1075,6 +1177,7 @@ function widget(act,live){
  return"";
 }
 function summaryHtml(){
+ if(typeof isRep==="function"&&isRep())return `<div class="kw ksum"><dl class="spec"><dt>Art</dt><dd>Reparatur / Instandhaltung</dd><dt>Schaden</dt><dd>${esc(K.rep.summary||"siehe Gespräch")}</dd>${Object.entries(K.rep.masse||{}).filter(([,v])=>v!=="").map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}<dt>Fotos</dt><dd>${(K.rep.fotos||[]).length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}</dd></dl>${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Anfrage absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
  return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
  ${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Projekt absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
 }
@@ -1084,7 +1187,7 @@ function renderChat(){
  log.innerHTML=K.chat.map(m=>{
   if(m.role==="user")return `<div class="km user">${m.img&&m.img.length?`<div class="mini">${m.img.map(s=>`<img src="${s}" alt="">`).join("")}</div>`:""}${esc(m.text)}</div>`;
   const live=m===lastA&&!K.sent;
-  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map(o=>`<button type="button" class="chip" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live)}${live&&m.fallback?manualHtml():""}</div>`;
+  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map(o=>`<button type="button" class="chip" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live,m)}${live&&m.fallback?manualHtml():""}</div>`;
  }).join("")+(busy?'<div class="km bot"><div class="bub typing"><i></i><i></i><i></i></div></div>':"")+(K.show?`<div class="km bot"><div class="bub">Hier können Sie es eintragen:</div>${widget(K.show,true)}</div>`:"");
  const end=$("#kEnd");if(end)end.scrollIntoView({block:"end",behavior:"smooth"});
  $("#kSumBtn").hidden=!(S.cLast||K.chat.length>8)||K.sent;
@@ -1139,8 +1242,15 @@ async function send(){
  const btn=$("#kSend");if(btn){btn.disabled=true;btn.textContent="Wird gesendet …"}
  try{
   if(!CFG.worker)throw new Error("Das Absenden ist noch nicht eingerichtet.");
-  const [look,sketch]=await Promise.all([svgPng("#look"),svgPng("#sketch")]);
-  const payload={
+  const rep=typeof isRep==="function"&&isRep();
+  const [look,sketch]=rep?[null,null]:await Promise.all([svgPng("#look"),svgPng("#sketch")]);
+  const payload=rep?{
+   kunde:{vorname:S.cFirst,nachname:S.cLast,strasse:S.cStreet,plz:S.cZip,ort:S.cCity,telefon:S.cPhone,email:S.cMail,kontaktweg:K.contactPref,wunschtermin:K.wunsch},
+   spec:[["Art","Reparatur / Instandhaltung"],["Schaden",K.rep.summary||"siehe Gesprächsverlauf"],["Dringend",K.rep.dringend?"ja":"nein"],...Object.entries(K.rep.masse||{}).filter(([,v])=>v!=="").map(([k,v])=>[k,String(v)]),["Fotos",(K.rep.fotos||[]).map(f=>f.titel).join(", ")||"keine"]],
+   hinweise:S.notes,vorort:{parken:K.park||"",strom:K.strom||""},seiten:[],
+   verlauf:K.chat.map(m=>({rolle:m.role==="user"?"Kunde":"Assistent",text:m.text})),
+   fotos:(K.rep.fotos||[]).map(f=>f.data).slice(0,8),bilder:{},link:""
+  }:{
    kunde:{vorname:S.cFirst,nachname:S.cLast,strasse:S.cStreet,plz:S.cZip,ort:S.cCity,telefon:S.cPhone,email:S.cMail,kontaktweg:K.contactPref,wunschtermin:K.wunsch},
    spec:specRows().filter(([k])=>k!=="Fertigung"),hinweise:S.notes,vorort:{parken:K.park||"",strom:K.strom||""},
    seiten:K.sides.filter(s=>+s.len>0).map((s,i)=>({seite:segName(i),laenge:+s.len,ecke:i?s.turn||"gerade":""})),
@@ -1169,7 +1279,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kSumBtn"){K.show="abschluss";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
- if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
  if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
  if(b.dataset.kprod){S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
  if(b.dataset.kmodel){S.model=b.dataset.kmodel;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
