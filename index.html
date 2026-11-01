@@ -1,11 +1,11 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><script src="config.js"></script><title>Stahl & Verstand Konfigurator</title>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><title>Stahl &amp; Verstand</title><link rel="icon" href="favicon.png"><link rel="apple-touch-icon" href="apple-touch-icon.png"><meta name="apple-mobile-web-app-title" content="Stahl & Verstand"><script src="config.js"></script><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Stahl & Verstand Konfigurator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
 /* Layout: werkstatt-tablet. Links die Schritte, rechts die mitlaufende Skizze auf Blaupausen-Papier. */
 :root{
   --bg:#eef0f1; --panel:#ffffff; --ink:#1d2328; --muted:#5d6972; --line:#d3d9dd;
-  --steel:#2c3a44; --accent:#c4561f; --accent-ink:#ffffff; --sheet:#f6f8f9; --grid:#dfe5e9; --draw:#22313b; --dim:#c4561f;
+  --steel:#2c3a44; --accent:#c8262a; --accent-ink:#ffffff; --sheet:#f6f8f9; --grid:#dfe5e9; --draw:#22313b; --dim:#c8262a;
   --ok:#2e7d4f; --warn:#b06d00;
   --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
   --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
@@ -13,11 +13,11 @@
 }
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
   --bg:#14181b; --panel:#1c2226; --ink:#e7ebee; --muted:#98a4ad; --line:#323b42;
-  --steel:#cfd8de; --accent:#e8743a; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f08a50;
+  --steel:#cfd8de; --accent:#ef4b45; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f2695e;
   --ok:#5cc28a; --warn:#e3a43a; color-scheme:dark}}
 :root[data-theme="dark"]{
   --bg:#14181b; --panel:#1c2226; --ink:#e7ebee; --muted:#98a4ad; --line:#323b42;
-  --steel:#cfd8de; --accent:#e8743a; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f08a50;
+  --steel:#cfd8de; --accent:#ef4b45; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f2695e;
   --ok:#5cc28a; --warn:#e3a43a; color-scheme:dark}
 *{box-sizing:border-box}
 body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
@@ -26,7 +26,7 @@ body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--steel);padding-bottom:12px}
 .brand{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:.95;letter-spacing:-.01em;text-transform:uppercase}
 .brand span{color:var(--accent)}
-.brand.haslogo img{display:block;height:56px;width:auto;max-width:70vw}
+.brand.haslogo{font-size:0}.brand.haslogo img{display:block;height:64px;width:auto;background:#fff;border-radius:8px;padding:3px}
 .brand small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-top:6px}
 .top-actions{display:flex;gap:8px;flex-wrap:wrap}
 button,.btn{font:600 14px var(--f-body);border-radius:4px;border:1.5px solid var(--steel);background:transparent;color:var(--ink);padding:10px 16px;cursor:pointer;min-height:44px}
@@ -650,7 +650,7 @@ function drawLook(){
  <ellipse cx="${x0+W/2}" cy="${y0+2}" rx="${W/2+10}" ry="5" fill="#000" opacity=".12" filter="url(#blur)"/><g class="fx" ${f.rust?'filter="url(#rust)"':""}>${fgP}</g><g class="fx hl" transform="translate(-.8 -.6)">${fg}</g>
  <rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
  <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc(prodShort()+" "+modelLabel())}</text>
- ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}${window.LOGO_DATA?`<rect x="626" y="338" width="180" height="50" rx="6" fill="#ffffff" opacity=".85"/><image href="${window.LOGO_DATA}" x="634" y="342" width="164" height="42" preserveAspectRatio="xMidYMid meet"/>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
+ ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}${window.LOGO_DATA?`<rect x="734" y="314" width="74" height="74" rx="8" fill="#ffffff" opacity=".9"/><image href="${window.LOGO_DATA}" x="738" y="318" width="66" height="66" preserveAspectRatio="xMidYMid meet"/>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
  const _=0;$("#look").innerHTML=`<style>${css("#look",f.c,f.hi)}</style>`+svg.replace("<!--SLAB-->",slabSvg(x0,W,y0,slabPx));
 }
 function slabSvg(x0,W,y0,h){
@@ -738,7 +738,7 @@ function svgToImg(el,light,cb){
 }
 function makePng(){
  const w=$("#pngWrap");w.innerHTML='<p class="hint">Bilder lange gedrückt halten (Tablet) oder Rechtsklick, dann „Bild sichern“ und an die Mail anhängen.</p>';
- const light={"--draw":"#22313b","--dim":"#c4561f","--grid":"#dfe5e9","--muted":"#5d6972"};
+ const light={"--draw":"#22313b","--dim":"#c8262a","--grid":"#dfe5e9","--muted":"#5d6972"};
  drawLook();drawSketch();
  [["#look","Farbige Ansicht"],["#sketch","Bemaßte Skizze"]].forEach(([sel,cap])=>svgToImg($(sel),light,img=>{
   const fig=document.createElement("figure");fig.className="png";

@@ -131,7 +131,7 @@ async function submit(b, env) {
   const row = (a, v) => v ? `<tr><td style="padding:4px 12px 4px 0;color:#5d6972;font-size:13px;vertical-align:top">${esc(a)}</td><td style="padding:4px 0;font-size:14px">${esc(v)}</td></tr>` : "";
   const logo = env.LOGO_URL || "https://tzuas.github.io/Stahl-und-Verstand/logo.png";
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;color:#1d2328">
-  <div style="border-bottom:3px solid #2c3a44;padding-bottom:10px;margin-bottom:16px">${env.LOGO_URL ? `<img src="${esc(logo)}" alt="Stahl &amp; Verstand" height="48" style="height:48px;width:auto;display:block">` : `<div style="font-weight:800;font-size:20px;letter-spacing:.02em">STAHL <span style="color:#c4561f">&amp;</span> VERSTAND</div>`}</div>
+  <div style="border-bottom:3px solid #2c3a44;padding-bottom:10px;margin-bottom:16px"><img src="${esc(logo)}" alt="Stahl &amp; Verstand" width="72" height="69" style="width:72px;height:auto;display:block"></div>
   <h2 style="margin:0 0 4px">Neue Projektanfrage: ${esc(name)}</h2>
   <p style="margin:0 0 16px;color:#5d6972">${esc((b.spec || []).slice(0, 2).map(x => x[1]).join(" "))} · ${esc(k.plz)} ${esc(k.ort)}</p>
   <div style="border-left:5px solid ${farbe};background:#f6f8f9;padding:12px 16px;margin-bottom:18px">
@@ -143,7 +143,7 @@ async function submit(b, env) {
   <h3 style="margin:0 0 6px">Kunde</h3><table>${row("Name", name)}${row("Adresse", [k.strasse, [k.plz, k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "))}${row("Telefon", k.telefon)}${row("E-Mail", k.email)}${row("Kontakt per", k.kontaktweg)}${row("Wunschtermin", k.wunschtermin)}</table>
   <h3 style="margin:16px 0 6px">Anfahrt &amp; vor Ort</h3><table>${row("Entfernung", fahrt ? fahrt.text : (env.BASE_ADDRESS ? "nicht berechenbar (" + fahrtFehler + ")" : "BASE_ADDRESS in Cloudflare eintragen"))}${row("Parken", vo.parken)}${row("Strom 230 V", vo.strom)}</table>${fahrt ? `<p style="margin:6px 0 0"><a href="${esc(fahrt.maps)}">Route in Google Maps öffnen</a></p>` : ""}
   <h3 style="margin:16px 0 6px">Projekt</h3><table>${(b.spec || []).map(([a, v]) => row(a, v)).join("")}${row("Hinweise", b.hinweise)}</table>
-  ${b.link ? `<p style="margin:18px 0"><a href="${esc(b.link)}" style="background:#c4561f;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:bold">Im Berater-Tool öffnen</a></p>` : ""}
+  ${b.link ? `<p style="margin:18px 0"><a href="${esc(b.link)}" style="background:#c8262a;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:bold">Im Berater-Tool öffnen</a></p>` : ""}
   <p style="font-size:13px;color:#5d6972">Im Anhang: Ansicht, Skizze und ${(b.fotos || []).length} Foto(s) des Kunden.</p>
   <details><summary style="font-size:13px">Gesprächsverlauf</summary><pre style="white-space:pre-wrap;font-size:12px;color:#3a444b">${esc(verlauf)}</pre></details></div>`;
 

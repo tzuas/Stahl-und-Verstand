@@ -2,7 +2,8 @@
 window.SV_CONFIG = {
   firma: "Stahl & Verstand",
   inhaber: "Florian",
-  logo: "",                /* wird gesetzt, sobald logo.png im Projekt liegt */
+  logo: "logo.png",
+  adresse: "Friedrichstraße 41, 73770 Denkendorf",
   website: "https://www.stahlundverstand.de",
   impressum: "https://www.stahlundverstand.de",
   datenschutz: "https://www.stahlundverstand.de",
