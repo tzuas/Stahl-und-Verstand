@@ -25,6 +25,7 @@ img{max-width:100%}
 .wrap{max-width:760px;margin:0 auto;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
 header.k{border-bottom:3px solid var(--steel);padding-block:14px 10px;display:flex;justify-content:space-between;align-items:flex-end;gap:10px}
 .brand{font:800 26px/1 var(--f-display);font-stretch:75%;text-transform:uppercase;letter-spacing:-.01em}.brand span{color:var(--accent)}
+.brand.haslogo img{display:block;height:48px;width:auto;max-width:70vw}
 .brand small{display:block;font:500 11px var(--f-mono);letter-spacing:.12em;color:var(--muted);margin-top:4px}
 button,.btn{font:600 15px var(--f-body);border-radius:6px;border:1.5px solid var(--steel);background:transparent;color:var(--ink);padding:10px 16px;cursor:pointer;min-height:46px;text-decoration:none;display:inline-flex;align-items:center;justify-content:center;gap:8px}
 button.primary,.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
@@ -112,7 +113,7 @@ footer{padding-block:18px 30px;font-size:12.5px;color:var(--muted);display:flex;
 </style>
 </head>
 <body>
-<div class="wrap"><header class="k"><div class="brand">Stahl <span>&amp;</span> Verstand<small>Ihr Projekt-Assistent</small></div></header></div>
+<div class="wrap"><header class="k"><div class="brand" data-logo>Stahl <span>&amp;</span> Verstand<small>Ihr Projekt-Assistent</small></div></header></div>
 
 <main>
  <section id="kIntro" class="wrap intro">
@@ -462,7 +463,7 @@ function drawLook(){
  <ellipse cx="${x0+W/2}" cy="${y0+2}" rx="${W/2+10}" ry="5" fill="#000" opacity=".12" filter="url(#blur)"/><g class="fx" ${f.rust?'filter="url(#rust)"':""}>${fgP}</g><g class="fx hl" transform="translate(-.8 -.6)">${fg}</g>
  <rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
  <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc(prodShort()+" "+modelLabel())}</text>
- ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
+ ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}${window.LOGO_DATA?`<rect x="626" y="338" width="180" height="50" rx="6" fill="#ffffff" opacity=".85"/><image href="${window.LOGO_DATA}" x="634" y="342" width="164" height="42" preserveAspectRatio="xMidYMid meet"/>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
  const _=0;$("#look").innerHTML=`<style>${css("#look",f.c,f.hi)}</style>`+svg.replace("<!--SLAB-->",slabSvg(x0,W,y0,slabPx));
 }
 function slabSvg(x0,W,y0,h){
@@ -544,7 +545,7 @@ function sysPrompt(){
  const sc=SCREENS.map(m=>`${m.n}: ${m.t}`).join("\n");
  return `Du bist der digitale Projekt-Assistent von „${CFG.firma}“${CFG.inhaber?" (Inhaber "+CFG.inhaber+")":""}, einem Fachbetrieb für Metallzäune, Tore, Geländer und Sichtschutz (Hersteller ELEO, Fertigung nach Maß). Ein Interessent hat einen Link bekommen und bereitet hier sein Projekt vor, damit der Betrieb ohne Anfahrt ein Angebot erstellen kann.
 
-DEIN STIL: Deutsch, per Sie, herzlich, kurz und klar wie ein guter Handwerksmeister. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Lob und Bestätigung sparsam und ehrlich. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot.
+DEIN STIL: Deutsch, per Sie, aber richtig locker und sympathisch, wie ein gut gelaunter Handwerksmeister, der gern mal einen kleinen Spruch macht (z. B. „Der Zaun steht schon fast, fehlen nur noch ein paar Zahlen.“). Humor dezent, nie albern, nie auf Kosten des Kunden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot.
 
 DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
 1. Was soll entstehen? (aktion "produkt")
@@ -552,11 +553,12 @@ DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
 3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik.
 4. Aufmaß (aktion "masse"): erkläre einfach, wie man misst. Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern; Gefälle auf der Strecke grob schätzen (Zollstock + Wasserwaage oder Augenmaß).
 5. Untergrund und Umgebung erfragen: Rasen/Erde, Pflaster, Mauer/Sockel, vorhandene Pfosten; Hindernisse (Leitungen, Bäume); Zufahrt für die Spedition.
-6. Fotos (aktion "foto"): ein Übersichtsfoto der ganzen Strecke, Detailfotos von Anfang und Ende, bei Toren die Pfeiler, gern mit Zollstock im Bild.
+6. Vor Ort (aktion "vorort"): Parkmöglichkeit für unser Fahrzeug und Stromanschluss in der Nähe abfragen, das Eingabefeld erscheint automatisch.
+6b. Fotos (aktion "foto"): ein Übersichtsfoto der ganzen Strecke, Detailfotos von Anfang und Ende, bei Toren die Pfeiler, gern mit Zollstock im Bild.
 7. Ganz natürlich im Gespräch klären (nie verhörartig, nie drängen, jede Frage freiwillig, verteilt über das Gespräch): Bis wann soll es fertig sein? Ist es Ihr eigenes Grundstück? Montage selbst oder durch uns? Gibt es schon einen Budgetrahmen (ausdrücklich optional)? Wie sind Sie auf uns aufmerksam geworden?
    Frage NIEMALS direkt, ob schon andere Angebote vorliegen oder ob Preise verglichen werden. Erschließe das nur indirekt, z. B.: „Wie weit sind Sie mit Ihrer Planung, haben Sie sich schon einen Überblick verschafft, oder fangen Sie gerade erst an?“ oder „Was ist Ihnen bei der Umsetzung besonders wichtig, eher Qualität und Beratung oder vor allem ein schneller, günstiger Abschluss?“
    Triff im Gespräch KEINE Zu- oder Absage und bewerte den Kunden nie sichtbar. Jeder bekommt dieselbe freundliche Hilfe.
-8. Kontaktdaten (aktion "kontakt").
+8. Kontaktdaten mit vollständiger Adresse (aktion "kontakt").
 9. Abschluss (aktion "abschluss"): kurze Zusammenfassung und bitte den Kunden, auf „Projekt absenden“ zu tippen. Versprich keinen Termin und keinen Rückruf.
 
 Wenn Fotos kommen, beschreibe kurz, was du erkennst, und frag nach, was für das Angebot wichtig ist (z. B. Sockelmauer, Gefälle).
@@ -572,10 +574,11 @@ AKTUELLER STAND:
 ${specRows().map(([k,v])=>k+": "+v).join("\n")}
 Seiten: ${K.sides.length?K.sides.map((s,i)=>segName(i)+" "+(s.len||"?")+" cm"+(i?" ("+(s.turn||"gerade")+")":"")).join(", "):"noch keine"}
 Fotos: ${K.fotos.length}
+Parken: ${K.park||"noch offen"}, Strom: ${K.strom||"noch offen"}
 Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
 
 ANTWORTFORMAT: ausschließlich ein JSON-Objekt, nichts davor oder danach:
-{"sagen":"Text","optionen":["kurze Antwort 1","kurze Antwort 2"],"aktion":"produkt|modell|farbe|masse|foto|kontakt|abschluss|null","aendern":{…}|null}
+{"sagen":"Text","optionen":["kurze Antwort 1","kurze Antwort 2"],"aktion":"produkt|modell|farbe|masse|vorort|foto|kontakt|abschluss|null","aendern":{…}|null}
 "optionen": 2–4 kurze Antwortvorschläge zum Antippen (max. 4 Wörter), oder [] wenn ein Eingabefeld angezeigt wird.
 "aendern" erlaubt: product, model, coat, ral, form, tip, fill, height (cm), total (cm), posts, mount, screenMat, notes (Untergrund, Hindernisse, Gefälle als kurzer Text ergänzen), wunsch (Wunschtermin). Werte exakt in obiger Schreibweise.`;
 }
@@ -646,12 +649,15 @@ function widget(act,live){
   <p class="hint" style="margin:0">Unsicher? Ungefähre Werte reichen erst einmal. Wir prüfen alles vor der Bestellung.</p>
   <button type="button" class="primary kok" data-kdone="masse">Maße übernehmen</button></div>`;
  }
+ if(act==="vorort")return `<div class="kw"><fieldset><legend>Parkmöglichkeit für unser Fahrzeug</legend><div class="chips">${["Direkt vor Ort","In der Nähe","Schwierig"].map(o=>`<button type="button" class="chip" data-kpark="${o}" aria-pressed="${K.park===o}">${o}</button>`).join("")}</div></fieldset>
+  <fieldset><legend>Stromanschluss (230 V) in der Nähe</legend><div class="chips">${["Ja","Nein","Weiß nicht"].map(o=>`<button type="button" class="chip" data-kstrom="${o}" aria-pressed="${K.strom===o}">${o}</button>`).join("")}</div></fieldset>
+  ${K.park&&K.strom?`<button type="button" class="primary kok" data-kdone="vorort">Weiter</button>`:""}</div>`;
  if(act==="foto")return `<div class="kw"><label class="btn primary filebtn" for="kFoto">Fotos aufnehmen oder auswählen</label><input type="file" id="kFoto" accept="image/*" multiple class="vh">
   <div class="thumbs">${K.fotos.map((f,i)=>`<span><img src="${f}" alt="Foto ${i+1}"><button type="button" class="xs" data-fdel="${i}" aria-label="Foto entfernen">✕</button></span>`).join("")}</div>
   <div class="row">${K.fotos.length?`<button type="button" class="primary" data-kdone="foto">${K.fotos.length} Foto${K.fotos.length>1?"s":""} senden</button>`:""}<button type="button" data-kskip="foto">Später / keine Fotos</button></div></div>`;
  if(act==="kontakt")return `<form class="kw kform" id="kContact">
   <div class="grid2"><label class="f">Vorname<input id="kc-cFirst" value="${esc(S.cFirst)}" autocomplete="given-name"></label><label class="f">Nachname<input id="kc-cLast" value="${esc(S.cLast)}" autocomplete="family-name" required></label></div>
-  <label class="f">Straße, Hausnr.<input id="kc-cStreet" value="${esc(S.cStreet)}" autocomplete="street-address"></label>
+  <label class="f">Straße, Hausnr. (Ort der Montage)<input id="kc-cStreet" value="${esc(S.cStreet)}" autocomplete="street-address" required></label>
   <div class="grid2 zip"><label class="f">PLZ<input id="kc-cZip" value="${esc(S.cZip)}" inputmode="numeric" autocomplete="postal-code" required></label><label class="f">Ort<input id="kc-cCity" value="${esc(S.cCity)}" autocomplete="address-level2"></label></div>
   <div class="grid2"><label class="f">Telefon<input id="kc-cPhone" type="tel" value="${esc(S.cPhone)}" autocomplete="tel"></label><label class="f">E-Mail<input id="kc-cMail" type="email" value="${esc(S.cMail)}" autocomplete="email"></label></div>
   <fieldset><legend>Wie sollen wir uns melden?</legend><div class="chips">${["WhatsApp","Anruf","E-Mail"].map(o=>`<button type="button" class="chip" data-kpref="${o}" aria-pressed="${K.contactPref===o}">${o}</button>`).join("")}</div></fieldset>
@@ -660,7 +666,7 @@ function widget(act,live){
  return"";
 }
 function summaryHtml(){
- return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
+ return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
  ${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Projekt absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
 }
 function renderChat(){
@@ -712,9 +718,12 @@ function toast(t){const el=$("#kToast");el.textContent=t;el.hidden=false;clearTi
 /* ---------- Absenden ---------- */
 function b64url(s){return btoa(unescape(encodeURIComponent(s))).replace(/\+/g,"-").replace(/\//g,"_").replace(/=+$/,"")}
 function importLink(){
+ const n0=S.notes;S.notes=[S.notes,K.park?"Parken: "+K.park:"",K.strom?"Strom: "+K.strom:""].filter(Boolean).join(" · ");
+ try{
  const keep=["product","model","form","tip","bar","coat","ral","fill","screenVar","screenMat","backwall","handrail","total","height","fields","posts","slope","slopeUnit","hinge","swing","lock","mount","slab","pts","lens","cSal","cFirst","cLast","cStreet","cZip","cCity","cPhone","cMail","notes","wishText"];
  const o={};keep.forEach(k=>{if(S[k]!==undefined&&S[k]!=="")o[k]=S[k]});
  return (CFG.berater||location.href.replace(/kunde\.html.*$/,""))+"?k="+b64url(JSON.stringify(o));
+ }finally{S.notes=n0}
 }
 function svgPng(sel){return new Promise(res=>{const light={"--draw":"#22313b","--dim":"#c4561f","--grid":"#dfe5e9","--muted":"#5d6972"};S.view==="look"?null:null;const el=$(sel),wasHidden=el.hasAttribute("hidden");el.removeAttribute("hidden");svgToImg(el,light,img=>{if(wasHidden)el.setAttribute("hidden","");res(img?img.src:null)})})}
 async function send(){
@@ -724,7 +733,7 @@ async function send(){
   const [look,sketch]=await Promise.all([svgPng("#look"),svgPng("#sketch")]);
   const payload={
    kunde:{vorname:S.cFirst,nachname:S.cLast,strasse:S.cStreet,plz:S.cZip,ort:S.cCity,telefon:S.cPhone,email:S.cMail,kontaktweg:K.contactPref,wunschtermin:K.wunsch},
-   spec:specRows().filter(([k])=>k!=="Fertigung"),hinweise:S.notes,
+   spec:specRows().filter(([k])=>k!=="Fertigung"),hinweise:S.notes,vorort:{parken:K.park||"",strom:K.strom||""},
    seiten:K.sides.filter(s=>+s.len>0).map((s,i)=>({seite:segName(i),laenge:+s.len,ecke:i?s.turn||"gerade":""})),
    verlauf:K.chat.map(m=>({rolle:m.role==="user"?"Kunde":"Assistent",text:m.text})),
    fotos:K.fotos,bilder:{ansicht:look,skizze:sketch},link:importLink()
@@ -751,7 +760,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kSumBtn"){K.show="abschluss";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
- if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
  if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
  if(b.dataset.kprod){S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
  if(b.dataset.kmodel){S.model=b.dataset.kmodel;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
@@ -770,6 +779,9 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.dataset.fdel){K.fotos.splice(+b.dataset.fdel,1);renderChat();save();return}
  if(b.dataset.kdone==="foto"){const sent=K.fotosSent||0,neu=K.fotos.slice(sent,sent+3);K.fotosSent=K.fotos.length;K.show=null;const small=await Promise.all(neu.map(smallCopy));return ask(`Hier ${K.fotos.length>1?"sind meine Fotos":"ist mein Foto"}.`,small)}
  if(b.dataset.kskip==="foto"){K.show=null;return ask("Fotos schicke ich später.")}
+ if(b.dataset.kpark){K.park=b.dataset.kpark;renderChat();save();return}
+ if(b.dataset.kstrom){K.strom=b.dataset.kstrom;renderChat();save();return}
+ if(b.dataset.kdone==="vorort"){K.show=null;return ask(`Parken: ${K.park}. Strom in der Nähe: ${K.strom}.`)}
  if(b.dataset.kpref){K.contactPref=b.dataset.kpref;renderChat();save();return}
 });
 document.addEventListener("input",e=>{const t=e.target;
@@ -785,7 +797,7 @@ document.addEventListener("change",async e=>{const t=e.target;
 document.addEventListener("submit",e=>{
  if(e.target.id==="kForm"){e.preventDefault();const v=$("#kText").value.trim();if(v){$("#kText").value="";ask(v)}}
  if(e.target.id==="kContact"){e.preventDefault();const err=$("#kcErr");
-  if(!S.cLast||!S.cZip||!(S.cPhone||S.cMail)){err.textContent="Bitte Nachname, PLZ und Telefon oder E-Mail eintragen.";err.hidden=false;return}
+  if(!S.cLast||!S.cStreet||!S.cZip||!S.cCity||!(S.cPhone||S.cMail)){err.textContent="Bitte Nachname, vollständige Adresse und Telefon oder E-Mail eintragen.";err.hidden=false;return}
   K.show=null;ask(`Meine Kontaktdaten sind eingetragen (PLZ ${S.cZip}${S.cCity?" "+S.cCity:""}). Ich möchte per ${K.contactPref} kontaktiert werden.`)}
 });
 
@@ -800,4 +812,11 @@ function boot(){
 if(K.started&&K.consent)boot();
 (function foot(){const f=$("#kFoot");if(!f)return;const l=[];if(CFG.impressum)l.push(`<a href="${esc(CFG.impressum)}" target="_blank" rel="noopener">Impressum</a>`);if(CFG.datenschutz)l.push(`<a href="${esc(CFG.datenschutz)}" target="_blank" rel="noopener">Datenschutz</a>`);if(CFG.website)l.push(`<a href="${esc(CFG.website)}" target="_blank" rel="noopener">${esc(CFG.website.replace(/^https?:\/\//,""))}</a>`);f.innerHTML=`<span>© ${esc(CFG.firma)}</span>`+l.join("")})();
 const _showDone=showDone;showDone=function(){_showDone();const b=$("#kBar");if(b)b.hidden=true;const p=$(".pv");if(p&&K.absage)p.hidden=true};
+
+/* ---------- Logo ---------- */
+window.LOGO_DATA=null;
+(async function loadLogo(){
+ if(!CFG.logo)return;
+ try{const r=await fetch(CFG.logo);if(!r.ok)return;const bl=await r.blob();const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="${esc(CFG.firma)}">`;el.classList.add("haslogo")});drawPreview()};fr.readAsDataURL(bl)}catch(e){}
+})();
 </script></body></html>

@@ -1,4 +1,4 @@
-<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Stahl & Verstand Konfigurator</title>
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><script src="config.js"></script><title>Stahl & Verstand Konfigurator</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -26,6 +26,7 @@ body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
 header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--steel);padding-bottom:12px}
 .brand{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:.95;letter-spacing:-.01em;text-transform:uppercase}
 .brand span{color:var(--accent)}
+.brand.haslogo img{display:block;height:56px;width:auto;max-width:70vw}
 .brand small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-top:6px}
 .top-actions{display:flex;gap:8px;flex-wrap:wrap}
 button,.btn{font:600 14px var(--f-body);border-radius:4px;border:1.5px solid var(--steel);background:transparent;color:var(--ink);padding:10px 16px;cursor:pointer;min-height:44px}
@@ -161,7 +162,7 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 
 <div class="wrap">
   <header class="top">
-    <div class="brand">Stahl <span>&amp;</span> Verstand<small>Zaun · Tor · Geländer · Sichtschutz — Beratung vor Ort</small></div>
+    <div class="brand" data-logo>Stahl <span>&amp;</span> Verstand<small>Zaun · Tor · Geländer · Sichtschutz — Beratung vor Ort</small></div>
     <div class="top-actions">
       <button type="button" id="btnNew">Neue Beratung</button>
     </div>
@@ -649,7 +650,7 @@ function drawLook(){
  <ellipse cx="${x0+W/2}" cy="${y0+2}" rx="${W/2+10}" ry="5" fill="#000" opacity=".12" filter="url(#blur)"/><g class="fx" ${f.rust?'filter="url(#rust)"':""}>${fgP}</g><g class="fx hl" transform="translate(-.8 -.6)">${fg}</g>
  <rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
  <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc(prodShort()+" "+modelLabel())}</text>
- ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
+ ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}${window.LOGO_DATA?`<rect x="626" y="338" width="180" height="50" rx="6" fill="#ffffff" opacity=".85"/><image href="${window.LOGO_DATA}" x="634" y="342" width="164" height="42" preserveAspectRatio="xMidYMid meet"/>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
  const _=0;$("#look").innerHTML=`<style>${css("#look",f.c,f.hi)}</style>`+svg.replace("<!--SLAB-->",slabSvg(x0,W,y0,slabPx));
 }
 function slabSvg(x0,W,y0,h){
@@ -963,7 +964,7 @@ function aiMode(){return AI.sample?"claude":aiKey()?"api":"none"}
 function aiSystem(){
  const ms=MODELS.map(m=>`${m.n} (${m.t}; ${m.sp?"mit Zierspitzen":"ohne Spitzen"}; Formen: ${m.f>1?FORMS.join("/"):"nur Gerade"}; Stäbe: ${m.st.join(" oder ")}; erhältlich als ${m.av.join(", ")}${m.noZink?"; nicht feuerverzinkt":""})`).join("\n");
  const sc=SCREENS.map(m=>`${m.n}${m.p?" / teilflächig "+m.p:""}: ${m.t}`).join("\n");
- return `Du bist der freundliche Verkaufs-Assistent von „Stahl & Verstand“, einem Fachhändler für Metallzäune. Du stehst mit dem Händler beim Kunden vor Ort und sprichst über das Tablet. Sprich Deutsch, per Sie, locker und kompetent wie ein guter Handwerksmeister. Deine Antworten werden vorgelesen: höchstens 3 kurze Sätze, keine Aufzählungszeichen, keine Emojis, Zahlen ausgeschrieben lesbar (z. B. "1,20 Meter").
+ return `Du bist der freundliche Verkaufs-Assistent von „Stahl & Verstand“, einem Fachhändler für Metallzäune. Du stehst mit dem Händler beim Kunden vor Ort und sprichst über das Tablet. Sprich Deutsch, per Sie, aber richtig locker und sympathisch wie ein gut gelaunter Handwerksmeister, gern mit einem kleinen, dezenten Spruch. Kompetent bleiben, nie albern. Deine Antworten werden vorgelesen: höchstens 3 kurze Sätze, keine Aufzählungszeichen, keine Emojis, Zahlen ausgeschrieben lesbar (z. B. "1,20 Meter").
 
 Du kannst den Konfigurator auf dem Tablet direkt umstellen. Wenn der Kunde etwas sehen oder ändern will, setze die passenden Felder in "aendern". Erfinde keine Preise; Preise nennt ELEO im Angebot. Lieferzeit laut Hersteller: Angebot in 1–2 Werktagen, Fertigung 8–10 Wochen, Express 6–7 Wochen, unverbindlich. Alles wird nach Maß gefertigt. Zahlung: 50 % Anzahlung, Rest bei Lieferung, 2 % Skonto bei Vorkasse.
 
@@ -1129,6 +1130,10 @@ document.addEventListener("change",e=>{const t=e.target;
   document.body.appendChild(n);setTimeout(()=>n.remove(),6000);
  }catch(e){console.warn("Import fehlgeschlagen",e)}
 })();
+
+/* ---------- Logo (aus config.js, nur in der Online-Version) ---------- */
+window.LOGO_DATA=window.LOGO_DATA||null;
+(async function(){const c=window.SV_CONFIG;if(!c||!c.logo)return;try{const r=await fetch(c.logo);if(!r.ok)return;const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="Stahl & Verstand">`;el.classList.add("haslogo")});refresh(false)};fr.readAsDataURL(await r.blob())}catch(e){}})();
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">

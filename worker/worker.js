@@ -7,6 +7,8 @@
  *   RESEND_KEY      (Secret)  dein Resend-API-Schlüssel, re_…
  *   TO_EMAIL        (Text)    deine E-Mail-Adresse, an die die Projektmappen gehen
  *   FROM_EMAIL      (Text, optional) Absender, Standard: "Stahl & Verstand <onboarding@resend.dev>"
+ *   BASE_ADDRESS    (Text)    deine Firmenadresse für km und Fahrtzeit, z. B. "Musterstraße 1, 96450 Coburg"
+ *   LOGO_URL        (Text, optional) Logo für die E-Mail, Standard: tzuas.github.io/Stahl-und-Verstand/logo.png
  *   ALLOWED_ORIGINS (Text, optional) erlaubte Seiten, Standard: tzuas.github.io und stahlundverstand.de
  */
 const MODEL = "claude-sonnet-5-5";
@@ -73,6 +75,28 @@ async function chat(body, env) {
   return { text };
 }
 
+/* Entfernung und Fahrtzeit: OpenStreetMap (Nominatim) + OSRM, kostenlos, ohne Schlüssel */
+async function geocode(q, env) {
+  const r = await fetch("https://nominatim.openstreetmap.org/search?format=json&limit=1&countrycodes=de,at,ch&q=" + encodeURIComponent(q),
+    { headers: { "User-Agent": "StahlUndVerstand-Projektassistent/1.0 (" + (env.TO_EMAIL || "kontakt") + ")", "Accept-Language": "de" } });
+  const j = await r.json();
+  if (!j[0]) throw new Error("Adresse nicht gefunden");
+  return { lat: +j[0].lat, lon: +j[0].lon };
+}
+async function route(env, kundeAdresse) {
+  if (!env.BASE_ADDRESS) return null;
+  const a = await geocode(env.BASE_ADDRESS, env);
+  await new Promise(r => setTimeout(r, 1100)); // Nominatim: max. 1 Anfrage pro Sekunde
+  const b = await geocode(kundeAdresse, env);
+  const r = await fetch(`https://router.project-osrm.org/route/v1/driving/${a.lon},${a.lat};${b.lon},${b.lat}?overview=false`);
+  const j = await r.json();
+  const rt = j.routes && j.routes[0];
+  if (!rt) throw new Error("Keine Route gefunden");
+  const km = Math.round(rt.distance / 100) / 10, min = Math.round(rt.duration / 60);
+  return { km, min, text: `${km.toLocaleString("de-DE")} km · ca. ${min >= 60 ? Math.floor(min / 60) + " Std. " + (min % 60) + " Min." : min + " Min."} (ohne Verkehr)`,
+    maps: "https://www.google.com/maps/dir/?api=1&travelmode=driving&origin=" + encodeURIComponent(env.BASE_ADDRESS) + "&destination=" + encodeURIComponent(kundeAdresse) };
+}
+
 const esc = s => String(s ?? "").replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
 
 async function submit(b, env) {
@@ -95,11 +119,19 @@ async function submit(b, env) {
   } catch (e) { ein.zusammenfassung = "Einschätzung nicht verfügbar (" + e.message + ")."; }
   const absage = ein.absage === true && +ein.punkte < 25;
 
+  // Anfahrt
+  const kAdr = [k.strasse, [k.plz, k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+  let fahrt = null, fahrtFehler = "";
+  try { fahrt = await route(env, kAdr); } catch (e) { fahrtFehler = e.message; }
+  const vo = b.vorort || {};
+
   // 2) E-Mail
   const farbe = ein.kaufabsicht === "hoch" ? "#2e7d4f" : ein.kaufabsicht === "mittel" ? "#b06d00" : "#9a2b2b";
   const name = [k.vorname, k.nachname].filter(Boolean).join(" ");
   const row = (a, v) => v ? `<tr><td style="padding:4px 12px 4px 0;color:#5d6972;font-size:13px;vertical-align:top">${esc(a)}</td><td style="padding:4px 0;font-size:14px">${esc(v)}</td></tr>` : "";
+  const logo = env.LOGO_URL || "https://tzuas.github.io/Stahl-und-Verstand/logo.png";
   const html = `<div style="font-family:Arial,Helvetica,sans-serif;max-width:680px;color:#1d2328">
+  <div style="border-bottom:3px solid #2c3a44;padding-bottom:10px;margin-bottom:16px">${env.LOGO_URL ? `<img src="${esc(logo)}" alt="Stahl &amp; Verstand" height="48" style="height:48px;width:auto;display:block">` : `<div style="font-weight:800;font-size:20px;letter-spacing:.02em">STAHL <span style="color:#c4561f">&amp;</span> VERSTAND</div>`}</div>
   <h2 style="margin:0 0 4px">Neue Projektanfrage: ${esc(name)}</h2>
   <p style="margin:0 0 16px;color:#5d6972">${esc((b.spec || []).slice(0, 2).map(x => x[1]).join(" "))} · ${esc(k.plz)} ${esc(k.ort)}</p>
   <div style="border-left:5px solid ${farbe};background:#f6f8f9;padding:12px 16px;margin-bottom:18px">
@@ -109,7 +141,8 @@ async function submit(b, env) {
    <p style="font-size:11px;color:#5d6972;margin:6px 0 0">Nur für dich. Diese Einschätzung sieht der Kunde nicht.</p>
   </div>
   <h3 style="margin:0 0 6px">Kunde</h3><table>${row("Name", name)}${row("Adresse", [k.strasse, [k.plz, k.ort].filter(Boolean).join(" ")].filter(Boolean).join(", "))}${row("Telefon", k.telefon)}${row("E-Mail", k.email)}${row("Kontakt per", k.kontaktweg)}${row("Wunschtermin", k.wunschtermin)}</table>
-  <h3 style="margin:16px 0 6px">Projekt</h3><table>${(b.spec || []).map(([a, v]) => row(a, v)).join("")}${row("Hinweise", b.hinweise)}${(b.seiten || []).map(s => row("Seite " + s.seite, s.laenge + " cm" + (s.ecke ? " · " + s.ecke : ""))).join("")}</table>
+  <h3 style="margin:16px 0 6px">Anfahrt &amp; vor Ort</h3><table>${row("Entfernung", fahrt ? fahrt.text : (env.BASE_ADDRESS ? "nicht berechenbar (" + fahrtFehler + ")" : "BASE_ADDRESS in Cloudflare eintragen"))}${row("Parken", vo.parken)}${row("Strom 230 V", vo.strom)}</table>${fahrt ? `<p style="margin:6px 0 0"><a href="${esc(fahrt.maps)}">Route in Google Maps öffnen</a></p>` : ""}
+  <h3 style="margin:16px 0 6px">Projekt</h3><table>${(b.spec || []).map(([a, v]) => row(a, v)).join("")}${row("Hinweise", b.hinweise)}</table>
   ${b.link ? `<p style="margin:18px 0"><a href="${esc(b.link)}" style="background:#c4561f;color:#fff;padding:12px 18px;border-radius:6px;text-decoration:none;font-weight:bold">Im Berater-Tool öffnen</a></p>` : ""}
   <p style="font-size:13px;color:#5d6972">Im Anhang: Ansicht, Skizze und ${(b.fotos || []).length} Foto(s) des Kunden.</p>
   <details><summary style="font-size:13px">Gesprächsverlauf</summary><pre style="white-space:pre-wrap;font-size:12px;color:#3a444b">${esc(verlauf)}</pre></details></div>`;
@@ -126,10 +159,10 @@ async function submit(b, env) {
       from: env.FROM_EMAIL || "Stahl & Verstand <onboarding@resend.dev>",
       to: [env.TO_EMAIL],
       reply_to: k.email || undefined,
-      subject: `${absage ? "[Absage angezeigt] " : ein.kaufabsicht === "hoch" ? "🔥 " : ""}Projektanfrage ${name} · ${(b.spec || [])[0]?.[1] || ""} · ${k.plz || ""}`,
+      subject: `${fahrt ? "[" + fahrt.km.toLocaleString("de-DE") + " km] " : ""}${absage ? "[Absage angezeigt] " : ein.kaufabsicht === "hoch" ? "🔥 " : ""}Projektanfrage ${name} · ${(b.spec || [])[0]?.[1] || ""} · ${k.plz || ""}`,
       html, attachments: att,
     }),
   });
   if (!r.ok) throw new Error("E-Mail konnte nicht gesendet werden (" + r.status + ").");
-  return { ok: true, absage };
+  return { ok: true, absage }; // Entfernung bleibt intern, der Kunde sieht sie nicht
 }

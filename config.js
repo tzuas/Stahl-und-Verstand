@@ -2,6 +2,7 @@
 window.SV_CONFIG = {
   firma: "Stahl & Verstand",
   inhaber: "Florian",
+  logo: "",                /* wird gesetzt, sobald logo.png im Projekt liegt */
   website: "https://www.stahlundverstand.de",
   impressum: "https://www.stahlundverstand.de",
   datenschutz: "https://www.stahlundverstand.de",
