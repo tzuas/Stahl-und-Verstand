@@ -1,0 +1,1094 @@
+<!doctype html><html lang="de"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Stahl & Verstand Konfigurator</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: werkstatt-tablet. Links die Schritte, rechts die mitlaufende Skizze auf Blaupausen-Papier. */
+:root{
+  --bg:#eef0f1; --panel:#ffffff; --ink:#1d2328; --muted:#5d6972; --line:#d3d9dd;
+  --steel:#2c3a44; --accent:#c4561f; --accent-ink:#ffffff; --sheet:#f6f8f9; --grid:#dfe5e9; --draw:#22313b; --dim:#c4561f;
+  --ok:#2e7d4f; --warn:#b06d00;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#14181b; --panel:#1c2226; --ink:#e7ebee; --muted:#98a4ad; --line:#323b42;
+  --steel:#cfd8de; --accent:#e8743a; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f08a50;
+  --ok:#5cc28a; --warn:#e3a43a; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#14181b; --panel:#1c2226; --ink:#e7ebee; --muted:#98a4ad; --line:#323b42;
+  --steel:#cfd8de; --accent:#e8743a; --accent-ink:#14181b; --sheet:#182025; --grid:#26323a; --draw:#d9e2e8; --dim:#f08a50;
+  --ok:#5cc28a; --warn:#e3a43a; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--f-body);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:20px 40px}
+.wrap{max-width:1280px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;border-bottom:3px solid var(--steel);padding-bottom:12px}
+.brand{font-family:var(--f-display);font-stretch:75%;font-weight:800;font-size:clamp(28px,4.4vw,44px);line-height:.95;letter-spacing:-.01em;text-transform:uppercase}
+.brand span{color:var(--accent)}
+.brand small{display:block;font:500 12px/1.4 var(--f-mono);letter-spacing:.12em;color:var(--muted);text-transform:uppercase;margin-top:6px}
+.top-actions{display:flex;gap:8px;flex-wrap:wrap}
+button,.btn{font:600 14px var(--f-body);border-radius:4px;border:1.5px solid var(--steel);background:transparent;color:var(--ink);padding:10px 16px;cursor:pointer;min-height:44px}
+button:hover{background:var(--grid)}
+button.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.primary:hover{filter:brightness(1.07);background:var(--accent)}
+button:focus-visible,input:focus-visible,select:focus-visible,textarea:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.steps{display:flex;gap:4px;overflow-x:auto}
+.steps button{border:none;border-bottom:3px solid var(--line);border-radius:0;padding:10px 12px;color:var(--muted);white-space:nowrap;font-family:var(--f-display);font-stretch:85%;font-size:16px;text-transform:uppercase;letter-spacing:.04em}
+.steps button b{font-family:var(--f-mono);font-weight:500;margin-right:6px}
+.steps button[aria-current="step"]{color:var(--ink);border-bottom-color:var(--accent)}
+.steps button.done{color:var(--ink)}
+.main{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.05fr);gap:20px;align-items:start}
+@media (max-width:900px){.main{grid-template-columns:minmax(0,1fr)}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:20px;min-width:0}
+h2{font-family:var(--f-display);font-stretch:80%;font-weight:700;font-size:24px;text-transform:uppercase;margin:0 0 4px;text-wrap:balance}
+.lede{color:var(--muted);margin:0 0 16px;max-width:60ch}
+.tiles{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.tile{display:flex;flex-direction:column;align-items:flex-start;gap:4px;text-align:left;border:1.5px solid var(--line);border-radius:6px;padding:12px;background:var(--panel);min-height:0}
+.tile:hover{border-color:var(--steel);background:var(--panel)}
+.tile[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.tile strong{font-family:var(--f-display);font-stretch:85%;font-size:17px;text-transform:uppercase}
+.tile span{font-weight:400;font-size:12.5px;color:var(--muted);line-height:1.35}
+.tile svg{width:100%;height:46px;color:var(--draw)}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1.5px solid var(--line);border-radius:999px;padding:8px 14px;font-weight:500;min-height:40px;background:var(--panel)}
+.chip[aria-pressed="true"]{border-color:var(--accent);background:var(--accent);color:var(--accent-ink)}
+.chip:disabled{opacity:.35;cursor:not-allowed}
+fieldset{border:none;padding:0;margin:0 0 18px;min-width:0}
+legend,.lbl{font:500 11.5px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;padding:0}
+.grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px 14px}
+label.f{display:flex;flex-direction:column;gap:4px;font-size:13px;font-weight:500;min-width:0}
+input,select,textarea{font:15px var(--f-body);color:var(--ink);background:var(--sheet);border:1.5px solid var(--line);border-radius:4px;padding:10px;min-height:44px;width:100%}
+input[type=number]{font-family:var(--f-mono)}
+textarea{min-height:80px;resize:vertical}
+.unit{display:flex;align-items:center;gap:6px}.unit span{font:13px var(--f-mono);color:var(--muted)}
+.hint{font-size:12.5px;color:var(--muted)}
+.warn{color:var(--warn);font-weight:500;font-size:13px}
+.nav{display:flex;justify-content:space-between;gap:10px;margin-top:20px;flex-wrap:wrap}
+.sticky{position:sticky;top:max(12px,env(safe-area-inset-top,0px))}
+.sheet{background:var(--sheet);border:1px solid var(--line);border-radius:6px;overflow:hidden}
+.sheet-head{display:flex;justify-content:space-between;gap:10px;padding:10px 14px;border-bottom:1px solid var(--line);font:500 12px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);flex-wrap:wrap}
+.sheet-head b{color:var(--ink)}
+#sketch{display:block;width:100%;height:auto;background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);background-size:20px 20px}
+.spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:6px 14px;padding:14px;font-size:13.5px;border-top:1px solid var(--line)}
+.spec dt{font:500 11px var(--f-mono);letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-top:2px}
+.spec dd{margin:0;font-variant-numeric:tabular-nums}
+pre.out{font:12.5px/1.55 var(--f-mono);background:var(--sheet);border:1px solid var(--line);border-radius:4px;padding:14px;white-space:pre-wrap;word-break:break-word;max-height:380px;overflow:auto;margin:0}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.mailbox{font:500 14px var(--f-mono);user-select:all;background:var(--sheet);border:1px dashed var(--line);padding:8px 10px;border-radius:4px}
+#pngWrap img{border:1px solid var(--line);border-radius:4px;background:#fff;max-width:100%}
+.toast{font-weight:600;color:var(--ok)}
+.note{border-left:3px solid var(--accent);padding:8px 12px;background:var(--sheet);font-size:13px;color:var(--muted)}
+#look{display:block;width:100%;height:auto;background:#eef3f4}
+.seg{display:flex;border:1.5px solid var(--steel);border-radius:4px;overflow:hidden}
+.seg button{border:none;border-radius:0;min-height:36px;padding:6px 12px;font:600 12px var(--f-body);letter-spacing:.02em;text-transform:none}
+.seg button[aria-pressed="true"]{background:var(--steel);color:var(--bg)}
+.sw{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px}
+.swb{display:flex;align-items:center;gap:10px;text-align:left;font-weight:500;border:1.5px solid var(--line);background:var(--panel)}
+.swb i{width:28px;height:28px;border-radius:50%;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.15)}
+.swb[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ral{display:grid;grid-template-columns:repeat(auto-fill,minmax(112px,1fr));gap:6px;margin-top:12px}
+.ralb{display:flex;align-items:center;gap:8px;padding:6px 8px;min-height:44px;text-align:left;border:1.5px solid var(--line);background:var(--panel)}
+.ralb i{width:22px;height:22px;border-radius:3px;flex:none;box-shadow:inset 0 0 0 1px rgba(0,0,0,.2)}
+.ralb span{display:flex;flex-direction:column;font:500 12.5px var(--f-mono);line-height:1.2}.ralb small{font:400 10.5px var(--f-body);color:var(--muted)}
+.ralb[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1.5px var(--accent)}
+.ck{display:flex;align-items:center;gap:10px;font-weight:500;min-height:40px}.ck input{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
+.cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 14px}
+.zip{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
+.mt .tile{padding:8px 8px 12px}.thumb{width:100%;height:auto;border-radius:4px;display:block}
+.tile svg.thumb{height:auto}
+.tl{list-style:none;margin:12px 0 8px;padding:0;display:flex;flex-direction:column;gap:0}
+.tl li{display:flex;flex-direction:column;padding:6px 0 12px 22px;border-left:2px solid var(--line);margin-left:6px;position:relative}
+.tl li::before{content:"";position:absolute;left:-7px;top:9px;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
+.tl li:last-child{border-left-color:transparent}.tl li span{color:var(--muted);font-size:13.5px;font-variant-numeric:tabular-nums}
+.saved{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:8px}
+.saved li{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;border:1px solid var(--line);border-radius:4px;padding:8px 10px}
+.saved li small{display:block;color:var(--muted);font:12px var(--f-mono)}.saved button{min-height:38px;padding:6px 12px}
+figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:var(--muted);margin-top:4px}
+#look .fx .panel{opacity:1}#look .pat *{stroke:#d9e6dc!important;stroke-width:2.4!important}
+.thumb .fx .panel{opacity:1!important}.thumb .pat *{stroke:#d9e6dc!important;stroke-width:2.2!important}
+.planbox{border:1px solid var(--line);border-radius:6px;overflow:hidden;background:var(--sheet)}
+#plan{display:block;width:100%;height:auto;touch-action:none;cursor:crosshair}
+#plan .pg{stroke:var(--grid);stroke-width:1}#plan .pg2{stroke:var(--line)}#plan .pl{fill:none;stroke:var(--steel);stroke-width:5;stroke-linejoin:round;stroke-linecap:round}
+#plan .pt{fill:var(--panel);stroke:var(--accent);stroke-width:3}#plan .pt.first{fill:var(--accent)}#plan .ang{font:600 13px var(--f-mono);fill:var(--accent)}
+#plan .seglbl rect{fill:var(--panel);stroke:var(--line)}#plan .seglbl text{font:500 12px var(--f-mono);fill:var(--ink)}#plan .ph{font:15px var(--f-body);fill:var(--muted)}
+.calc{font:500 18px var(--f-mono);padding:8px 0}
+.mounts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px}.mnt svg{height:64px;color:var(--draw)}
+.vh{position:absolute;width:1px;height:1px;opacity:0;overflow:hidden;clip:rect(0 0 0 0)}
+.filebtn{display:inline-flex;align-items:center;cursor:pointer;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.stage{position:relative;margin-top:12px;border-radius:6px;overflow:hidden;background:#000;user-select:none;-webkit-user-select:none}
+.stage img,.stage video{display:block;width:100%;height:auto;max-width:100%}
+.livebadge{position:absolute;top:10px;right:10px;background:#d22;color:#fff;font:700 12px var(--f-mono);letter-spacing:.1em;padding:4px 8px;border-radius:3px;pointer-events:none}
+.filebtn2{display:inline-flex;align-items:center;cursor:pointer}
+#layers{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.layer{position:absolute;left:0;top:0;transform-origin:0 0;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+#handles{position:absolute;inset:0;width:100%;height:100%;touch-action:none}
+#handles .qd{fill:transparent;stroke:#fff;stroke-width:1;stroke-dasharray:5 4;opacity:.6}#handles .qd.act{stroke:#ffb27d;opacity:1;stroke-width:1.5;cursor:move}
+#handles .hd{fill:rgba(232,116,58,.25);stroke:#fff;stroke-width:2.5;cursor:grab}#handles .hdc{fill:#fff;pointer-events:none}
+.pngs img{max-width:100%;border-radius:4px;margin-top:8px}
+#v3d{position:relative;background:#dfe7eb}#c3d{display:block;width:100%;touch-action:none}
+.v3dbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;padding:8px 12px;font:12px var(--f-mono);color:var(--muted);background:var(--sheet);border-top:1px solid var(--line)}
+.arbtn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;min-height:48px;border-radius:6px;background:var(--muted);color:#fff;font:600 15px var(--f-body);text-decoration:none;pointer-events:none;opacity:.75}
+.arbtn.ready{background:#111;pointer-events:auto;opacity:1}.arbtn.small{padding:6px 12px;min-height:38px;font-size:13px}
+.arcard{border:1.5px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--sheet)}.arcard p{margin:0 0 10px;max-width:60ch}
+@media (prefers-reduced-motion:no-preference){.tile,.chip,button{transition:border-color .12s,background .12s}}
+</style>
+
+<div class="wrap">
+  <header class="top">
+    <div class="brand">Stahl <span>&amp;</span> Verstand<small>Zaun · Tor · Geländer · Sichtschutz — Beratung vor Ort</small></div>
+    <div class="top-actions">
+      <button type="button" id="btnNew">Neue Beratung</button>
+    </div>
+  </header>
+
+  <nav class="steps" id="steps" aria-label="Schritte"></nav>
+
+  <div class="main">
+    <section class="card" id="panel" aria-live="polite"></section>
+    <aside class="sticky">
+      <div class="sheet">
+        <div class="sheet-head"><div class="seg" role="group" aria-label="Darstellung"><button type="button" data-view="look" aria-pressed="true">Ansicht</button><button type="button" data-view="tech" aria-pressed="false">Technische Skizze</button><button type="button" data-view="3d" aria-pressed="false">3D</button></div><span>Farben am Bildschirm angenähert</span></div>
+        <svg id="look" viewBox="0 0 820 400" role="img" aria-label="Farbige Ansicht der Anlage"></svg>
+        <svg id="sketch" viewBox="0 0 820 400" role="img" aria-label="Bemaßte Skizze der Anlage" hidden></svg>
+        <div id="v3d" hidden><canvas id="c3d" aria-label="3D-Modell, mit dem Finger drehen"></canvas><div class="v3dbar"><span>Mit dem Finger drehen, mit zwei Fingern zoomen</span><a class="arbtn small" rel="ar" data-ar><img alt="" width="22" height="22" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22%3E%3Cpath d=%22M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7%22/%3E%3C/svg%3E"><span>AR wird vorbereitet …</span></a></div></div>
+        <dl class="spec" id="spec"></dl>
+      </div>
+    </aside>
+  </div>
+</div>
+<script>
+const ALL=["Zaun","Geländer","Tor","Gartentor","Französischer Balkon"];
+const ZTG=["Zaun","Tor","Gartentor"];
+const PRODUCTS=[
+ {id:"Zaun",name:"Zaun",d:"Zaunfelder zwischen Pfosten",max:360},
+ {id:"Tor",name:"Tor",d:"Zweiflügeliges Einfahrtstor",max:400},
+ {id:"Gartentor",name:"Gartentor",d:"Einflügelige Tür im Zaun",max:150},
+ {id:"Geländer",name:"Geländer",d:"Balkon-, Terrassen- oder Treppengeländer",max:200},
+ {id:"Französischer Balkon",name:"Franz. Balkon",d:"Absturzsicherung vor bodentiefem Fenster",max:200},
+ {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200}
+];
+const BOTH=["16 mm Hohlrohr","12 mm Massiv"], VK=["12 × 12 mm Vierkant massiv"];
+const MODELS=[
+ {n:"Lucca",sp:1,st:BOTH,f:4,av:ALL,deco:"c",t:"Kurze Zwischenstäbe und C-Dekore"},
+ {n:"Padua",sp:0,st:VK,f:4,av:ALL,deco:"plain",t:"Schlicht, zwei Traversen, Vierkantstäbe"},
+ {n:"Belluno",sp:1,st:["12 mm Massiv"],f:4,av:ALL,deco:"circle",t:"Kreisdekore zwischen den Traversen"},
+ {n:"Lugano",sp:1,st:BOTH,f:4,av:ZTG,deco:"c",t:"Klassisch-romantisch mit C-Dekoren"},
+ {n:"Ancona",sp:1,st:BOTH,f:4,av:ALL,deco:"plain",t:"Klassiker mit schlichtem Grunddesign"},
+ {n:"Perugia",sp:0,st:VK,f:4,av:ALL,deco:"short",t:"Klare Linien, kurze Zwischenstäbe"},
+ {n:"Aquila",sp:1,st:["16 mm Hohlrohr"],f:4,av:ZTG,deco:"orn",t:"Ornamente an den Stäben",noZink:1},
+ {n:"Modena",sp:0,st:["12 × 12 mm Vierkant + 25 × 6 mm Flachstahl"],f:4,av:ALL,deco:"modena",t:"Modern, Flachstahl-Trennelemente"},
+ {n:"Salerno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"salerno",t:"Senkrechte und waagerechte Profile"},
+ {n:"Sarno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:["Zaun","Tor","Gartentor","Geländer","Französischer Balkon"],deco:"frame",t:"Reduziertes Rahmendesign"},
+ {n:"Sanremo",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"horiz",t:"Waagerechte Profile, moderne Baustile"},
+ {n:"Monza",sp:0,st:["25 × 6 mm Massiv"],f:1,av:["Zaun","Geländer"],deco:"plain",t:"Reduziert, Flachstahlstäbe"},
+ {n:"Molveno",sp:0,st:["25 × 6 mm Massiv"],f:1,av:["Geländer","Französischer Balkon"],deco:"molveno",t:"Aussparung oben für Blumenkästen"},
+ {n:"Avelino",sp:1,st:BOTH,f:4,av:ZTG,deco:"orn",t:"Filigrane Dekore an den Stäben"},
+ {n:"Lana",sp:1,st:BOTH,f:4,av:ZTG,deco:"lana",t:"Lange und kurze Stäbe, C-Dekore"},
+ {n:"Bologna",sp:1,st:BOTH,f:4,av:ALL,deco:"volute",t:"Voluten zwischen den oberen Traversen"},
+ {n:"Balerna",sp:1,st:BOTH,f:4,av:ZTG,deco:"s",t:"Geschwungene S-Dekore"},
+ {n:"Portofino",sp:0,st:VK,f:4,av:ALL,deco:"rhomb",t:"Geometrische Rauten in den Stäben"},
+ {n:"Pescara",sp:0,st:VK,f:1,av:ALL,deco:"x",t:"Drei Traversen mit X-Dekoren"},
+ {n:"Roma",sp:0,st:VK,f:4,av:ZTG,deco:"plain",t:"Traversen aus Hespeneisen"},
+ {n:"Ravenna",sp:1,st:BOTH,f:4,av:ZTG,deco:"plain",t:"Hespeneisen-Traversen, Zierspitzen"}
+];
+const SCREENS=[
+ {n:"Adda",p:"Amato",pat:"geo",t:"Geometrisches Muster"},
+ {n:"Arno",p:"Agri",pat:"wave",t:"Dynamische Wellen"},
+ {n:"Livenza",p:"Liro",pat:"leaf",t:"Detailreiche Blätter"},
+ {n:"Piave",p:"Panaro",pat:"leaf2",t:"Exotisches Blattmuster"},
+ {n:"Reno",p:"Rienza",pat:"rhomb",t:"Rautenmuster"},
+ {n:"Roya",p:"Romna",pat:"flower",t:"Florales Muster"},
+ {n:"Tanaro",p:"Taro",pat:"palm",t:"Abstrakte Palmenblätter"},
+ {n:"Pesa",p:null,pat:"none",t:"Blickdicht ohne Muster"}
+];
+const FORMS=["Gerade","Bogen","Geschwungen","U-Form"];
+const TIPS=["Kreuzlilie","Kugellilie","Kugelstab","Lanze","Lilie","Lotus","Pinie","Stab","Ohne Spitze"];
+const COATS=["Unbeschichtet (Edelrost)","Feuerverzinkt","Anthrazit DB 703","Sonderfarbe RAL"];
+const FILLS=["Wie Modell","Ohne Dekore (nur Stäbe)","Ohne Füllung (nur Rahmen)"];
+const RAL={"9005":["Tiefschwarz","#111214"],"7016":["Anthrazitgrau","#383e42"],"6005":["Moosgrün","#114232"],"6009":["Tannengrün","#27352a"],"8017":["Schokoladenbraun","#45322e"],"9001":["Cremeweiß","#e9e0d2"],"9010":["Reinweiß","#f1ece1"],"7035":["Lichtgrau","#c5c7c4"],"7030":["Steingrau","#8b8c7a"],"9006":["Weißaluminium","#a1a1a0"],"9007":["Graualuminium","#878581"],"3004":["Purpurrot","#6b1c23"],"5011":["Stahlblau","#1a2b3c"],"1013":["Perlweiß","#e3d9c6"]};
+const WISHES=["Briefkasten-Durchwurf","Hausnummer / Initialen","Engerer Stababstand (Hund, Kinder)","Torantrieb vorbereiten","Wunschmotiv (Sichtschutz)","Bodenfreiheit nach Wunsch"];
+const STEPS=["Produkt","Modell","Ausführung","Wünsche","Maße","Foto","Kunde","Anfrage"];
+const MAIL="kundenservice@eleo-zaun.de";
+/* Zeiten laut ELEO-Website / Katalog (Stand Okt. 2026, unverbindlich, saisonabhängig) */
+const TIMES={offer:[1,2],std:[8,10],exp:[6,7]};
+
+const DEF=()=>({step:0,product:"Zaun",model:"Lucca",form:"Gerade",tip:"Lanze",bar:"",coat:"Anthrazit DB 703",ral:"7016",
+ fill:"Wie Modell",wishes:[],wishText:"",express:false,
+ screenVar:"voll",screenMat:"Metall",backwall:"ohne Design",screenUse:"Zaun",handrail:"",
+ total:1000,height:100,fields:0,posts:"Zum Einbetonieren",slope:"",slopeUnit:"cm",
+ hinge:"links",swing:"nach innen",lock:"Drückergarnitur Modern + Schließzylinder",
+ cSal:"",cFirst:"",cLast:"",cStreet:"",cZip:"",cCity:"",cPhone:"",cMail:"",
+ altShip:false,sName:"",sStreet:"",sZip:"",sCity:"",
+ shipNote:"",mount:"Aufgesetzt",slab:18,pts:[],lens:[],photo:"",place:[],activePart:0,unload:"Bordsteinkante",install:"Selbstmontage",measure:"Kunde misst selbst",notes:"",view:"look"});
+let S=DEF();
+function load(k,d){try{const v=JSON.parse(localStorage.getItem(k)||"null");return v??d}catch(e){return d}}
+function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+S=Object.assign(DEF(),load("sv-draft",{}));
+if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
+function save(){store("sv-draft",S)}
+
+const isScreen=()=>S.product==="Sichtschutz";
+const prod=()=>PRODUCTS.find(p=>p.id===S.product);
+const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
+function modelsFor(p){return p==="Sichtschutz"?SCREENS:MODELS.filter(m=>m.av.includes(p))}
+function fixState(){
+ const ms=modelsFor(S.product);
+ if(!ms.find(m=>m.n===S.model))S.model=ms[0].n;
+ const m=model();
+ if(!isScreen()){
+  if(m.f===1)S.form="Gerade";
+  if(!m.sp)S.tip="Ohne Spitze"; else if(S.tip==="Ohne Spitze")S.tip="Lanze";
+  if(!m.st.includes(S.bar))S.bar=m.st[0];
+  if(m.noZink&&S.coat==="Feuerverzinkt")S.coat="Anthrazit DB 703";
+ }else{
+  if(!["Unbeschichtet (Edelrost)","Anthrazit DB 703"].includes(S.coat))S.coat="Anthrazit DB 703";
+  if(!m.p)S.screenVar="voll";
+ }
+ if(S.product==="Gartentor"&&S.total>200)S.total=100;
+ if(S.product==="Tor"&&(S.total<200||S.total>600))S.total=350;
+ if(S.product==="Tor"&&S.height<100)S.height=120;
+ if(!Array.isArray(S.wishes))S.wishes=[];
+}
+function modelLabel(){const m=model();return isScreen()?(S.screenVar==="teil"&&m.p?m.p:m.n):m.n}
+function coatLabel(){return S.coat==="Sonderfarbe RAL"?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
+/* Farbe der Anlage für die Ansicht */
+function finish(){
+ if(isScreen()&&S.screenMat==="Cortenstahl")return{c:"#9c4f24",hi:"#d0773d",rust:1,name:"Cortenstahl"};
+ if(S.coat.startsWith("Unbeschichtet"))return{c:"#6e4029",hi:"#b06a3c",rust:1};
+ if(S.coat==="Feuerverzinkt")return{c:"#8e979c",hi:"#d7dde0",zink:1};
+ if(S.coat==="Sonderfarbe RAL"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
+ return{c:"#3d4043",hi:"#73787d"};
+}
+function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.round(v+(255-v)*a);return"#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
+
+function layout(){
+ const p=prod(),gate=S.product==="Tor"||S.product==="Gartentor";
+ const post=gate?10:5;
+ if(gate){const total=Math.max(30,+S.total||0),clear=total-2*post,per=S.product==="Tor"?clear/2:clear;return{n:S.product==="Tor"?2:1,post,clear,per,total,gate,width:total,segs:[],fields:[clear],corners:[]}}
+ const planned=S.pts.length>=2&&S.lens.slice(0,S.pts.length-1).every(v=>+v>0);
+ const lens=planned?S.lens.slice(0,S.pts.length-1).map(Number):[Math.max(30,+S.total||0)];
+ const segs=lens.map(len=>{const n=(lens.length===1&&+S.fields)||Math.max(1,Math.ceil((len-post)/(p.max+post)));return{len,n,per:(len-(n+1)*post)/n}});
+ const fields=[],corners=[];segs.forEach((g,i)=>{for(let k=0;k<g.n;k++)fields.push(g.per);if(i<segs.length-1)corners.push(fields.length)});
+ const n=fields.length,clear=fields.reduce((a,b)=>a+b,0);
+ return{n,post,per:Math.max(...fields),clear,total:lens.reduce((a,b)=>a+b,0),gate,segs,fields,corners,width:clear+(n+1)*post,planned};
+}
+const cm=v=>(Math.round(v*10)/10).toLocaleString("de-DE")+" cm";
+/* Zeitplan */
+function addWorkdays(d,n){d=new Date(d);while(n>0){d.setDate(d.getDate()+1);if(d.getDay()%6)n--}return d}
+function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil(((d-y)/864e5+1)/7)}
+function plan(){
+ const now=new Date(),w=S.express?TIMES.exp:TIMES.std;
+ const offer=addWorkdays(now,TIMES.offer[1]);
+ const from=new Date(offer);from.setDate(from.getDate()+w[0]*7);
+ const to=new Date(offer);to.setDate(to.getDate()+w[1]*7);
+ const f=d=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
+ return{w,offer:f(offer),from:f(from),to:f(to),kw:`KW ${isoWeek(from)}–${isoWeek(to)}`};
+}
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function chips(key,opts,dis=[]){return `<div class="chips">${opts.map(o=>`<button type="button" class="chip" data-k="${key}" data-v="${esc(o)}" aria-pressed="${S[key]===o}" ${dis.includes(o)?"disabled":""}>${esc(o)}</button>`).join("")}</div>`}
+function num(key,label,unit="cm",hint=""){return `<label class="f">${label}<span class="unit"><input type="number" inputmode="decimal" id="in-${key}" data-k="${key}" value="${esc(S[key])}"><span>${unit}</span></span>${hint?`<span class="hint">${hint}</span>`:""}</label>`}
+function txt(key,label,type="text",ph=""){return `<label class="f">${label}<input type="${type}" id="in-${key}" data-k="${key}" value="${esc(S[key])}" placeholder="${esc(ph)}"></label>`}
+function sel(key,label,opts){return `<label class="f">${label}<select id="in-${key}" data-k="${key}">${opts.map(o=>`<option ${S[key]===o?"selected":""}>${esc(o)}</option>`).join("")}</select></label>`}
+function check(key,label){return `<label class="ck"><input type="checkbox" id="in-${key}" data-k="${key}" ${S[key]?"checked":""}> ${label}</label>`}
+function area(key,label,ph){return `<label class="f">${label}<textarea id="in-${key}" data-k="${key}" placeholder="${esc(ph)}">${esc(S[key])}</textarea></label>`}
+
+function coatSwatches(opts){
+ return `<div class="sw">${opts.map(o=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
+  return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o}</button>`}).join("")}</div>`;
+}
+function ralPicker(){
+ return `<div class="ral">${Object.entries(RAL).map(([k,[n,c]])=>`<button type="button" class="ralb" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}" title="RAL ${k} ${n}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>
+ <div style="margin-top:10px;max-width:260px">${txt("ral","Anderer RAL-Ton","text","z. B. 7039")}</div>${finish().guess?'<p class="hint">Diesen Farbton kennt die Vorschau nicht genau. Er wird grau angedeutet, ELEO fertigt den echten RAL-Ton.</p>':""}`;
+}
+function renderSteps(){
+ $("#steps").innerHTML=STEPS.map((s,i)=>`<button type="button" data-step="${i}" ${i===S.step?'aria-current="step"':""} class="${i<S.step?"done":""}"><b>${i+1}</b>${s}</button>`).join("");
+}
+function timeline(){
+ const p=plan();
+ return `<ol class="tl">
+  <li><b>Anfrage an ELEO</b><span>heute</span></li>
+  <li><b>Angebot mit technischer Zeichnung</b><span>${TIMES.offer[0]}–${TIMES.offer[1]} Werktage · bis ${p.offer}</span></li>
+  <li><b>Fertigung nach Maß</b><span>${p.w[0]}–${p.w[1]} Wochen${S.express?" (Expressfertigung)":""} nach Bestellung</span></li>
+  <li><b>Lieferung per Spedition</b><span>voraussichtlich ${p.from} – ${p.to} · ${p.kw}</span></li>
+ </ol>
+ <p class="hint">Zeiten laut ELEO-Website, unverbindlich und saisonabhängig. Die verbindliche Fertigungszeit steht im Angebot. Die Spedition ruft vorher zur Terminabsprache an.</p>`;
+}
+function renderPanel(){
+ const P=$("#panel");let h="";const st=S.step;
+ if(st===0){
+  const list=load("sv-list",[]);
+  h=`<h2>Was soll entstehen?</h2><p class="lede">Tippen Sie auf die Art der Anlage. Die Ansicht rechts zeigt sie sofort in Farbe.</p>
+  <div class="tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-prod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong><span>${p.d}</span></button>`).join("")}</div>
+  <fieldset style="margin-top:24px"><legend>Gespeicherte Beratungen</legend>${list.length?`<ul class="saved">${list.map(e=>`<li><span><b>${esc(e.name||"Ohne Namen")}</b> · ${esc(e.product)} ${esc(e.model)}<small>${esc(e.date)}</small></span><span class="row"><button type="button" data-open="${e.id}">Öffnen</button><button type="button" data-del="${e.id}">Löschen</button></span></li>`).join("")}</ul>`:'<p class="hint">Noch keine. Im letzten Schritt speichern Sie eine Beratung mit dem Kundennamen.</p>'}</fieldset>`;
+ }else if(st===1){
+  const ms=modelsFor(S.product);
+  h=`<h2>Modell wählen</h2><p class="lede">${ms.length} Modelle als <b>${esc(prod().name)}</b>, gezeigt in ${esc(coatLabel())}.</p>
+  <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span></button>`).join("")}</div>`;
+ }else if(st===2){
+  const m=model();
+  if(isScreen()){
+   h=`<h2>Ausführung ${esc(modelLabel())}</h2><p class="lede">Sichtschutz-Paneele aus 1,5 mm Blech.</p>
+   ${m.p?`<fieldset><legend>Muster</legend>${chipsVar(m)}</fieldset>`:""}
+   <fieldset><legend>Material</legend>${chips("screenMat",["Metall","Cortenstahl"])}<p class="hint">Cortenstahl nur für Sichtschutzzäune. Er bildet eine orange-braune Rostschicht.</p></fieldset>
+   ${S.screenMat==="Metall"?`<fieldset><legend>Beschichtung</legend>${coatSwatches(["Unbeschichtet (Edelrost)","Anthrazit DB 703"])}</fieldset>`:""}
+   <fieldset><legend>Rückwand</legend>${chips("backwall",["ohne Design","mit Design"])}</fieldset>
+   <fieldset><legend>Einsatz als</legend>${chips("screenUse",["Zaun","Geländer","Tor","Tür"])}</fieldset>`;
+  }else{
+   h=`<h2>Ausführung ${esc(m.n)}</h2><p class="lede">${esc(m.t)}.</p>
+   <fieldset><legend>Farbe / Beschichtung</legend>${coatSwatches(COATS.filter(c=>!(m.noZink&&c==="Feuerverzinkt")))}
+   ${S.coat==="Sonderfarbe RAL"?ralPicker():""}${S.coat!=="Unbeschichtet (Edelrost)"&&S.coat!=="Feuerverzinkt"?'<p class="hint">Pulverbeschichtung im Duplex-Verfahren.</p>':""}</fieldset>
+   <fieldset><legend>Form der Oberkante</legend>${chips("form",FORMS,m.f===1?FORMS.slice(1):[])}${m.f===1?'<p class="hint">Dieses Modell gibt es nur gerade.</p>':""}</fieldset>
+   <fieldset><legend>Zierspitze</legend>${m.sp?chips("tip",TIPS.slice(0,8)):'<p class="hint">Modell ohne Spitzen.</p>'}</fieldset>
+   <fieldset><legend>Stäbe / Profil</legend>${chips("bar",m.st)}</fieldset>
+   ${["Geländer","Französischer Balkon"].includes(S.product)?`<fieldset><legend>Handlauf</legend>${txt("handrail","Wunsch Handlauf","text","z. B. Flachstahl 40 × 8 mm")}</fieldset>`:""}`;
+  }
+ }else if(st===3){
+  h=`<h2>Wünsche des Kunden</h2><p class="lede">Alles, was vom Standardmodell abweicht. ELEO fertigt nach Maß und prüft jeden Wunsch im Angebot.</p>
+  ${isScreen()?"":`<fieldset><legend>Füllung</legend>${chips("fill",FILLS)}<p class="hint">„Ohne Füllung“ bedeutet nur Rahmen, Traversen und Pfosten, etwa für eine eigene Holz- oder WPC-Füllung.</p></fieldset>`}
+  <fieldset><legend>Zusätzliche Wünsche</legend><div class="cks">${WISHES.filter(w=>isScreen()?!w.startsWith("Engerer"):!w.startsWith("Wunschmotiv")).map(w=>`<label class="ck"><input type="checkbox" data-wish="${esc(w)}" ${S.wishes.includes(w)?"checked":""}> ${w}</label>`).join("")}</div></fieldset>
+  ${area("wishText","Persönliche Wünsche, frei formuliert","z. B. Initialen „M&K“ mittig im Tor, Briefkasten links neben dem Schloss, Motiv Olivenzweig")}`;
+ }else if(st===4){
+  const L=layout(),p=prod(),gate=L.gate,over=!gate&&L.per>p.max;
+  h=`<h2>Maße aufnehmen</h2><p class="lede">${gate?"Lichte Weite = Abstand zwischen den beiden Torpfosten.":"Gesamtstrecke inklusive Pfosten. Die Felder teilt das Tool automatisch auf."}</p>
+  <div class="grid2">${L.planned?`<label class="f">Gesamtstrecke<span class="calc">${cm(L.total)}</span><span class="hint">aus dem Grundriss</span></label>`:num("total",gate?"Gesamtbreite inkl. Pfosten":"Gesamtstrecke")}${num("height",isRail()?"Geländerhöhe ab Oberkante Boden":"Höhe")}${gate||L.planned?"":num("fields","Anzahl Felder","Stk.","0 = automatisch")}
+   ${isRail()?"":sel("posts","Pfosten",["Zum Einbetonieren","Zum Aufschrauben","Bestehende Pfosten (Montage dazwischen)","Keine Pfosten"])}</div>
+  ${isRail()?mountHtml():""}
+  ${gate?"":`<fieldset style="margin-top:18px"><legend>Grundriss zeichnen (bei Ecken)</legend><p class="hint" style="margin-top:0">Tippen Sie Punkt für Punkt den Verlauf. Punkte lassen sich verschieben. Ein Kästchen entspricht etwa 1 m, die echten Maße tragen Sie darunter ein.</p>
+   <div class="planbox"><svg id="plan" viewBox="0 0 600 380" role="img" aria-label="Grundriss-Zeichenfläche"></svg></div>
+   <div class="row" style="margin-top:8px"><button type="button" id="planUndo">Letzten Punkt entfernen</button><button type="button" id="planClear">Neu zeichnen</button></div>
+   <div id="segList" style="margin-top:12px"></div></fieldset>`}
+  <fieldset style="margin-top:16px"><legend>Gefälle / Steigung</legend><div class="grid2">${num("slope","Höhenunterschied über die Strecke",S.slopeUnit,"leer lassen bei ebenem Gelände")}${sel("slopeUnit","Angabe in",["cm","%","Grad"])}</div></fieldset>
+  ${gate?`<fieldset><legend>Toranschlag</legend><div class="grid2">${sel("hinge","Bänder sitzen",["links","rechts"])}${sel("swing","Öffnet",["nach innen","nach außen"])}${sel("lock","Schloss",["Drückergarnitur Modern + Schließzylinder","Drückergarnitur Klassisch + Schließzylinder","Ohne Schloss"])}</div></fieldset>`:""}
+  <div class="note" id="mnote">${measureNote()}</div>
+  ${over?`<p class="warn">Ein Feld darf höchstens ${p.max} cm lang sein. Erhöhen Sie die Felderanzahl.</p>`:""}
+  ${S.product==="Tor"&&L.clear>400?`<p class="warn">Tore sind bis 400 cm Breite Standard. Breiter nur nach Rücksprache.</p>`:""}`;
+ }else if(st===5){
+  h=photoStepHtml();
+ }else if(st===6){
+  h=`<h2>Kunde anlegen</h2><p class="lede">Rechnungs- und Lieferdaten für das Angebot.</p>
+  <div class="grid2">${sel("cSal","Anrede",["","Frau","Herr","Familie","Firma"])}<span></span>${txt("cFirst","Vorname")}${txt("cLast","Nachname / Firma")}
+  ${txt("cStreet","Straße, Hausnr.")}<div class="grid2 zip">${txt("cZip","PLZ","text")}${txt("cCity","Ort")}</div>
+  ${txt("cPhone","Telefon","tel")}${txt("cMail","E-Mail","email")}</div>
+  <fieldset style="margin-top:16px"><legend>Lieferung</legend>${check("altShip","Lieferadresse weicht ab")}
+  ${S.altShip?`<div class="grid2" style="margin-top:10px">${txt("sName","Name / Baustelle")}${txt("sStreet","Straße, Hausnr.")}${txt("sZip","PLZ")}${txt("sCity","Ort")}</div>`:""}
+  <div class="grid2" style="margin-top:10px">${sel("unload","Abladen",["Bordsteinkante","Auf Grundstück, wenn befahrbar","Nach Absprache mit Kunde"])}</div>
+  <div style="margin-top:10px">${area("shipNote","Hinweis für Lieferant / Spedition","z. B. in die Garage stellen, Zufahrt nur bis 7,5 t, vorher 30 Min. anrufen, Hund im Hof")}</div></fieldset>
+  <div class="grid2">${sel("install","Montage",["Selbstmontage","Montagepartner gewünscht"])}${sel("measure","Aufmaß",["Kunde misst selbst","Vor Ort aufgenommen (Händler)","Virtuelles Aufmaß gewünscht","Aufmaßservice gewünscht"])}</div>
+  <div style="margin-top:12px">${area("notes","Bemerkungen / bauliche Situation","z. B. Sockelmauer 30 cm, Pfosten auf Mauerkrone schrauben")}</div>`;
+ }else{
+  h=`<h2>Anfrage & Zeitplan</h2><p class="lede">So geht es nach der Anfrage weiter.</p>
+  <fieldset><legend>Bearbeitungszeit</legend>${check("express","Expressfertigung gewünscht (gegen Aufpreis)")}${timeline()}</fieldset>
+  <fieldset><legend>Zahlung laut ELEO</legend><p class="hint" style="margin:0">50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu.</p></fieldset>
+  <fieldset><legend>Anfrage-Text</legend><pre class="out" id="out"></pre></fieldset>
+  <div class="row"><button type="button" class="primary" id="btnCopy">Anfrage kopieren</button><a class="btn" id="mailLink" href="#">In Mail-App öffnen</a><button type="button" id="btnSave">Beratung speichern</button><span id="copyMsg" class="toast" role="status"></span></div>
+  <p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${MAIL}</span> · Tel. +49 (0) 9565 / 50 917 0</p>
+  <fieldset style="margin-top:14px"><legend>Bilder für die Mail</legend><div class="row"><button type="button" id="btnPng">Ansicht und Skizze als Bild erzeugen</button></div><div id="pngWrap" style="margin-top:10px"></div></fieldset>`;
+ }
+ h+=`<div class="nav">${st>0?`<button type="button" data-go="-1">Zurück</button>`:"<span></span>"}${st<STEPS.length-1?`<button type="button" class="primary" data-go="1">Weiter: ${STEPS[st+1]}</button>`:""}</div>`;
+ P.innerHTML=h;
+ if(st===7)updateOut();
+ if(st===4){renderPlan();renderSegList()}
+ if(st===5)setTimeout(renderPhotoStep,0);
+}
+function measureNote(){const L=layout();if(L.segs.length>1)return `${L.segs.map((g,i)=>`Seite ${segName(i)}: ${g.n} × ${cm(g.per)}`).join(" · ")} · ${L.corners.length} Eckpfosten. Montageabstände zieht ELEO im Angebot ab.`;return `${L.gate?`Lichte Weite: <b>${cm(L.clear)}</b>${S.product==="Tor"?` · je Flügel ca. <b>${cm(L.per)}</b>`:""}`:`${L.n} Felder · lichte Weite je Feld ca. <b>${cm(L.per)}</b> · Pfosten 5 × 5 cm`}. Montageabstände zieht ELEO im Angebot ab.`}
+function chipsVar(m){return `<div class="chips"><button type="button" class="chip" data-k="screenVar" data-v="voll" aria-pressed="${S.screenVar==="voll"}">Vollflächig (${m.n})</button><button type="button" class="chip" data-k="screenVar" data-v="teil" aria-pressed="${S.screenVar==="teil"}">Nur oben (${m.p})</button></div>`}
+function miniIcon(id){
+ const b='stroke="currentColor" fill="none" stroke-width="2"';
+ const bars=(x0,x1,y0,y1,st=10)=>{let s="";for(let x=x0;x<=x1;x+=st)s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;return s};
+ let g="";
+ if(id==="Zaun")g=`<rect x="4" y="8" width="5" height="36"/><rect x="111" y="8" width="5" height="36"/>${bars(18,104,10,42)}<line x1="9" y1="18" x2="111" y2="18"/><line x1="9" y1="38" x2="111" y2="38"/>`;
+ if(id==="Tor")g=`<rect x="4" y="4" width="6" height="40"/><rect x="110" y="4" width="6" height="40"/><path d="M12 14 Q36 4 59 10 M61 10 Q84 4 108 14"/>${bars(18,52,12,42,8)}${bars(68,104,12,42,8)}<line x1="12" y1="40" x2="108" y2="40"/>`;
+ if(id==="Gartentor")g=`<rect x="30" y="6" width="6" height="38"/><rect x="84" y="6" width="6" height="38"/><path d="M38 14 Q60 4 82 14"/>${bars(44,78,12,42,8)}<line x1="38" y1="40" x2="82" y2="40"/>`;
+ if(id==="Geländer")g=`<line x1="4" y1="44" x2="116" y2="44"/><line x1="4" y1="10" x2="116" y2="10" stroke-width="4"/>${bars(8,112,10,44,9)}`;
+ if(id==="Französischer Balkon")g=`<rect x="28" y="2" width="64" height="44" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;
+ if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
+ return `<svg viewBox="0 0 120 48" ${b} aria-hidden="true">${g}</svg>`;
+}
+
+const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
+function mountHtml(){
+ const fb=S.product==="Französischer Balkon",opts=fb?["In der Laibung","Vor der Fassade"]:["Aufgesetzt","Stirnseitig"];
+ if(!opts.includes(S.mount))S.mount=opts[0];
+ return `<fieldset style="margin-top:16px"><legend>Montageart</legend><div class="mounts">${opts.map(o=>`<button type="button" class="tile mnt" data-k="mount" data-v="${o}" aria-pressed="${S.mount===o}">${mountIcon(o)}<strong>${o}</strong><span>${{"Aufgesetzt":"Pfosten stehen oben auf der Balkonplatte","Stirnseitig":"Pfosten seitlich an die Plattenkante geschraubt","In der Laibung":"Zwischen die Fensterleibung gesetzt","Vor der Fassade":"Vor das Fenster an die Hauswand geschraubt"}[o]}</span></button>`).join("")}</div>
+ ${fb?"":`<div class="grid2" style="margin-top:12px">${num("slab","Stärke der Balkonplatte","cm")}</div>`}</fieldset>`;
+}
+function mountIcon(o){
+ const c='stroke="currentColor" fill="none" stroke-width="2"';let g="";
+ if(o==="Aufgesetzt")g=`<rect x="20" y="52" width="80" height="16" fill="currentColor" opacity=".25"/><line x1="70" y1="10" x2="70" y2="52" stroke-width="4"/><line x1="60" y1="52" x2="80" y2="52" stroke-width="3"/><line x1="40" y1="12" x2="86" y2="12"/>`;
+ if(o==="Stirnseitig")g=`<rect x="20" y="52" width="70" height="16" fill="currentColor" opacity=".25"/><line x1="96" y1="10" x2="96" y2="70" stroke-width="4"/><line x1="90" y1="56" x2="96" y2="56" stroke-width="3"/><line x1="90" y1="65" x2="96" y2="65" stroke-width="3"/><line x1="50" y1="12" x2="100" y2="12"/>`;
+ if(o==="In der Laibung")g=`<rect x="24" y="6" width="12" height="64" fill="currentColor" opacity=".25"/><rect x="84" y="6" width="12" height="64" fill="currentColor" opacity=".25"/><line x1="36" y1="24" x2="84" y2="24" stroke-width="3"/>${[44,52,60,68,76].map(x=>`<line x1="${x}" y1="24" x2="${x}" y2="66"/>`).join("")}`;
+ if(o==="Vor der Fassade")g=`<rect x="34" y="6" width="52" height="64" stroke-dasharray="4 3"/><line x1="24" y1="24" x2="96" y2="24" stroke-width="3"/>${[30,40,50,60,70,80,90].map(x=>`<line x1="${x}" y1="24" x2="${x}" y2="66"/>`).join("")}`;
+ return `<svg viewBox="0 0 120 76" ${c} aria-hidden="true">${g}</svg>`;
+}
+function photoStepHtml(){
+ const live=!!LIVE;
+ return `<h2>Vor Ort zeigen</h2><p class="lede">${live?"Tablet ruhig halten, am besten auf ein Stativ. Ziehen Sie die vier Eckpunkte auf die Stelle: unten auf den Boden, oben auf die gewünschte Höhe. Der Kunde sieht die Anlage live im Kamerabild. Dann Foto schießen.":"Starten Sie die Live-Kamera oder fotografieren Sie die Stelle. Dann ziehen Sie die vier Eckpunkte: unten auf den Boden, oben auf die gewünschte Höhe. Zum Verschieben in die Fläche tippen und ziehen."}</p>
+ <div class="row">${live?`<button type="button" class="primary" id="liveSnap">Foto schießen</button><button type="button" id="liveStop">Kamera beenden</button>`:`<button type="button" class="primary" id="liveStart">Live-Kamera</button><label class="btn filebtn2" for="photoIn">${S.photo?"Neues Foto":"Foto aufnehmen oder wählen"}</label><input type="file" accept="image/*" capture="environment" id="photoIn" class="vh">${S.photo?'<button type="button" id="photoDel">Foto entfernen</button>':""}`}${S.photo||live?'<button type="button" id="photoReset">Position zurücksetzen</button>':""}</div>
+ <p id="liveMsg" class="warn" role="status"></p>
+ ${live?"":`<fieldset class="arcard" style="margin-top:14px"><legend>Echtes AR auf dem iPad</legend><p>Die Anlage steht in Originalgröße auf dem Boden und bleibt an ihrem Platz, wenn Sie mit dem iPad herumgehen. Mit Ecken aus dem Grundriss, in der gewählten Farbe.</p>${arButton()}<p class="hint" data-arhint hidden style="margin-top:10px">AR öffnet Apples AR-Ansicht. Das klappt in Safari auf iPad oder iPhone, wenn die Seite als eigene Datei über https geöffnet ist. In der Claude-Ansicht steht es nicht zur Verfügung.</p></fieldset>`}
+ <div id="partBar" style="margin-top:12px"></div>
+ <div class="stage" id="stage" hidden><img id="photoImg" alt="Foto des Grundstücks"><video id="liveVid" playsinline muted autoplay hidden></video><div id="layers"></div><svg id="handles" aria-label="Eckpunkte ziehen"></svg>${live?'<span class="livebadge">LIVE</span>':""}</div>
+ ${S.photo&&!live?`<div class="row" style="margin-top:12px"><button type="button" id="photoPng">Fotomontage als Bild erzeugen</button></div><div id="photoOut" class="pngs"></div>`:live?"":'<p class="hint">Tipp: Möglichst gerade auf die Linie halten, an der der Zaun stehen soll. Bei mehreren Seiten platzieren Sie jede Seite einzeln.</p>'}`;
+}
+
+function arButton(){return `<a class="arbtn" rel="ar" data-ar><img alt="" width="26" height="26" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22%3E%3Cpath d=%22M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7%22/%3E%3C/svg%3E"><span>AR wird vorbereitet …</span></a>`}
+/* ---------- Geometrie ---------- */
+const VB={w:820,h:400,l:80,r:30,t:56,b:78};
+function curveOff(t,H,s,form){
+ const k=Math.min(H*.18,22*s);
+ switch(form){case"Bogen":return -k*Math.sin(Math.PI*t);case"Geschwungen":return -k*Math.pow(Math.sin(Math.PI*t),2);case"U-Form":return k*Math.sin(Math.PI*t);default:return 0}
+}
+function tipShape(tip,x,y,s){
+ const r=Math.max(2.2,3*s);if(tip==="Ohne Spitze")return"";
+ if(tip.startsWith("Kugel"))return `<circle cx="${x}" cy="${y-r}" r="${r}" class="fillD"/>`+(tip==="Kugellilie"?`<path d="M${x} ${y-2*r} l-${r} -${r*1.6} M${x} ${y-2*r} l${r} -${r*1.6} M${x} ${y-2*r} v-${r*2}"/>`:"");
+ if(tip==="Lilie"||tip==="Kreuzlilie")return `<path class="fillD" d="M${x} ${y-r*3.4} l${r*.8} ${r*2.2} h-${r*1.6}z"/><path d="M${x-r*1.6} ${y-r*2.2} q${r*.6} ${r*1.4} ${r*1.6} ${r*1.2} q${r} .2 ${r*1.6} -${r*1.2}"/>`+(tip==="Kreuzlilie"?`<line x1="${x-r*1.4}" y1="${y-r*1.2}" x2="${x+r*1.4}" y2="${y-r*1.2}"/>`:"");
+ if(tip==="Lotus"||tip==="Pinie")return `<path class="fillD" d="M${x-r*.9} ${y} q-.2 -${r*2.4} ${r*.9} -${r*3.4} q${r*1.1} ${r} ${r*.9} ${r*3.4}z"/>`;
+ if(tip==="Stab")return `<path class="fillD" d="M${x-r*.5} ${y} l${r*.5} -${r*3} l${r*.5} ${r*3}z"/><circle cx="${x}" cy="${y-r*.6}" r="${r*.7}" class="fillD"/>`;
+ return `<path class="fillD" d="M${x-r} ${y} l${r} -${r*3.2} l${r} ${r*3.2}z"/>`;
+}
+function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
+ const fill=o.fill||"Wie Modell",noDeco=fill!=="Wie Modell",empty=fill.startsWith("Ohne Füllung");
+ const d=m.deco,out=[];
+ const base=y0-6*s, botRail=base-8*s;
+ const top=xx=>y0-H+curveOff((xx-spanX)/spanW,H,s,o.form);
+ const spikes=m.sp&&o.tip!=="Ohne Spitze"&&!empty;
+ const railDrop=spikes?14*s:0;
+ const line=(off,n=24)=>{let a=[];for(let i=0;i<=n;i++){const xx=x+w*i/n;a.push(`${xx.toFixed(1)},${(top(xx)+railDrop+off).toFixed(1)}`)}return `<polyline points="${a.join(" ")}" class="rail"/>`};
+ const box=["frame","salerno","horiz"].includes(d);
+ if(empty){out.push(line(0),`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,`<line x1="${x}" y1="${top(x)+railDrop}" x2="${x}" y2="${botRail}" class="rail"/>`,`<line x1="${x+w}" y1="${top(x+w)+railDrop}" x2="${x+w}" y2="${botRail}" class="rail"/>`);return out.join("")}
+ if(box)out.push(`<rect x="${x}" y="${top(x)}" width="${w}" height="${base-top(x)}" class="thick"/>`);
+ else{
+  out.push(`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,line(0));
+  if(!noDeco&&["x","circle","c","s","volute"].includes(d))out.push(line(20*s));
+  if(d==="molveno")out.push(line(7*s));
+  if(!noDeco&&d==="x")out.push(line(40*s));
+ }
+ const gap=(d==="modena"||d==="molveno"||m.st[0].startsWith("25"))?11:(m.st[0].startsWith("40")?13:12);
+ const n=Math.max(2,Math.round(w/(gap*s)));
+ if(d==="horiz"){for(let yy=top(x)+10*s;yy<base-4*s;yy+=10*s)out.push(`<line x1="${x}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ if(d==="salerno"){const mid=x+w*.45;for(let i=1;i<6;i++){const xx=x+(mid-x)*i/6;out.push(`<line x1="${xx}" y1="${top(x)}" x2="${xx}" y2="${base}" class="bar"/>`)}out.push(`<line x1="${mid}" y1="${top(x)}" x2="${mid}" y2="${base}" class="thick"/>`);for(let yy=top(x)+12*s;yy<base-4*s;yy+=12*s)out.push(`<line x1="${mid}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ for(let i=1;i<n;i++){
+  const xx=x+w*i/n;let ty=box?top(x):top(xx);
+  if(!noDeco&&d==="lana"&&i%2===0)ty+=10*s;
+  out.push(`<line x1="${xx}" y1="${ty}" x2="${xx}" y2="${box?base:botRail}" class="${d==="modena"&&i%6===0?"thick":"bar"}"/>`);
+  if(spikes)out.push(tipShape(o.tip,xx,ty,s));
+  if(noDeco)continue;
+  const ry=top(xx)+railDrop,cx=xx+w/n/2,r=Math.min(w/n/2,9*s)*.85,cy=ry+10*s;
+  if(d==="short"||m.n==="Lucca")out.push(`<line x1="${cx}" y1="${botRail}" x2="${cx}" y2="${botRail-Math.min(28*s,H*.3)}" class="bar"/>`);
+  if(d==="circle"&&i%2)out.push(`<circle cx="${cx}" cy="${cy}" r="${r}"/>`);
+  if(d==="c"&&i%2)out.push(`<path d="M${cx-r} ${cy-r} a${r} ${r} 0 1 0 0 ${2*r} M${cx+r} ${cy-r} a${r} ${r} 0 1 1 0 ${2*r}"/>`);
+  if(d==="s"&&i%2)out.push(`<path d="M${cx-r*1.6} ${cy+r} c0 -${r*2} ${r*1.6} -${r*2} ${r*1.6} 0 s${r*1.6} ${r*2} ${r*1.6} 0"/>`);
+  if(d==="volute"&&i%3===1)out.push(`<path d="M${cx-r*2} ${cy} a${r} ${r} 0 1 1 ${r*.8} ${r*.8} M${cx+r*2} ${cy} a${r} ${r} 0 1 0 -${r*.8} ${r*.8} M${cx-r*1.2} ${cy+r*.8} q${r*1.2} -${r*1.8} ${r*2.4} 0"/>`);
+  if(d==="x")out.push(`<path d="M${xx} ${ry+20*s} L${xx+w/n} ${ry+40*s} M${xx+w/n} ${ry+20*s} L${xx} ${ry+40*s}"/>`);
+  const midY=(ry+botRail)/2;
+  if(d==="rhomb"&&i%3===2){const q=Math.max(4,7*s);out.push(`<path d="M${xx} ${midY-q*1.4} l${q} ${q*1.4} l-${q} ${q*1.4} l-${q} -${q*1.4}z"/>`)}
+  if(d==="orn"&&i%2)out.push(`<ellipse cx="${xx}" cy="${midY}" rx="${Math.max(2.5,4*s)}" ry="${Math.max(5,9*s)}"/>`);
+ }
+ return out.join("");
+}
+function patternDef(m,id,sc=1){
+ const p=m.pat;let b="";const z=24*sc;
+ if(p==="geo")b=`<path d="M0 24 L24 0 M0 12 L12 0 M12 24 L24 12"/>`;
+ if(p==="wave")b=`<path d="M0 6 q6 -6 12 0 t12 0 M0 18 q6 -6 12 0 t12 0"/>`;
+ if(p==="leaf"||p==="leaf2"||p==="palm")b=`<ellipse cx="12" cy="12" rx="${p==="palm"?3:4}" ry="10" transform="rotate(${p==="leaf2"?25:-30} 12 12)"/><line x1="4" y1="20" x2="20" y2="4"/>`;
+ if(p==="rhomb")b=`<path d="M12 2 L22 12 L12 22 L2 12z M12 7 L17 12 L12 17 L7 12z"/>`;
+ if(p==="flower")b=`<circle cx="12" cy="12" r="2.5"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="12" cy="6.5" rx="2" ry="3.6" transform="rotate(${a} 12 12)"/>`).join("")}`;
+ return `<pattern id="${id}" width="${z}" height="${z}" patternUnits="userSpaceOnUse"><g class="pat" transform="scale(${sc})">${b}</g></pattern>`;
+}
+/* Anlage als SVG-Gruppe (ohne Bemaßung) */
+function fieldXs(L,s,x0){const pw=Math.max(3,L.post*s);let x=x0;const posts=[],starts=[];for(let i=0;i<L.n;i++){posts.push(x);x+=pw;starts.push(x);x+=L.fields[i]*s}posts.push(x);return{posts,starts,pw}}
+function fence(m,o,L,s,x0,y0,H,patId){
+ const g=[],pw=Math.max(3,L.post*s),postH=H+(o.product==="Tor"?12:4)*s;
+ const X=L.gate?null:fieldXs(L,s,x0);
+ if(o.screen){
+  X.starts.forEach((x,i)=>{const w=L.fields[i]*s,top=y0-H,base=y0-4*s;
+   const pt=o.screenVar==="teil"&&m.p?top+(base-top)*.3:base;
+   g.push(`<rect x="${x}" y="${top}" width="${w}" height="${base-top}" class="panel"/>`);
+   if(m.pat!=="none")g.push(`<rect x="${x+3}" y="${top+3}" width="${w-6}" height="${pt-top-6}" style="fill:url(#${patId});stroke:none" class="patfill"/>`);
+   g.push(`<rect x="${x}" y="${top}" width="${w}" height="${base-top}" class="thick"/>`)});
+ }else if(L.gate){
+  const span=x0+pw,spanW=L.clear*s,cv=xx=>y0-H+curveOff((xx-span)/spanW,H,s,o.form);
+  const leaves=o.product==="Tor"?[[span+2*s,(spanW-4*s)/2-2*s],[span+(spanW-4*s)/2+4*s,(spanW-4*s)/2-2*s]]:[[span+2*s,spanW-4*s]];
+  leaves.forEach(([lx,lw])=>{g.push(drawRailing(m,o,lx,lw,H,y0,s,span,spanW));[lx,lx+lw].forEach(xx=>g.push(`<line x1="${xx}" y1="${cv(xx)}" x2="${xx}" y2="${y0-6*s}" class="thick"/>`))});
+  const lk=o.product==="Tor"?span+spanW/2-3:(o.hinge==="links"?span+spanW-8:span+2);
+  if(o.lock!=="Ohne Schloss")g.push(`<rect x="${lk}" y="${y0-H*.55}" width="6" height="${Math.max(10,14*s)}" class="lock"/>`);
+ }else{
+  X.starts.forEach((x,i)=>g.push(drawRailing(m,o,x,L.fields[i]*s,H,y0,s,x,L.fields[i]*s)));
+ }
+ const rail=o.product==="Geländer"||o.product==="Französischer Balkon",front=o.mount==="Stirnseitig"||o.mount==="Vor der Fassade";
+ if(o.posts!=="Keine Pfosten"||rail){
+  const ps=L.gate?[x0,x0+L.width*s-pw]:X.posts;
+  ps.forEach((x,i)=>{
+   const yb=front?y0+(o.slabPx||14)*.9:y0;
+   g.push(`<rect x="${x}" y="${y0-postH}" width="${pw}" height="${yb-y0+postH}" class="post${!L.gate&&L.corners.includes(i)?" corner":""}"/>`);
+   g.push(`<rect x="${x-pw*.15}" y="${y0-postH-Math.max(1.5,1.2*s)}" width="${pw*1.3}" height="${Math.max(1.5,1.2*s)}" class="fillD"/>`);
+   if(rail&&!front)g.push(`<rect x="${x-pw*.6}" y="${y0-Math.max(1.5,1*s)}" width="${pw*2.2}" height="${Math.max(1.5,1*s)}" class="fillD"/>`);
+   if(rail&&front&&o.product==="Geländer")[.3,.7].forEach(t=>g.push(`<rect x="${x-pw*.3}" y="${y0+(o.slabPx||14)*t-1.5}" width="${pw*1.6}" height="3" class="fillD"/>`));
+  });
+ }
+ return g.join("");
+}
+function opts(slabPx){return{product:S.product,form:S.form,tip:S.tip,fill:S.fill,screen:isScreen(),screenVar:S.screenVar,posts:S.posts,hinge:S.hinge,lock:S.lock,mount:isRail()?S.mount:"",slabPx}}
+function postGrad(id,f){return `<linearGradient id="pg${id}" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="${f.c}"/><stop offset=".35" stop-color="${f.hi}"/><stop offset=".6" stop-color="${f.c}"/><stop offset="1" stop-color="${f.c}" stop-opacity=".85"/></linearGradient>`}
+function rustFilter(id){return `<filter id="${id}" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" values="0 0 0 0 .72  0 0 0 0 .36  0 0 0 0 .16  0 0 0 1.6 -.55" result="spots"/><feComposite in="spots" in2="SourceGraphic" operator="in" result="rs"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rs"/></feMerge></filter>`}
+function css(scope,c,hi,inner=" .fx"){
+ const q=scope+inner;
+ return `${q} line,${q} path,${q} polyline,${q} circle,${q} ellipse,${q} rect{stroke:${c};stroke-width:1.5;fill:none;stroke-linecap:round;stroke-linejoin:round}
+${q} .rail{stroke-width:3}${q} .bar{stroke-width:1.7}${q} .thick{stroke-width:3.2}${q} .post{fill:${c};stroke:none}
+${q} .fillD{fill:${c};stroke:none}${q} .lock{fill:#b9bec2;stroke:none}${q} .panel{fill:${c};stroke:none;opacity:.14}${scope} .pat *{stroke:${c};stroke-width:1.7;fill:none}
+${scope} .hl *{stroke:${hi};stroke-width:.7;opacity:.75}${scope} .hl .post,${scope} .hl .fillD{fill:none;stroke:${hi}}${scope} .hl .panel,${scope} .hl .patfill{display:none}
+${scope} .shd *{stroke:#000;opacity:1}${scope} .shd .post,${scope} .shd .fillD,${scope} .shd .panel{fill:#000;opacity:1}${scope} .shd .patfill{display:none}`;
+}
+function fit(L,H0,aw,ah){return Math.min(aw/(L.width||L.total),(ah-20)/(H0+10))}
+
+/* ---------- Technische Skizze ---------- */
+function drawSketch(){
+ const L=layout(),H0=Math.max(40,+S.height||100),m=model(),rail=isRail();
+ const aw=VB.w-VB.l-VB.r,ah=VB.h-VB.t-VB.b,s=fit(L,H0,aw,ah)*(rail?.92:1);
+ const W=L.width*s,H=H0*s,x0=VB.l+(aw-W)/2,y0=VB.h-VB.b-(rail?10:0),slabPx=Math.max(8,(+S.slab||18)*s),o=opts(slabPx);
+ const g=[`<defs>${isScreen()?patternDef(m,"pat-sk"):""}</defs>`];
+ g.push(`<text x="20" y="26" class="ttl">${esc(prodShort()+" "+modelLabel())}</text><text x="20" y="44" class="sub">${esc(subLine())}</text>`);
+ if(S.product==="Geländer"){g.push(`<rect x="${x0-24}" y="${y0}" width="${W+(S.mount==="Stirnseitig"?24:48)}" height="${slabPx}" class="slab"/>`)}
+ else{g.push(`<line x1="${x0-20}" y1="${y0}" x2="${x0+W+20}" y2="${y0}" class="ground"/>`);for(let gx=x0-20;gx<x0+W+20;gx+=10)g.push(`<line x1="${gx}" y1="${y0+6}" x2="${gx+6}" y2="${y0}" class="hatch"/>`)}
+ g.push(`<g class="fx">${fence(m,o,L,s,x0,y0,H,"pat-sk")}</g>`);
+ const fd=Math.min(40,60*s),X=L.gate?null:fieldXs(L,s,x0),pw=Math.max(3,L.post*s);
+ const ps=L.gate?[x0,x0+W-pw]:X.posts;
+ if(!rail&&S.posts!=="Keine Pfosten")ps.forEach(x=>{
+  if(S.posts==="Zum Einbetonieren")g.push(`<rect x="${x-pw*.6}" y="${y0}" width="${pw*2.2}" height="${fd}" class="found"/>`);
+  if(S.posts==="Zum Aufschrauben")g.push(`<rect x="${x-pw*.5}" y="${y0-2}" width="${pw*2}" height="3" class="fillD"/>`)});
+ if(L.gate){const hx=S.hinge==="links"?x0+pw+4:x0+W-pw-4;g.push(`<circle cx="${hx}" cy="${y0-H*.8}" r="3" class="hinge"/><circle cx="${hx}" cy="${y0-H*.2}" r="3" class="hinge"/>`)}
+ if(!L.gate)L.corners.forEach((ci,k)=>{const x=X.posts[ci]+pw/2;g.push(`<line x1="${x}" y1="${y0-H-26}" x2="${x}" y2="${y0+4}" class="cornerln"/><text x="${x}" y="${y0-H-30}" text-anchor="middle" class="dimS">Ecke ${cornerAngle(k+1)??""}°</text>`)});
+ const dy=y0+(rail?slabPx+20:S.posts==="Zum Einbetonieren"?fd+18:22);
+ if(!L.gate&&L.segs.length>1){L.segs.forEach((sg,i)=>{const a=X.posts[L.fields.slice(0,0).length+L.segs.slice(0,i).reduce((t,q)=>t+q.n,0)],b=X.posts[L.segs.slice(0,i+1).reduce((t,q)=>t+q.n,0)]+pw;g.push(dim(a,b,dy,"Seite "+segName(i)+" "+cm(sg.len)))});}
+ else g.push(dim(x0,x0+W,dy,(L.gate?"Gesamt ":"Gesamtstrecke ")+cm(L.total)));
+ if(L.gate)g.push(dim(x0+pw,x0+W-pw,dy+22,"lichte Weite "+cm(L.clear)));
+ else X.starts.forEach((x,i)=>{const w=L.fields[i]*s;g.push(dim(x,x+w,dy+22,w<60?Math.round(L.fields[i])+"":cm(L.fields[i]),true))});
+ g.push(vdim(x0-22,y0,y0-H,cm(H0)));
+ if(+S.slope)g.push(`<text x="${x0+W}" y="${y0-H-14}" text-anchor="end" class="sub">Gefälle ${esc(S.slope)} ${esc(S.slopeUnit)} über die Strecke</text>`);
+ if(S.product==="Geländer")g.push(mountDetail());
+ $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style>`+g.join("");
+}
+function mountDetail(){
+ const x=680,y=12,st=S.mount==="Stirnseitig",g=[`<rect x="${x}" y="${y}" width="128" height="118" class="inset"/><text x="${x+8}" y="${y+16}" class="dimS" style="fill:var(--muted)">SCHNITT · ${st?"STIRNSEITIG":"AUFGESETZT"}</text>`];
+ const sx=x+14,sy=y+78,sw=st?82:100,sh=16;
+ g.push(`<rect x="${sx}" y="${sy}" width="${sw}" height="${sh}" class="slabS"/>`);
+ if(st){const px=sx+sw+4;g.push(`<rect x="${px}" y="${y+28}" width="6" height="${sy+sh+6-(y+28)}" class="fillD"/><line x1="${px}" y1="${sy+4}" x2="${px-16}" y2="${sy+4}" class="anchor"/><line x1="${px}" y1="${sy+12}" x2="${px-16}" y2="${sy+12}" class="anchor"/><text x="${sx}" y="${sy+sh+14}" class="dimS">Platte ${esc(S.slab)} cm</text>`)}
+ else{const px=sx+sw-16;g.push(`<rect x="${px}" y="${y+28}" width="6" height="${sy-(y+28)}" class="fillD"/><rect x="${px-6}" y="${sy-3}" width="18" height="3" class="fillD"/><line x1="${px-3}" y1="${sy}" x2="${px-3}" y2="${sy+10}" class="anchor"/><line x1="${px+9}" y1="${sy}" x2="${px+9}" y2="${sy+10}" class="anchor"/><text x="${sx}" y="${sy+sh+14}" class="dimS">Platte ${esc(S.slab)} cm</text>`)}
+ return g.join("");
+}
+const prodShort=()=>S.product==="Französischer Balkon"?"Franz. Balkon":S.product;
+function subLine(){return (isScreen()?coatLabel()+" · "+S.screenMat:[S.form,model().sp?S.tip:"",coatLabel(),S.fill!=="Wie Modell"?S.fill:""].filter(Boolean).join(" · "))+(custName()?" · "+custName():"")}
+function custName(){return [S.cSal,S.cFirst,S.cLast].filter(Boolean).join(" ")}
+function dim(a,b,y,label,small){return `<g class="dim"><line x1="${a}" y1="${y-6}" x2="${a}" y2="${y+6}"/><line x1="${b}" y1="${y-6}" x2="${b}" y2="${y+6}"/><line x1="${a}" y1="${y}" x2="${b}" y2="${y}"/><path d="M${a+5} ${y-3} L${a} ${y} L${a+5} ${y+3} M${b-5} ${y-3} L${b} ${y} L${b-5} ${y+3}"/><text x="${(a+b)/2}" y="${y-4}" text-anchor="middle" class="${small?"dimS":"dimT"}">${label}</text></g>`}
+function vdim(x,a,b,label){return `<g class="dim"><line x1="${x}" y1="${a}" x2="${x}" y2="${b}"/><line x1="${x-6}" y1="${a}" x2="${x+6}" y2="${a}"/><line x1="${x-6}" y1="${b}" x2="${x+6}" y2="${b}"/><text transform="translate(${x-6} ${(a+b)/2}) rotate(-90)" text-anchor="middle" class="dimT">${label}</text></g>`}
+const SK_EXTRA=`#sketch .ground{stroke-width:2}#sketch .slab{fill:var(--grid);stroke:var(--draw);stroke-width:1.4}#sketch .inset{fill:var(--sheet);stroke:var(--line)}#sketch .slabS{fill:var(--grid);stroke:var(--draw)}#sketch .anchor{stroke:var(--dim);stroke-width:2}#sketch .cornerln{stroke:var(--dim);stroke-dasharray:4 3;stroke-width:1}#sketch .hatch{stroke-width:1;opacity:.5}#sketch .found{fill:var(--grid);stroke:var(--muted);stroke-dasharray:3 2}
+#sketch .hinge{fill:var(--dim);stroke:none}#sketch .dim line,#sketch .dim path{stroke:var(--dim);stroke-width:1}#sketch text{font-family:"IBM Plex Mono",monospace;fill:var(--draw);stroke:none}
+#sketch .dimT{font-size:13px;fill:var(--dim)}#sketch .dimS{font-size:11px;fill:var(--dim)}#sketch .ttl{font:700 19px "Archivo","Arial Narrow",sans-serif;text-transform:uppercase}#sketch .sub{font-size:11.5px;fill:var(--muted)}`;
+
+/* ---------- Farbige Ansicht ---------- */
+function rng(seed){return()=>{seed=(seed*16807)%2147483647;return seed/2147483647}}
+function scene(kind,y0,H,x0,W){
+ const r=rng(7),g=[];
+ g.push(`<rect width="820" height="400" fill="url(#sky)"/>`);
+ if(kind==="wall"){
+  g.push(`<rect x="0" y="40" width="820" height="${y0-40}" fill="#e9e4dc"/>`);
+  for(let y=60;y<y0;y+=26)g.push(`<line x1="0" y1="${y}" x2="820" y2="${y}" stroke="#ddd6cc" stroke-width="1"/>`);
+  const inL=S.mount==="In der Laibung",ex=inL?14:-W*.08;if(S.product==="Französischer Balkon")g.push(`<rect x="${x0-ex}" y="${y0-H*1.9}" width="${W+2*ex}" height="${H*2.1}" fill="#5d6a72"/><rect x="${x0-ex+8}" y="${y0-H*1.85}" width="${W+2*ex-16}" height="${H*2}" fill="url(#glass)"/><line x1="${x0+W/2}" y1="${y0-H*1.85}" x2="${x0+W/2}" y2="${y0+H*.15}" stroke="#eef1f3" stroke-width="5"/>`);
+  if(S.product!=="Geländer")g.push(`<rect x="0" y="${y0}" width="820" height="${400-y0}" fill="#b9b4ab"/><rect x="0" y="${y0}" width="820" height="7" fill="#d6d1c8"/>`);else g.push(`<rect x="0" y="${y0}" width="820" height="${400-y0}" fill="#ddd7cd"/>`);
+ }else{
+  g.push(`<rect x="0" y="${y0-150}" width="820" height="150" fill="#4f7a43"/>`);
+  for(let i=0;i<46;i++){const cx=r()*840-10,cy=y0-110-r()*70,rx=30+r()*40;g.push(`<ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${rx*.8}" fill="${["#45703a","#5a8a4b","#3d6533","#6b9a55"][i%4]}"/>`)}
+  g.push(`<rect x="0" y="${y0-4}" width="820" height="${404-y0}" fill="url(#lawn)"/>`);
+  if(kind==="drive")g.push(`<path d="M${x0+W*.08} ${y0} L${x0+W*.92} ${y0} L${x0+W*1.1} 400 L${x0-W*.1} 400z" fill="#a8a59e"/>${Array.from({length:8},(_,i)=>`<line x1="0" y1="${y0+8+i*12}" x2="820" y2="${y0+8+i*12}" stroke="#97948d" stroke-width="1" clip-path="url(#dclip)"/>`).join("")}`);
+ }
+ return g.join("");
+}
+function viewLayout(){const L=layout();if(L.gate||L.n<=3)return L;const fields=L.fields.slice(0,3),corners=L.corners.filter(c=>c<3);return Object.assign({},L,{n:3,fields,corners,per:Math.max(...fields),width:fields.reduce((a,b)=>a+b,0)+4*L.post,crop:true})}
+function drawLook(){
+ const L=viewLayout(),H0=Math.max(40,+S.height||100),m=model(),o=opts(),f=finish();
+ const rail=isRail(),s=fit(L,H0,700,rail?250:300),W=L.width*s,H=H0*s,x0=(820-W)/2,y0=rail?300:330,slabPx=Math.max(18,(+S.slab||18)*s);o.mount=rail?S.mount:"";o.slabPx=slabPx;
+ const kind=["Geländer","Französischer Balkon"].includes(S.product)?"wall":L.gate&&S.product==="Tor"?"drive":"garden";
+ const shM=`matrix(1 0 -0.55 -0.2 ${0.55*y0} ${1.2*y0})`;
+ const fg=fence(m,o,L,s,x0,y0,H,"pat-lk"),fgP=fg.replace(/class="post( corner)?"/g,'class="post$1" style="fill:url(#pglk)"');
+ const defs=`<defs><linearGradient id="sky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#bcd4e2"/><stop offset="1" stop-color="#eef3f4"/></linearGradient>
+ <linearGradient id="lawn" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f9b4f"/><stop offset="1" stop-color="#4e7a37"/></linearGradient>
+ <linearGradient id="glass" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#9fb7c4"/><stop offset=".5" stop-color="#d8e4ea"/><stop offset="1" stop-color="#8fa9b7"/></linearGradient>
+ <clipPath id="dclip"><path d="M${x0+W*.08} ${y0} L${x0+W*.92} ${y0} L${x0+W*1.1} 400 L${x0-W*.1} 400z"/></clipPath>
+ ${postGrad("lk",f)}<filter id="blur"><feGaussianBlur stdDeviation="1.6"/></filter>
+ <filter id="rust" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" seed="4" result="n"/><feColorMatrix in="n" values="0 0 0 0 .72  0 0 0 0 .36  0 0 0 0 .16  0 0 0 1.6 -.55" result="spots"/><feComposite in="spots" in2="SourceGraphic" operator="in" result="rs"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="rs"/></feMerge></filter>
+ ${isScreen()?patternDef(m,"pat-lk"):""}</defs>`;
+ const svg=`${defs}${scene(kind,y0,H,x0,W)}
+ <!--SLAB--><g class="fx shd" opacity=".16" filter="url(#blur)" transform="${shM}">${fg}</g>
+ <ellipse cx="${x0+W/2}" cy="${y0+2}" rx="${W/2+10}" ry="5" fill="#000" opacity=".12" filter="url(#blur)"/><g class="fx" ${f.rust?'filter="url(#rust)"':""}>${fgP}</g><g class="fx hl" transform="translate(-.8 -.6)">${fg}</g>
+ <rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
+ <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc(prodShort()+" "+modelLabel())}</text>
+ ${L.crop?`<rect x="624" y="14" width="180" height="26" rx="4" fill="#ffffff" opacity=".88"/><text x="714" y="31" text-anchor="middle" style="font:12px monospace;fill:#3a444b">Ausschnitt: 3 von ${layout().n} Feldern</text>`:""}<circle cx="34" cy="48" r="6" fill="${f.c}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(f.name||coatLabel())}</text>`;
+ const _=0;$("#look").innerHTML=`<style>${css("#look",f.c,f.hi)}</style>`+svg.replace("<!--SLAB-->",slabSvg(x0,W,y0,slabPx));
+}
+function slabSvg(x0,W,y0,h){
+ if(S.product!=="Geländer")return"";
+ const st=S.mount==="Stirnseitig",r=st?x0+W+4:x0+W+40;
+ return `<polygon points="${x0-40},${y0} ${r},${y0} ${r+30},${y0-14} ${x0-10},${y0-14}" fill="#c9c3b9"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="${h}" fill="#bdb7ad"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="2" fill="#e2ddd5"/><polygon points="${r},${y0} ${r+30},${y0-14} ${r+30},${y0-14+h} ${r},${y0+h}" fill="#a9a399"/><rect x="${x0-40}" y="${y0+h}" width="${r-x0+70}" height="14" fill="#000" opacity=".13" filter="url(#blur)"/>`;
+}
+function modelThumb(m){
+ const f=finish(),screen=isScreen(),o={product:"Zaun",form:m.f>1?S.form:"Gerade",tip:m.sp?(S.tip==="Ohne Spitze"?"Lanze":S.tip):"Ohne Spitze",fill:"Wie Modell",screen,screenVar:"voll",posts:"Zum Einbetonieren"};
+ const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
+ const id="th-"+m.n,sc="#"+id;
+ return `<svg id="${id}" class="thumb" viewBox="0 0 160 100" aria-hidden="true"><style>${css(sc,f.c,f.hi)}</style><defs>${screen?patternDef(m,"p"+id,.55):""}</defs><rect width="160" height="100" fill="#e7edf0"/><rect y="${y0}" width="160" height="8" fill="#7ea35f"/><g class="fx">${fence(m,o,L,s,x0,y0,H,"p"+id)}</g></svg>`;
+}
+
+/* ---------- Spezifikation & Anfrage ---------- */
+function specRows(){
+ const L=layout(),r=[];
+ r.push(["Produkt",S.product],["Modell",modelLabel()]);
+ if(isScreen()){r.push(["Muster",S.screenVar==="teil"?"teilflächig (nur oben)":"vollflächig"],["Material",S.screenMat+", 1,5 mm"],["Einsatz",S.screenUse],["Rückwand",S.backwall])}
+ else{r.push(["Form",S.form]);if(model().sp)r.push(["Spitze",S.tip]);r.push(["Stäbe",S.bar],["Füllung",S.fill]);if(S.handrail)r.push(["Handlauf",S.handrail])}
+ if(!(isScreen()&&S.screenMat==="Cortenstahl"))r.push(["Beschichtung",coatLabel()+(["Anthrazit DB 703","Sonderfarbe RAL"].includes(S.coat)?" (Duplex)":"")]);
+ r.push([L.gate?"Gesamtbreite":"Gesamtstrecke",cm(L.total)],["Höhe",cm(+S.height)]);
+ if(L.gate)r.push(["Lichte Weite",cm(L.clear)],["Anschlag","Bänder "+S.hinge+", öffnet "+S.swing],["Schloss",S.lock]);
+ else r.push(["Felder",L.n+" × ca. "+cm(L.per)+" lichte Weite"]);
+ if(isRail())r.push(["Montage",S.mount+(S.product==="Geländer"?", Plattenstärke "+(S.slab||"?")+" cm":"")]);else if(!L.gate)r.push(["Pfosten",S.posts+(L.corners.length?`, davon ${L.corners.length} Eckpfosten`:"")]);else r.push(["Pfosten",S.posts]);
+ if(!L.gate&&L.segs.length>1)L.segs.forEach((g,i)=>r.push(["Seite "+segName(i),cm(g.len)+" · "+g.n+" Felder"+(i>0?" · Ecke "+(cornerAngle(i)??"?")+"°":"")]));
+ if(+S.slope)r.push(["Gefälle",S.slope+" "+S.slopeUnit]);
+ if(S.wishes.length)r.push(["Wünsche",S.wishes.join(", ")]);
+ if(S.wishText)r.push(["Freitext",S.wishText]);
+ r.push(["Fertigung",S.express?"Express gewünscht":"Standard"]);
+ return r;
+}
+function renderSpec(){$("#spec").innerHTML=specRows().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}
+function requestText(){
+ const d=new Date().toLocaleDateString("de-DE"),p=plan();
+ const rows=specRows().map(([k,v])=>`  ${(k+":").padEnd(15)} ${v}`).join("\n");
+ const addr=[S.cStreet,[S.cZip,S.cCity].filter(Boolean).join(" ")].filter(Boolean).join(", ");
+ const ship=S.altShip?[S.sName,S.sStreet,[S.sZip,S.sCity].filter(Boolean).join(" ")].filter(Boolean).join(", "):"wie Rechnungsadresse";
+ return `Betreff: Angebotsanfrage ${S.product} ${modelLabel()}${S.cLast?" – "+S.cLast:""}
+
+Guten Tag,
+
+bitte erstellen Sie ein unverbindliches Angebot inkl. technischer Zeichnung für folgende Anlage:
+
+PRODUKT
+${rows}
+
+KUNDE (RECHNUNG)
+  Name:           ${custName()||"–"}
+  Adresse:        ${addr||"–"}
+  Telefon:        ${S.cPhone||"–"}
+  E-Mail:         ${S.cMail||"–"}
+
+LIEFERUNG
+  Lieferadresse:  ${ship}
+  Abladen:        ${S.unload}
+  Hinweis:        ${S.shipNote||"–"}
+
+MONTAGE & AUFMASS
+  Montage:        ${S.install}
+  Aufmaß:         ${S.measure}
+
+BEMERKUNGEN
+  ${S.notes||"–"}
+
+Gewünschte Fertigung: ${S.express?"Expressfertigung ("+TIMES.exp.join("–")+" Wochen)":"Standard ("+TIMES.std.join("–")+" Wochen)"}, Liefer-Wunschzeitraum ab ${p.from}.
+Ansicht, bemaßte Skizze${S.photo?" und Fotomontage vor Ort":""} liegen als Bilder bei.
+
+Mit freundlichen Grüßen
+Stahl & Verstand
+Aufgenommen am ${d}`;
+}
+function updateOut(){const o=$("#out");if(!o)return;const t=requestText();o.textContent=t;
+ const subj=t.split("\n")[0].replace("Betreff: ",""),body=t.split("\n").slice(2).join("\n");
+ const a=$("#mailLink");if(a)a.href=`mailto:${MAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body.slice(0,1800))}`}
+
+function svgToImg(el,light,cb){
+ let src=new XMLSerializer().serializeToString(el).replace(/var\((--[a-z]+)\)/g,(m,k)=>light[k]||"#22313b");
+ if(!src.includes('xmlns="http://www.w3.org/2000/svg"'))src=src.replace("<svg",'<svg xmlns="http://www.w3.org/2000/svg"');
+ const img=new Image();
+ img.onload=()=>{const c=document.createElement("canvas");c.width=1640;c.height=800;const x=c.getContext("2d");x.fillStyle="#fff";x.fillRect(0,0,c.width,c.height);x.drawImage(img,0,0,c.width,c.height);
+  const out=new Image();out.src=c.toDataURL("image/png");cb(out)};
+ img.onerror=()=>cb(null);
+ img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(src);
+}
+function makePng(){
+ const w=$("#pngWrap");w.innerHTML='<p class="hint">Bilder lange gedrückt halten (Tablet) oder Rechtsklick, dann „Bild sichern“ und an die Mail anhängen.</p>';
+ const light={"--draw":"#22313b","--dim":"#c4561f","--grid":"#dfe5e9","--muted":"#5d6972"};
+ drawLook();drawSketch();
+ [["#look","Farbige Ansicht"],["#sketch","Bemaßte Skizze"]].forEach(([sel,cap])=>svgToImg($(sel),light,img=>{
+  const fig=document.createElement("figure");fig.className="png";
+  if(img){img.alt=cap;fig.appendChild(img)}else fig.innerHTML='<p class="warn">Bild ließ sich nicht erzeugen. Bitte Screenshot machen.</p>';
+  const c=document.createElement("figcaption");c.textContent=cap;fig.appendChild(c);w.appendChild(fig)}));
+}
+
+/* ---------- Ablauf ---------- */
+function setView(v){S.view=v;$("#look").toggleAttribute("hidden",v!=="look");$("#sketch").toggleAttribute("hidden",v!=="tech");$("#v3d").toggleAttribute("hidden",v!=="3d");if(v==="3d"&&window.SV3D)SV3D.update();document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v))}
+function refresh(full){if(full&&S.step!==5&&typeof stopLive==="function")stopLive();fixState();if(!Array.isArray(S.pts))S.pts=[];if(!Array.isArray(S.lens))S.lens=[];if(full){renderSteps();renderPanel()}else{const n=$("#mnote");if(n)n.innerHTML=measureNote()}drawLook();drawSketch();setView(S.view);renderSpec();updateOut();save();if(window.SV3D){SV3D.invalidate();if(S.view!=="3d"&&(S.step===5))SV3D.prepare()}}
+document.addEventListener("click",e=>{
+ const b=e.target.closest("button,a");if(!b)return;
+ if(b.dataset.view){setView(b.dataset.view);save();return}
+ if(b.dataset.prod){S.product=b.dataset.prod;S.fields=0;refresh(true);return}
+ if(b.dataset.model){S.model=b.dataset.model;refresh(true);return}
+ if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;refresh(true);return}
+ if(b.dataset.go){S.step=Math.max(0,Math.min(STEPS.length-1,S.step+ +b.dataset.go));refresh(true);window.scrollTo({top:0,behavior:"smooth"});return}
+ if(b.dataset.step){S.step=+b.dataset.step;refresh(true);return}
+ if(b.dataset.open){const e2=load("sv-list",[]).find(x=>x.id===b.dataset.open);if(e2){S=Object.assign(DEF(),e2.state,{step:1});refresh(true)}return}
+ if(b.dataset.del){if(b.dataset.armed){store("sv-list",load("sv-list",[]).filter(x=>x.id!==b.dataset.del));refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich?"}return}
+ if(b.id==="btnNew"){if(b.dataset.armed){S=DEF();delete b.dataset.armed;b.textContent="Neue Beratung";refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich neu beginnen?";setTimeout(()=>{delete b.dataset.armed;b.textContent="Neue Beratung"},4000)}return}
+ if(b.id==="btnSave"){const list=load("sv-list",[]),id=S._id||("b"+Date.now());S._id=id;
+  const entry={id,date:new Date().toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}),name:custName(),product:S.product,model:modelLabel(),state:JSON.parse(JSON.stringify(S))};
+  const i=list.findIndex(x=>x.id===id);if(i>=0)list[i]=entry;else list.unshift(entry);store("sv-list",list);save();$("#copyMsg").textContent="Beratung gespeichert.";return}
+ if(b.id==="btnCopy"){const t=requestText(),msg=$("#copyMsg");
+  const fb=()=>{const r=document.createRange();r.selectNodeContents($("#out"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Text markiert. Jetzt kopieren."};
+  try{navigator.clipboard.writeText(t).then(()=>msg.textContent="Kopiert.",fb)}catch(err){fb()}return}
+ if(b.id==="btnPng"){makePng();return}
+ if(b.id==="planUndo"){S.pts.pop();S.lens=S.lens.slice(0,Math.max(0,S.pts.length-1));refresh(true);return}
+ if(b.id==="planClear"){S.pts=[];S.lens=[];refresh(true);return}
+ if(b.dataset.part){S.activePart=+b.dataset.part;renderPhotoStep();return}
+ if(b.id==="photoDel"){S.photo="";S.place=[];refresh(true);return}
+ if(b.id==="photoReset"){S.place=[];renderPhotoStep();save();return}
+ if(b.id==="photoPng"){exportPhoto();return}
+});
+document.addEventListener("input",e=>{const t=e.target;
+ if(t.dataset.len!==undefined){S.lens[+t.dataset.len]=t.value===""?"":+t.value;renderPlan();refresh(false);return}
+ if(t.dataset.wish!==undefined){const w=t.dataset.wish;S.wishes=t.checked?[...new Set([...S.wishes,w])]:S.wishes.filter(x=>x!==w);refresh(false);return}
+ const k=t.dataset.k;if(!k)return;
+ S[k]=t.type==="checkbox"?t.checked:t.type==="number"?(t.value===""?"":+t.value):t.value;
+ refresh(false);
+});
+document.addEventListener("change",e=>{const t=e.target;if(t.id==='photoIn'){if(t.files[0])loadPhoto(t.files[0]);return}if(t.dataset.len!==undefined){refresh(true);return}if(t.type==="checkbox"&&t.dataset.k||t.id==="in-slopeUnit"||t.id==="in-ral"||(S.step===4&&t.type==="number"))refresh(true)});
+refresh(true);
+
+document.addEventListener("sv3d-ready",()=>{if(S.view==="3d")SV3D.update();else SV3D.prepare()});
+function noLib(){if(window.SV3D)return;document.querySelectorAll("a[data-ar] span").forEach(s=>s.textContent="3D nicht geladen. Internetverbindung prüfen.");const c=$("#c3d");if(c&&!c.dataset.msg){c.dataset.msg=1;c.insertAdjacentHTML("afterend",'<p class="hint" style="padding:12px">Die 3D-Ansicht braucht beim ersten Öffnen Internet, um die 3D-Bibliothek zu laden.</p>')}}
+setTimeout(noLib,9000);
+/* ---------- Grundriss-Zeichner ---------- */
+const PLAN={w:600,h:380,grid:20};
+const segName=i=>String.fromCharCode(65+i);
+function planActive(){return !L_GATE()&&S.pts.length>=2&&S.lens.slice(0,S.pts.length-1).every(v=>+v>0)}
+function L_GATE(){return S.product==="Tor"||S.product==="Gartentor"}
+function cornerAngle(i){const p=S.pts,a=p[i-1],b=p[i],c=p[i+1];if(!a||!c)return null;
+ const v1=[a[0]-b[0],a[1]-b[1]],v2=[c[0]-b[0],c[1]-b[1]];
+ const d=Math.acos(Math.max(-1,Math.min(1,(v1[0]*v2[0]+v1[1]*v2[1])/(Math.hypot(...v1)*Math.hypot(...v2)))))*180/Math.PI;return Math.round(d/5)*5}
+function renderPlan(){
+ const el=$("#plan");if(!el)return;const p=S.pts,g=[];
+ for(let x=0;x<=PLAN.w;x+=PLAN.grid)g.push(`<line x1="${x}" y1="0" x2="${x}" y2="${PLAN.h}" class="pg${x%100?"":" pg2"}"/>`);
+ for(let y=0;y<=PLAN.h;y+=PLAN.grid)g.push(`<line x1="0" y1="${y}" x2="${PLAN.w}" y2="${y}" class="pg${y%100?"":" pg2"}"/>`);
+ if(!p.length)g.push(`<text x="${PLAN.w/2}" y="${PLAN.h/2}" text-anchor="middle" class="ph">Tippen Sie den Anfangspunkt der Anlage</text>`);
+ if(p.length>1)g.push(`<polyline points="${p.map(q=>q.join(",")).join(" ")}" class="pl"/>`);
+ for(let i=1;i<p.length;i++){const a=p[i-1],b=p[i],mx=(a[0]+b[0])/2,my=(a[1]+b[1])/2;const nx=-(b[1]-a[1]),ny=b[0]-a[0],nl=Math.hypot(nx,ny)||1;
+  g.push(`<g class="seglbl"><rect x="${mx+nx/nl*18-34}" y="${my+ny/nl*18-12}" width="68" height="22" rx="3"/><text x="${mx+nx/nl*18}" y="${my+ny/nl*18+4}" text-anchor="middle">${segName(i-1)} · ${S.lens[i-1]?Math.round(S.lens[i-1])+" cm":"?"}</text></g>`)}
+ p.forEach((q,i)=>{const ang=cornerAngle(i);g.push(`<circle cx="${q[0]}" cy="${q[1]}" r="10" class="pt${i===0?" first":""}"/>`);if(ang!==null)g.push(`<text x="${q[0]+14}" y="${q[1]-12}" class="ang">${ang}°</text>`)});
+ el.innerHTML=g.join("");
+}
+function renderSegList(){
+ const el=$("#segList");if(!el)return;const n=S.pts.length-1;
+ if(n<1){el.innerHTML='<p class="hint">Noch kein Verlauf gezeichnet. Ohne Zeichnung gilt die Gesamtstrecke oben als gerade Linie.</p>';return}
+ el.innerHTML=`<div class="grid2">${Array.from({length:n},(_,i)=>`<label class="f">Seite ${segName(i)}${i>0?` <span class="hint">nach Ecke ${cornerAngle(i)}°</span>`:""}<span class="unit"><input type="number" inputmode="decimal" id="len-${i}" data-len="${i}" value="${esc(S.lens[i]??"")}"><span>cm</span></span></label>`).join("")}</div>
+ <p class="hint">Maß je Seite inklusive Pfosten. ${n-1>0?`${n-1} Eckpfosten. `:""}Gesamt: <b>${cm(S.lens.slice(0,n).reduce((a,b)=>a+(+b||0),0))}</b></p>`;
+}
+function svgPoint(svg,e){const pt=svg.createSVGPoint();pt.x=e.clientX;pt.y=e.clientY;return pt.matrixTransform(svg.getScreenCTM().inverse())}
+let planDrag=-1;
+function snapPoint(x,y){
+ x=Math.round(x/10)*10;y=Math.round(y/10)*10;
+ const p=S.pts,prev=p[p.length-1];
+ if(prev&&planDrag<0){const dx=x-prev[0],dy=y-prev[1],len=Math.hypot(dx,dy),a=Math.round(Math.atan2(dy,dx)/(Math.PI/12))*(Math.PI/12);x=prev[0]+Math.cos(a)*len;y=prev[1]+Math.sin(a)*len}
+ return[Math.round(Math.max(8,Math.min(PLAN.w-8,x))),Math.round(Math.max(8,Math.min(PLAN.h-8,y)))];
+}
+document.addEventListener("pointerdown",e=>{
+ const svg=e.target.closest("#plan");if(!svg)return;e.preventDefault();
+ const q=svgPoint(svg,e);const i=S.pts.findIndex(p=>Math.hypot(p[0]-q.x,p[1]-q.y)<20);
+ if(i>=0){planDrag=i;svg.setPointerCapture(e.pointerId);return}
+ const np=snapPoint(q.x,q.y),prev=S.pts[S.pts.length-1];
+ S.pts.push(np);
+ if(prev)S.lens[S.pts.length-2]=Math.max(10,Math.round(Math.hypot(np[0]-prev[0],np[1]-prev[1])/PLAN.grid*100/10)*10);
+ renderPlan();renderSegList();refresh(false);
+});
+document.addEventListener("pointermove",e=>{if(planDrag<0)return;const svg=$("#plan");if(!svg)return;const q=svgPoint(svg,e);S.pts[planDrag]=snapPoint(q.x,q.y);renderPlan()});
+document.addEventListener("pointerup",()=>{if(planDrag>=0){planDrag=-1;renderSegList();refresh(false)}});
+
+/* ---------- Fotomontage ---------- */
+function solve(A,b){const n=b.length;A=A.map((r,i)=>[...r,b[i]]);
+ for(let c=0;c<n;c++){let m=c;for(let r=c+1;r<n;r++)if(Math.abs(A[r][c])>Math.abs(A[m][c]))m=r;[A[c],A[m]]=[A[m],A[c]];
+  for(let r=0;r<n;r++){if(r===c)continue;const f=A[r][c]/A[c][c];for(let k=c;k<=n;k++)A[r][k]-=f*A[c][k]}}
+ return A.map((r,i)=>r[n]/r[i])}
+function homography(src,dst){const A=[],b=[];for(let i=0;i<4;i++){const[x,y]=src[i],[u,v]=dst[i];A.push([x,y,1,0,0,0,-u*x,-u*y]);b.push(u);A.push([0,0,0,x,y,1,-v*x,-v*y]);b.push(v)}return solve(A,b)}
+function hApply(h,x,y){const w=h[6]*x+h[7]*y+1;return[(h[0]*x+h[1]*y+h[2])/w,(h[3]*x+h[4]*y+h[5])/w]}
+/* Abschnitte, die auf dem Foto platziert werden */
+function photoParts(){
+ const L=layout();
+ if(L.gate||L.segs.length<2)return[{name:L.gate?S.product:"Anlage",L}];
+ return L.segs.map((g,i)=>({name:"Seite "+segName(i),L:{gate:false,post:L.post,n:g.n,per:g.per,fields:Array(g.n).fill(g.per),width:g.len,total:g.len,segs:[g],corners:[],clear:g.n*g.per}}));
+}
+function ensurePlace(){
+ const parts=photoParts(),k=parts.length;
+ if(!Array.isArray(S.place))S.place=[];
+ S.place=S.place.slice(0,k);
+ for(let i=S.place.length;i<k;i++){const a=.08+.84*i/k,b=.08+.84*(i+1)/k;S.place.push([[a,.5],[b,.5],[b,.82],[a,.82]])}
+ if(S.activePart>=k)S.activePart=0;
+}
+const PW=600;
+function partSvg(part,standalone){
+ const H0=Math.max(40,+S.height||100),sc=PW/part.L.width,H=H0*sc,m=model(),f=finish(),o=opts(),id="ph"+Math.random().toString(36).slice(2,7);
+ const pad=H*.6;
+ const body=`<style>${css("#"+id,f.c,f.hi)}#${id} .fx .panel{opacity:1}#${id} .pat *{stroke:${f.hi};opacity:.85}</style><defs>${isScreen()?patternDef(m,"pp"+id,Math.max(.6,sc*1.2)):""}${postGrad(id,f)}</defs><g class="fx"${f.rust?` filter="url(#rust${id})"`:""}>${fence(m,o,part.L,sc,0,H,H,"pp"+id).replace(/class="post"/g,`class="post" style="fill:url(#pg${id})"`)}</g><g class="fx hl" transform="translate(-.6 -.5)">${fence(m,o,part.L,sc,0,H,H,"pp"+id)}</g>${f.rust?rustFilter("rust"+id):""}`;
+ return{H,pad,sc,svg:standalone?`<svg xmlns="http://www.w3.org/2000/svg" id="${id}" width="${PW*2}" height="${(H+pad)*2}" viewBox="0 ${-pad} ${PW} ${H+pad}">${body}</svg>`:`<svg id="${id}" width="${PW}" height="${H}" viewBox="0 0 ${PW} ${H}" style="overflow:visible">${body}</svg>`};
+}
+function renderPhotoStep(){
+ const st=$("#stage");if(!st)return;
+ const img=$("#photoImg");
+ const live=!!LIVE,vid=$("#liveVid");
+ if(!S.photo&&!live){st.hidden=true;$("#partBar").innerHTML="";return}
+ st.hidden=false;img.hidden=live;vid.hidden=!live;
+ if(live){if(vid.srcObject!==LIVE){vid.srcObject=LIVE;vid.onloadedmetadata=()=>{vid.play().catch(()=>{});layoutPhoto()};vid.onresize=layoutPhoto}}
+ else{img.onload=layoutPhoto;if(img.getAttribute("src")!==S.photo)img.src=S.photo}
+ ensurePlace();
+ const parts=photoParts();
+ $("#partBar").innerHTML=parts.length>1?`<div class="chips">${parts.map((p,i)=>`<button type="button" class="chip" data-part="${i}" aria-pressed="${(S.activePart||0)===i}">${p.name}</button>`).join("")}</div>`:"";
+ $("#layers").innerHTML=parts.map((p,i)=>`<div class="layer" id="lay-${i}">${partSvg(p).svg}</div>`).join("");
+ layoutPhoto();
+}
+function layoutPhoto(){
+ const st=$("#stage");if(!st||st.hidden)return;const W=st.clientWidth,Hh=st.clientHeight;if(!W||!Hh)return;
+ const parts=photoParts(),hs=$("#handles");hs.setAttribute("viewBox",`0 0 ${W} ${Hh}`);let g="";
+ parts.forEach((p,i)=>{
+  const q=S.place[i].map(([x,y])=>[x*W,y*Hh]),info=partSvg(p),H=info.H;
+  const h=homography([[0,0],[PW,0],[PW,H],[0,H]],q);
+  const lay=$("#lay-"+i);if(lay)lay.style.transform=`matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;
+  const act=(S.activePart||0)===i;
+  g+=`<polygon points="${q.map(v=>v.join(",")).join(" ")}" class="qd${act?" act":""}"/>`;
+  if(act)q.forEach((v,k)=>g+=`<circle cx="${v[0]}" cy="${v[1]}" r="15" class="hd" data-h="${k}"/><circle cx="${v[0]}" cy="${v[1]}" r="3" class="hdc"/>`);
+ });
+ hs.innerHTML=g;
+}
+let phDrag=null;
+document.addEventListener("pointerdown",e=>{const c=e.target.closest("#handles");if(!c)return;
+ const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height,i=S.activePart||0,pts=S.place[i];if(!pts)return;
+ let k=pts.findIndex(p=>Math.hypot((p[0]-x)*r.width,(p[1]-y)*r.height)<28);
+ if(k<0){const cx=pts.reduce((a,p)=>a+p[0],0)/4,cy=pts.reduce((a,p)=>a+p[1],0)/4;k="all";phDrag={k,x,y,start:pts.map(p=>[...p])}}else phDrag={k};
+ c.setPointerCapture(e.pointerId);e.preventDefault()});
+document.addEventListener("pointermove",e=>{if(!phDrag)return;const c=$("#handles");const r=c.getBoundingClientRect(),x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)),i=S.activePart||0;
+ if(phDrag.k==="all"){S.place[i]=phDrag.start.map(p=>[p[0]+x-phDrag.x,p[1]+y-phDrag.y])}else S.place[i][phDrag.k]=[x,y];layoutPhoto()});
+document.addEventListener("pointerup",()=>{if(phDrag){phDrag=null;save()}});
+window.addEventListener("resize",()=>layoutPhoto());
+function loadPhoto(file){
+ const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,1600/Math.max(im.width,im.height));const c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);
+  S.photo=c.toDataURL("image/jpeg",.85);S.place=[];S.activePart=0;save();refresh(true);setTimeout(layoutPhoto,150)};im.src=r.result};r.readAsDataURL(file);
+}
+function tri(ctx,img,s,d){
+ const[[x0,y0],[x1,y1],[x2,y2]]=s,[[u0,v0],[u1,v1],[u2,v2]]=d;
+ const det=x0*(y1-y2)+x1*(y2-y0)+x2*(y0-y1);if(!det)return;
+ const A=(u0*(y1-y2)+u1*(y2-y0)+u2*(y0-y1))/det,C=(x0*(u1-u2)+x1*(u2-u0)+x2*(u0-u1))/det,E=(x0*(y1*u2-y2*u1)+x1*(y2*u0-y0*u2)+x2*(y0*u1-y1*u0))/det;
+ const B=(v0*(y1-y2)+v1*(y2-y0)+v2*(y0-y1))/det,D=(x0*(v1-v2)+x1*(v2-v0)+x2*(v0-v1))/det,F=(x0*(y1*v2-y2*v1)+x1*(y2*v0-y0*v2)+x2*(y0*v1-y1*v0))/det;
+ const cx=(u0+u1+u2)/3,cy=(v0+v1+v2)/3,g=p=>[p[0]+(p[0]-cx)*.02,p[1]+(p[1]-cy)*.02];
+ ctx.save();ctx.beginPath();ctx.moveTo(...g(d[0]));ctx.lineTo(...g(d[1]));ctx.lineTo(...g(d[2]));ctx.closePath();ctx.clip();ctx.transform(A,B,C,D,E,F);ctx.drawImage(img,0,0);ctx.restore();
+}
+function exportPhoto(){
+ const out=$("#photoOut");out.innerHTML='<p class="hint">Bild wird erzeugt …</p>';
+ const base=new Image();base.onload=()=>{
+  const c=document.createElement("canvas");c.width=base.width;c.height=base.height;const ctx=c.getContext("2d");ctx.drawImage(base,0,0);
+  const parts=photoParts();let left=parts.length;
+  parts.forEach((p,i)=>{const info=partSvg(p,true),im=new Image();
+   im.onload=()=>{const q=S.place[i].map(([x,y])=>[x*c.width,y*c.height]),h=homography([[0,0],[PW,0],[PW,info.H],[0,info.H]],q);
+    const cols=24,rows=12,y0=-info.pad,yh=info.H;
+    for(let a=0;a<cols;a++)for(let b=0;b<rows;b++){
+     const xs=[PW*a/cols,PW*(a+1)/cols],ys=[y0+(yh-y0)*b/rows,y0+(yh-y0)*(b+1)/rows];
+     const P=[[xs[0],ys[0]],[xs[1],ys[0]],[xs[1],ys[1]],[xs[0],ys[1]]],S2=P.map(([x,y])=>[x*2,(y+info.pad)*2]),D2=P.map(([x,y])=>hApply(h,x,y));
+     tri(ctx,im,[S2[0],S2[1],S2[2]],[D2[0],D2[1],D2[2]]);tri(ctx,im,[S2[0],S2[2],S2[3]],[D2[0],D2[2],D2[3]]);
+    }
+    if(--left===0)done()};
+   im.onerror=()=>{if(--left===0)done()};
+   im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(info.svg)});
+  function done(){const o=new Image();o.src=c.toDataURL("image/jpeg",.9);o.alt="Fotomontage";out.innerHTML='<p class="hint">Bild lange gedrückt halten oder Rechtsklick, dann „Bild sichern“ und an die Mail anhängen.</p>';out.appendChild(o)}
+ };base.src=S.photo;
+}
+
+/* ---------- Live-Kamera ---------- */
+var LIVE=null;
+async function startLive(){
+ const msg=$("#liveMsg");msg.textContent="";
+ const blocked="Die Live-Kamera ist in dieser Ansicht gesperrt. Öffnen Sie die Datei „stahl-und-verstand.html“ direkt im Browser des Tablets (über https), dann läuft die Kamera live. Hier können Sie weiterhin ein Foto aufnehmen.";
+ if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){msg.textContent=blocked;return}
+ try{LIVE=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}},audio:false})}
+ catch(e){LIVE=null;msg.textContent=e&&e.name==="NotAllowedError"?"Der Kamerazugriff wurde abgelehnt. Erlauben Sie die Kamera in den Browser-Einstellungen für diese Seite. "+blocked:blocked;return}
+ try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{})}catch(e){}
+ refresh(true);
+}
+function stopLive(){if(LIVE){LIVE.getTracks().forEach(t=>t.stop());LIVE=null}}
+function snapLive(){
+ const v=$("#liveVid");if(!v||!v.videoWidth)return;
+ const k=Math.min(1,1600/Math.max(v.videoWidth,v.videoHeight)),c=document.createElement("canvas");
+ c.width=Math.round(v.videoWidth*k);c.height=Math.round(v.videoHeight*k);c.getContext("2d").drawImage(v,0,0,c.width,c.height);
+ S.photo=c.toDataURL("image/jpeg",.85);stopLive();save();refresh(true);
+ setTimeout(()=>{const b=$("#photoPng");if(b)exportPhoto()},250);
+}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="liveStart")startLive();
+ if(b.id==="liveStop"){stopLive();refresh(true)}
+ if(b.id==="liveSnap")snapLive();
+});
+document.addEventListener("visibilitychange",()=>{if(document.hidden&&LIVE){stopLive();refresh(true)}});
+</script>
+<script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
+<script type="module">
+import * as THREE from "three";
+import {OrbitControls} from "three/addons/controls/OrbitControls.js";
+import {USDZExporter} from "three/addons/exporters/USDZExporter.js";
+import {RoomEnvironment} from "three/addons/environments/RoomEnvironment.js";
+import {mergeGeometries} from "three/addons/utils/BufferGeometryUtils.js";
+
+const AR_OK=(()=>{try{return document.createElement("a").relList.supports("ar")}catch(e){return false}})();
+
+function material(){
+ const f=finish();
+ return new THREE.MeshStandardMaterial({color:new THREE.Color(f.c),metalness:f.rust?.15:f.zink?.85:.55,roughness:f.rust?.85:f.zink?.32:.42});
+}
+/* ---- Bausteine (lokal: x entlang der Anlage, y nach oben, z quer) ---- */
+function beam(out,x1,y1,x2,y2,t=.03,d=.02){
+ const len=Math.hypot(x2-x1,y2-y1);if(len<1e-3)return;
+ const g=new THREE.BoxGeometry(len,t,d);g.rotateZ(Math.atan2(y2-y1,x2-x1));g.translate((x1+x2)/2,(y1+y2)/2,0);out.push(g);
+}
+function bar(out,x,y1,y2,round,r){
+ if(y2-y1<.01)return;
+ const g=round?new THREE.CylinderGeometry(r/2,r/2,y2-y1,8):new THREE.BoxGeometry(r,y2-y1,r);
+ g.translate(x,(y1+y2)/2,0);out.push(g);
+}
+function spike(out,x,y,tip){
+ let g;
+ if(tip.startsWith("Kugel")){g=new THREE.SphereGeometry(.02,10,8);g.translate(x,y+.018,0)}
+ else{g=new THREE.ConeGeometry(tip==="Lanze"||tip==="Stab"?.014:.022,tip==="Lanze"?.07:.06,8);g.translate(x,y+.032,0)}
+ out.push(g);
+}
+function ring(out,x,y,r){const g=new THREE.TorusGeometry(r,.005,6,18);g.translate(x,y,0);out.push(g)}
+
+function run(out,m,w,H,offFn){
+ const fill=S.fill||"Wie Modell",noDeco=fill!=="Wie Modell",empty=fill.startsWith("Ohne Füllung");
+ const d=m.deco,spikes=m.sp&&S.tip!=="Ohne Spitze"&&!empty,drop=spikes?.10:.02;
+ const top=x=>H+offFn(x);
+ const round=/Hohlrohr|12 mm Massiv/.test(S.bar||""),br=/16 mm/.test(S.bar||"")?.016:/25 × 6/.test(S.bar||"")?.025:/40 × 40/.test(S.bar||"")?.03:.013;
+ const box=["frame","salerno","horiz"].includes(d);
+ const rail=(off)=>{const N=14;for(let i=0;i<N;i++){const a=w*i/N,b=w*(i+1)/N;beam(out,a,top(a)-drop-off,b,top(b)-drop-off,.035,.02)}};
+ if(box){beam(out,0,.05,w,.05,.04,.04);beam(out,0,top(0),w,top(w),.04,.04);beam(out,0,.05,0,top(0),.04,.04);beam(out,w,.05,w,top(w),.04,.04)}
+ else{beam(out,0,.10,w,.10,.035,.02);rail(0)}
+ if(empty){beam(out,0,.10,0,top(0)-drop,.035,.02);beam(out,w,.10,w,top(w)-drop,.035,.02);return}
+ if(!box&&!noDeco&&["x","circle","c","s","volute"].includes(d))rail(.2);
+ if(!box&&d==="molveno")rail(.07);
+ if(!box&&!noDeco&&d==="x")rail(.4);
+ if(d==="horiz"){for(let y=.15;y<top(0)-.04;y+=.10)beam(out,0,y,w,y,.03,.03);return}
+ if(d==="salerno"){const mid=w*.45;for(let i=1;i<6;i++)bar(out,mid*i/6,.05,top(0),false,.025);bar(out,mid,.05,top(0),false,.04);for(let y=.15;y<top(0)-.04;y+=.12)beam(out,mid,y,w,y,.025,.025);return}
+ const gap=br>=.025?.11:.12,n=Math.max(2,Math.round(w/gap));
+ for(let i=1;i<n;i++){
+  const x=w*i/n,ty=box?top(0):(!noDeco&&d==="lana"&&i%2===0?top(x)-.1:top(x));
+  bar(out,x,box?.05:.10,spikes?ty:ty-drop,round,br);
+  if(spikes)spike(out,x,ty,S.tip);
+  if(noDeco)continue;
+  const cx=x+w/n/2,ry=top(x)-drop;
+  if(d==="short"||m.n==="Lucca")bar(out,cx,.10,.10+Math.min(.28,H*.3),round,br*.8);
+  if(["circle","c","s"].includes(d)&&i%2)ring(out,cx,ry-.1,Math.min(w/n/2,.05)*.8);
+  if(d==="volute"&&i%3===1)ring(out,cx,ry-.1,.04);
+  if(d==="rhomb"&&i%3===2){const q=.06,my=(ry+.10)/2;beam(out,x,my-q,x+q*.7,my,.01,.01);beam(out,x+q*.7,my,x,my+q,.01,.01);beam(out,x,my+q,x-q*.7,my,.01,.01);beam(out,x-q*.7,my,x,my-q,.01,.01)}
+  if(d==="x"){beam(out,x,ry-.2,x+w/n,ry-.4,.01,.01);beam(out,x+w/n,ry-.2,x,ry-.4,.01,.01)}
+ }
+}
+function offFactory(form,H,span0,spanW){
+ const k=Math.min(H*.18,.22);
+ return x=>{const t=Math.max(0,Math.min(1,(x+span0)/spanW)),s=Math.sin(Math.PI*t);
+  return form==="Bogen"?k*s:form==="Geschwungen"?k*s*s:form==="U-Form"?-k*s:0};
+}
+function screenPanel(out,w,H){const g=new THREE.BoxGeometry(w,H-.06,.004);g.translate(w/2,(H-.06)/2+.04,0);out.push(g);
+ beam(out,0,.04,w,.04,.03,.03);beam(out,0,H-.02,w,H-.02,.03,.03);beam(out,0,.04,0,H-.02,.03,.03);beam(out,w,.04,w,H-.02,.03,.03)}
+
+function place(list,mat4,dst){list.forEach(g=>{g.applyMatrix4(mat4);dst.push(g)})}
+function frameMatrix(x,z,theta){return new THREE.Matrix4().makeTranslation(x,0,z).multiply(new THREE.Matrix4().makeRotationY(-theta))}
+
+function buildGeometry(){
+ const L=layout(),m=model(),H=Math.max(.4,(+S.height||100)/100),all=[];
+ const rail=isRail(),front=rail&&(S.mount==="Stirnseitig"||S.mount==="Vor der Fassade"),slab=rail?Math.max(.08,(+S.slab||18)/100):0;
+ const P=L.post/100,postH=H+(S.product==="Tor"?.12:.04),postBot=front?-slab*.9:0;
+ const post=(out,x)=>{const g=new THREE.BoxGeometry(P,postH-postBot,P);g.translate(x+P/2,(postH+postBot)/2,0);out.push(g);
+  const c=new THREE.BoxGeometry(P*1.3,.012,P*1.3);c.translate(x+P/2,postH+.006,0);out.push(c);
+  if(rail&&!front){const f=new THREE.BoxGeometry(P*2.2,.01,P*2.2);f.translate(x+P/2,.005,0);out.push(f)}};
+ const showPosts=rail||S.posts!=="Keine Pfosten";
+ if(L.gate){
+  const loc=[],total=L.total/100,clear=L.clear/100,span0=P,off=offFactory(S.form,H,0,clear);
+  if(showPosts){post(loc,0);post(loc,total-P)}
+  const leaves=S.product==="Tor"?[[P+.02,(clear-.06)/2],[P+.04+(clear-.06)/2,(clear-.06)/2]]:[[P+.02,clear-.04]];
+  leaves.forEach(([x0,w])=>{const l=[],o2=x=>off(x+x0-span0);run(l,m,w,H,o2);beam(l,0,.05,0,H+o2(0),.04,.04);beam(l,w,.05,w,H+o2(w),.04,.04);place(l,new THREE.Matrix4().makeTranslation(x0,0,0),loc)});
+  place(loc,new THREE.Matrix4(),all);
+ }else{
+  let ang=L.segs.map(()=>0);
+  if(L.planned){ang=L.segs.map((_,i)=>{const a=S.pts[i],b=S.pts[i+1];return Math.atan2(b[1]-a[1],b[0]-a[0])})}
+  let cx=0,cz=0;
+  L.segs.forEach((g,i)=>{
+   const loc=[],per=g.per/100,step=per+P;
+   for(let k=(i===0?0:1);k<=g.n;k++)if(showPosts)post(loc,k*step);
+   for(let k=0;k<g.n;k++){const f=[];if(isScreen())screenPanel(f,per,H);else run(f,m,per,H,offFactory(S.form,H,0,per));place(f,new THREE.Matrix4().makeTranslation(k*step+P,0,0),loc)}
+   place(loc,frameMatrix(cx,cz,ang[i]),all);
+   const len=g.n*step;cx+=Math.cos(ang[i])*len;cz+=Math.sin(ang[i])*len;
+  });
+ }
+ const geo=mergeGeometries(all,false);if(!geo)throw new Error("merge failed");
+ all.forEach(g=>g.dispose());
+ geo.computeBoundingBox();const b=geo.boundingBox;
+ geo.translate(-(b.min.x+b.max.x)/2,0,-(b.min.z+b.max.z)/2);
+ return geo;
+}
+
+/* ---- 3D-Vorschau ---- */
+let R=null;
+function initView(){
+ if(R)return R;
+ const host=document.getElementById("v3d"),canvas=document.getElementById("c3d");
+ const renderer=new THREE.WebGLRenderer({canvas,antialias:true,preserveDrawingBuffer:true});
+ renderer.setPixelRatio(Math.min(2,devicePixelRatio));renderer.shadowMap.enabled=true;renderer.toneMapping=THREE.ACESFilmicToneMapping;
+ const scene=new THREE.Scene();scene.background=new THREE.Color("#dfe7eb");
+ const pm=new THREE.PMREMGenerator(renderer);scene.environment=pm.fromScene(new RoomEnvironment(),.04).texture;
+ const cam=new THREE.PerspectiveCamera(40,2,.05,200);
+ const sun=new THREE.DirectionalLight(0xffffff,2.2);sun.position.set(6,10,7);sun.castShadow=true;sun.shadow.mapSize.set(2048,2048);
+ Object.assign(sun.shadow.camera,{left:-12,right:12,top:12,bottom:-12,far:40});scene.add(sun,new THREE.HemisphereLight(0xdfefff,0x6d7f55,.8));
+ const ground=new THREE.Mesh(new THREE.CircleGeometry(40,64),new THREE.MeshStandardMaterial({color:"#8fae6e",roughness:1}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+ const controls=new OrbitControls(cam,canvas);controls.enableDamping=true;controls.maxPolarAngle=Math.PI*.49;
+ const resize=()=>{const w=host.clientWidth,h=Math.round(w*.5);if(!w)return;renderer.setSize(w,h,false);canvas.style.width=w+"px";canvas.style.height=h+"px";cam.aspect=w/h;cam.updateProjectionMatrix()};
+ new ResizeObserver(resize).observe(host);resize();
+ const loop=()=>{if(!host.hidden){controls.update();renderer.render(scene,cam)}requestAnimationFrame(loop)};loop();
+ R={renderer,scene,cam,controls,mesh:null,fitted:""};return R;
+}
+let current=null;
+function buildMesh(){const mesh=new THREE.Mesh(buildGeometry(),material());mesh.castShadow=true;mesh.name="Anlage";return mesh}
+function update(){
+ const v=document.getElementById("v3d");if(!v||v.hidden)return;
+ const r=initView();
+ if(r.mesh){r.scene.remove(r.mesh);r.mesh.geometry.dispose()}
+ r.mesh=buildMesh();r.scene.add(r.mesh);
+ const b=new THREE.Box3().setFromObject(r.mesh),size=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+ const key=S.product+L_key();
+ if(r.fitted!==key){const dist=Math.max(size.x,size.z,size.y*2)*1.1+1.5;r.cam.position.set(c.x+dist*.35,size.y*1.4+dist*.25,c.z+dist);r.controls.target.set(c.x,size.y*.45,c.z);r.fitted=key}
+ schedule();
+}
+function L_key(){const L=layout();return L.total+"|"+L.segs.length}
+
+/* ---- USDZ für AR Quick Look ---- */
+let timer=0,url="",busy=false;
+function schedule(){clearTimeout(timer);setArState("busy");timer=setTimeout(prepare,500)}
+async function prepare(){
+ if(!AR_OK){setArState("na");return}
+ if(busy){schedule();return}busy=true;
+ try{
+  const scene=new THREE.Scene();scene.add(buildMesh());
+  const data=await new USDZExporter().parse(scene,{quickLookCompatible:true});
+  if(url)URL.revokeObjectURL(url);
+  url=URL.createObjectURL(new Blob([data],{type:"model/vnd.usdz+zip"}));
+  setArState("ok");
+ }catch(e){console.warn(e);setArState("err")}finally{busy=false}
+}
+function setArState(st){
+ document.querySelectorAll("a[data-ar]").forEach(a=>{
+  a.classList.toggle("ready",st==="ok");
+  if(st==="ok"){a.setAttribute("href",url+"#allowsContentScaling=0")}else a.removeAttribute("href");
+  const s=a.querySelector("span");if(s)s.textContent=st==="ok"?"In AR ansehen":st==="busy"?"AR wird vorbereitet …":st==="na"?"AR nur in Safari (iPad/iPhone)":"AR-Fehler, erneut versuchen";
+ });
+ document.querySelectorAll("[data-arhint]").forEach(p=>p.hidden=st!=="na");
+}
+window.SV3D={update,prepare:()=>{if(!AR_OK){setArState("na");return}url?setArState("ok"):schedule()},invalidate:()=>{if(url){URL.revokeObjectURL(url);url=""}},AR_OK};
+document.dispatchEvent(new Event("sv3d-ready"));
+</script>
+</body></html>
