@@ -157,6 +157,14 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 .aihr{border:none;border-top:1px solid var(--line);margin:12px 0}
 #aiForm{display:flex;gap:8px}#aiForm input{flex:1;min-width:0}#aiForm button{flex:none}
 @media (prefers-reduced-motion:reduce){.aim.busy i,#aiMic .pulse{animation:none}}
+.posbox{border:1.5px solid var(--line);border-radius:6px;padding:12px 14px;background:var(--sheet)}
+.poslist{margin:0 0 10px;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px}
+.poslist li{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:8px 10px}
+.poslist li.cur{border-color:var(--accent)}.poslist small{color:var(--muted)}.poslist button{min-height:38px;padding:6px 12px}
+.posnote{background:var(--sheet);border-left:4px solid var(--accent);padding:10px 12px;margin-bottom:14px;font-size:14px}
+.sendbox{border:1.5px solid var(--accent);border-radius:6px;padding:12px 14px}
+.aibox{margin-top:10px;background:var(--sheet);border-left:4px solid var(--accent);padding:10px 12px;font-size:14px}
+.pngs{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:8px;margin-top:8px}
 @media (prefers-reduced-motion:no-preference){.tile,.chip,button{transition:border-color .12s,background .12s}}
 </style>
 
@@ -239,7 +247,7 @@ const MAIL="kundenservice@eleo-zaun.de";
 /* Zeiten laut ELEO-Website / Katalog (Stand Okt. 2026, unverbindlich, saisonabhängig) */
 const TIMES={offer:[1,2],std:[8,10],exp:[6,7]};
 
-const DEF=()=>({step:0,product:"Zaun",model:"Lucca",form:"Gerade",tip:"Lanze",bar:"",coat:"Anthrazit DB 703",ral:"7016",
+const DEF=()=>({positions:[],shipTo:"Montageort (Endkunde)",step:0,product:"Zaun",model:"Lucca",form:"Gerade",tip:"Lanze",bar:"",coat:"Anthrazit DB 703",ral:"7016",
  fill:"Wie Modell",wishes:[],wishText:"",express:false,
  screenVar:"voll",screenMat:"Metall",backwall:"ohne Design",screenUse:"Zaun",handrail:"",
  total:1000,height:100,fields:0,posts:"Zum Einbetonieren",slope:"",slopeUnit:"cm",
@@ -311,6 +319,15 @@ function plan(){
  const f=d=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
  return{w,offer:f(offer),from:f(from),to:f(to),kw:`KW ${isoWeek(from)}–${isoWeek(to)}`};
 }
+
+/* ---------- Positionen (mehrere Produkte in einer Anfrage) ---------- */
+const FIRMA={name:"Stahl & Verstand",strasse:"Friedrichstraße 41",ort:"73770 Denkendorf",mail:"info@stahlundverstand.de"};
+const PKEYS=["product","model","form","tip","bar","coat","ral","fill","wishes","wishText","screenVar","screenMat","backwall","screenUse","handrail","total","height","fields","posts","slope","slopeUnit","hinge","swing","lock","mount","slab","pts","lens","photo","place","activePart"];
+function posSnap(){const o={};PKEYS.forEach(k=>o[k]=S[k]===undefined?null:JSON.parse(JSON.stringify(S[k])));return o}
+function posLoad(o){const d=DEF();PKEYS.forEach(k=>S[k]=o&&o[k]!==undefined&&o[k]!==null?JSON.parse(JSON.stringify(o[k])):d[k])}
+function withPos(o,fn){const keep=posSnap();posLoad(o);fixState();try{return fn()}finally{posLoad(keep);fixState()}}
+function allPositions(){return [...(Array.isArray(S.positions)?S.positions:[]),posSnap()]}
+function posLabel(o){return withPos(o,()=>`${S.product==="Französischer Balkon"?"Franz. Balkon":S.product} ${modelLabel()}, ${cm(layout().total)}`)}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function chips(key,opts,dis=[]){return `<div class="chips">${opts.map(o=>`<button type="button" class="chip" data-k="${key}" data-v="${esc(o)}" aria-pressed="${S[key]===o}" ${dis.includes(o)?"disabled":""}>${esc(o)}</button>`).join("")}</div>`}
@@ -345,7 +362,8 @@ function renderPanel(){
  const P=$("#panel");let h="";const st=S.step;
  if(st===0){
   const list=load("sv-list",[]);
-  h=`<h2>Was soll entstehen?</h2><p class="lede">Tippen Sie auf die Art der Anlage. Die Ansicht rechts zeigt sie sofort in Farbe.</p>
+  const np=(S.positions||[]).length;
+  h=`${np?`<div class="posnote">Angebot mit mehreren Positionen: ${np} schon gespeichert. Du legst jetzt <b>Position ${np+1}</b> an. Kundendaten bleiben erhalten.</div>`:""}<h2>Was soll entstehen?</h2><p class="lede">Tippen Sie auf die Art der Anlage. Die Ansicht rechts zeigt sie sofort in Farbe.</p>
   <div class="tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-prod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong><span>${p.d}</span></button>`).join("")}</div>
   <fieldset style="margin-top:24px"><legend>Gespeicherte Beratungen</legend>${list.length?`<ul class="saved">${list.map(e=>`<li><span><b>${esc(e.name||"Ohne Namen")}</b> · ${esc(e.product)} ${esc(e.model)}<small>${esc(e.date)}</small></span><span class="row"><button type="button" data-open="${e.id}">Öffnen</button><button type="button" data-del="${e.id}">Löschen</button></span></li>`).join("")}</ul>`:'<p class="hint">Noch keine. Im letzten Schritt speichern Sie eine Beratung mit dem Kundennamen.</p>'}</fieldset>`;
  }else if(st===1){
@@ -397,8 +415,8 @@ function renderPanel(){
   <div class="grid2">${sel("cSal","Anrede",["","Frau","Herr","Familie","Firma"])}<span></span>${txt("cFirst","Vorname")}${txt("cLast","Nachname / Firma")}
   ${txt("cStreet","Straße, Hausnr.")}<div class="grid2 zip">${txt("cZip","PLZ","text")}${txt("cCity","Ort")}</div>
   ${txt("cPhone","Telefon","tel")}${txt("cMail","E-Mail","email")}</div>
-  <fieldset style="margin-top:16px"><legend>Lieferung</legend>${check("altShip","Lieferadresse weicht ab")}
-  ${S.altShip?`<div class="grid2" style="margin-top:10px">${txt("sName","Name / Baustelle")}${txt("sStreet","Straße, Hausnr.")}${txt("sZip","PLZ")}${txt("sCity","Ort")}</div>`:""}
+  <fieldset style="margin-top:16px"><legend>Lieferung durch ELEO</legend><p class="hint" style="margin-top:0">Angebot und Rechnung gehen immer an Stahl &amp; Verstand. Der Kunde erscheint nur als Kommission und Montageort.</p>${sel("shipTo","Lieferung an",["Montageort (Endkunde)","Stahl & Verstand","Abweichende Adresse"])}
+  ${S.shipTo==="Abweichende Adresse"?`<div class="grid2" style="margin-top:10px">${txt("sName","Name / Baustelle")}${txt("sStreet","Straße, Hausnr.")}${txt("sZip","PLZ")}${txt("sCity","Ort")}</div>`:""}
   <div class="grid2" style="margin-top:10px">${sel("unload","Abladen",["Bordsteinkante","Auf Grundstück, wenn befahrbar","Nach Absprache mit Kunde"])}</div>
   <div style="margin-top:10px">${area("shipNote","Hinweis für Lieferant / Spedition","z. B. in die Garage stellen, Zufahrt nur bis 7,5 t, vorher 30 Min. anrufen, Hund im Hof")}</div></fieldset>
   <div class="grid2">${sel("install","Montage",["Selbstmontage","Montagepartner gewünscht"])}${sel("measure","Aufmaß",["Kunde misst selbst","Vor Ort aufgenommen (Händler)","Virtuelles Aufmaß gewünscht","Aufmaßservice gewünscht"])}</div>
@@ -407,10 +425,14 @@ function renderPanel(){
   h=`<h2>Anfrage & Zeitplan</h2><p class="lede">So geht es nach der Anfrage weiter.</p>
   <fieldset><legend>Bearbeitungszeit</legend>${check("express","Expressfertigung gewünscht (gegen Aufpreis)")}${timeline()}</fieldset>
   <fieldset><legend>Zahlung laut ELEO</legend><p class="hint" style="margin:0">50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu.</p></fieldset>
+  ${positionsHtml()}
+  <fieldset class="sendbox"><legend>An ELEO senden</legend>
+   <p class="hint" style="margin-top:0">1. Bilder vorbereiten, 2. senden. Die Mail-App öffnet sich mit dem Anfrage-Text und allen Bildern im Anhang. Die Empfängeradresse ist dann in der Zwischenablage, im Feld „An“ einfach einfügen.</p>
+   <div class="row"><button type="button" id="btnPrep">1. Bilder vorbereiten</button><button type="button" class="primary" id="btnShare" disabled>2. Mit Bildern an ELEO senden</button><button type="button" id="btnSave">Beratung speichern</button></div>
+   <p id="copyMsg" class="toast" role="status"></p><div id="pngWrap" class="pngs"></div></fieldset>
   <fieldset><legend>Anfrage-Text</legend><pre class="out" id="out"></pre></fieldset>
-  <div class="row"><button type="button" class="primary" id="btnCopy">Anfrage kopieren</button><a class="btn" id="mailLink" href="#">In Mail-App öffnen</a><button type="button" id="btnSave">Beratung speichern</button><span id="copyMsg" class="toast" role="status"></span></div>
-  <p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${MAIL}</span> · Tel. +49 (0) 9565 / 50 917 0</p>
-  <fieldset style="margin-top:14px"><legend>Bilder für die Mail</legend><div class="row"><button type="button" id="btnPng">Ansicht und Skizze als Bild erzeugen</button></div><div id="pngWrap" style="margin-top:10px"></div></fieldset>`;
+  <div class="row"><button type="button" id="btnCopy">Text kopieren</button><a class="btn" id="mailLink" href="#">Nur Text per Mail (ohne Bilder)</a></div>
+  <p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${MAIL}</span> · Tel. +49 (0) 9565 / 50 917 0</p>`;
  }
  h+=`<div class="nav">${st>0?`<button type="button" data-go="-1">Zurück</button>`:"<span></span>"}${st<STEPS.length-1?`<button type="button" class="primary" data-go="1">Weiter: ${STEPS[st+1]}</button>`:""}</div>`;
  P.innerHTML=h;
@@ -453,6 +475,7 @@ function photoStepHtml(){
  return `<h2>Vor Ort zeigen</h2><p class="lede">${live?"Tablet ruhig halten, am besten auf ein Stativ. Ziehen Sie die vier Eckpunkte auf die Stelle: unten auf den Boden, oben auf die gewünschte Höhe. Der Kunde sieht die Anlage live im Kamerabild. Dann Foto schießen.":"Starten Sie die Live-Kamera oder fotografieren Sie die Stelle. Dann ziehen Sie die vier Eckpunkte: unten auf den Boden, oben auf die gewünschte Höhe. Zum Verschieben in die Fläche tippen und ziehen."}</p>
  <div class="row">${live?`<button type="button" class="primary" id="liveSnap">Foto schießen</button><button type="button" id="liveStop">Kamera beenden</button>`:`<button type="button" class="primary" id="liveStart">Live-Kamera</button><label class="btn filebtn2" for="photoIn">${S.photo?"Neues Foto":"Foto aufnehmen oder wählen"}</label><input type="file" accept="image/*" capture="environment" id="photoIn" class="vh">${S.photo?'<button type="button" id="photoDel">Foto entfernen</button>':""}`}${S.photo||live?'<button type="button" id="photoReset">Position zurücksetzen</button>':""}</div>
  <p id="liveMsg" class="warn" role="status"></p>
+ ${S.photo||live?`<div class="row" style="margin-top:10px"><button type="button" class="primary" id="aiDetectBtn">KI: Bestand erkennen</button><span class="hint">Die KI sucht den alten Zaun und setzt den neuen genau darauf.</span></div><div id="aiDetect"></div>`:""}
  ${live?"":`<fieldset class="arcard" style="margin-top:14px"><legend>Echtes AR auf dem iPad</legend><p>Die Anlage steht in Originalgröße auf dem Boden und bleibt an ihrem Platz, wenn Sie mit dem iPad herumgehen. Mit Ecken aus dem Grundriss, in der gewählten Farbe.</p>${arButton()}<p class="hint" data-arhint hidden style="margin-top:10px">AR öffnet Apples AR-Ansicht. Das klappt in Safari auf iPad oder iPhone, wenn die Seite als eigene Datei über https geöffnet ist. In der Claude-Ansicht steht es nicht zur Verfügung.</p></fieldset>`}
  <div id="partBar" style="margin-top:12px"></div>
  <div class="stage" id="stage" hidden><img id="photoImg" alt="Foto des Grundstücks"><video id="liveVid" playsinline muted autoplay hidden></video><div id="layers"></div><svg id="handles" aria-label="Eckpunkte ziehen"></svg>${live?'<span class="livebadge">LIVE</span>':""}</div>
@@ -460,6 +483,14 @@ function photoStepHtml(){
 }
 
 function arButton(){return `<a class="arbtn" rel="ar" data-ar><img alt="" width="26" height="26" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22%3E%3Cpath d=%22M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7%22/%3E%3C/svg%3E"><span>AR wird vorbereitet …</span></a>`}
+
+function positionsHtml(){
+ const pos=S.positions||[];
+ return `<fieldset class="posbox"><legend>Positionen in diesem Angebot</legend>
+  <ol class="poslist">${pos.map((o,i)=>`<li><span><b>Position ${i+1}</b> · ${esc(posLabel(o))}</span><span class="row"><button type="button" data-posedit="${i}">Bearbeiten</button><button type="button" data-posdel="${i}">Entfernen</button></span></li>`).join("")}
+  <li class="cur"><span><b>Position ${pos.length+1}</b> · ${esc(posLabel(posSnap()))} <small>(wird gerade bearbeitet)</small></span></li></ol>
+  <button type="button" id="posAdd">+ Weitere Position hinzufügen (z. B. Tor)</button></fieldset>`;
+}
 /* ---------- Geometrie ---------- */
 const VB={w:820,h:400,l:80,r:30,t:56,b:78};
 function curveOff(t,H,s,form){
@@ -685,42 +716,46 @@ function specRows(){
 }
 function renderSpec(){$("#spec").innerHTML=specRows().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}
 function requestText(){
- const d=new Date().toLocaleDateString("de-DE"),p=plan();
- const rows=specRows().map(([k,v])=>`  ${(k+":").padEnd(15)} ${v}`).join("\n");
+ const d=new Date().toLocaleDateString("de-DE"),p=plan(),pos=allPositions(),multi=pos.length>1;
+ const block=(o,i)=>withPos(o,()=>`${multi?`POSITION ${i+1}: ${S.product} ${modelLabel()}`:"PRODUKT"}\n`+specRows().filter(([k])=>k!=="Fertigung").map(([k,v])=>`  ${(k+":").padEnd(15)} ${v}`).join("\n"));
  const addr=[S.cStreet,[S.cZip,S.cCity].filter(Boolean).join(" ")].filter(Boolean).join(", ");
- const ship=S.altShip?[S.sName,S.sStreet,[S.sZip,S.sCity].filter(Boolean).join(" ")].filter(Boolean).join(", "):"wie Rechnungsadresse";
- return `Betreff: Angebotsanfrage ${S.product} ${modelLabel()}${S.cLast?" – "+S.cLast:""}
+ const kom=custName()||S.cLast||"–";
+ const ship=S.shipTo==="Stahl & Verstand"?`${FIRMA.name}, ${FIRMA.strasse}, ${FIRMA.ort}`:S.shipTo==="Abweichende Adresse"?[S.sName,S.sStreet,[S.sZip,S.sCity].filter(Boolean).join(" ")].filter(Boolean).join(", ")||"–":`Montageort (siehe Kommission): ${addr||"–"}`;
+ const labels=pos.map(o=>withPos(o,()=>S.product+" "+modelLabel())).join(" + ");
+ const anl=[];pos.forEach((o,i)=>{const n=multi?"-pos"+(i+1):"";anl.push("ansicht"+n+".png","skizze"+n+".png");if(o.photo)anl.push("fotomontage"+n+".jpg")});
+ return `Betreff: Angebotsanfrage ${labels} · Kommission ${kom} · ${FIRMA.name}
 
 Guten Tag,
 
-bitte erstellen Sie ein unverbindliches Angebot inkl. technischer Zeichnung für folgende Anlage:
+bitte erstellen Sie ein unverbindliches Angebot inkl. technischer Zeichnung für ${multi?"folgende "+pos.length+" Positionen. Bitte alle Positionen in EINEM Angebot zusammenfassen":"folgende Anlage"}.
 
-PRODUKT
-${rows}
+ANGEBOT UND RECHNUNG AN
+  ${FIRMA.name}
+  ${FIRMA.strasse}
+  ${FIRMA.ort}
+  ${FIRMA.mail}
 
-KUNDE (RECHNUNG)
-  Name:           ${custName()||"–"}
-  Adresse:        ${addr||"–"}
-  Telefon:        ${S.cPhone||"–"}
-  E-Mail:         ${S.cMail||"–"}
+${pos.map(block).join("\n\n")}
+
+KOMMISSION / MONTAGEORT
+  Kommission:     ${kom}
+  Montageort:     ${addr||"–"}
 
 LIEFERUNG
-  Lieferadresse:  ${ship}
+  Lieferung an:   ${ship}
   Abladen:        ${S.unload}
   Hinweis:        ${S.shipNote||"–"}
-
-MONTAGE & AUFMASS
-  Montage:        ${S.install}
-  Aufmaß:         ${S.measure}
 
 BEMERKUNGEN
   ${S.notes||"–"}
 
 Gewünschte Fertigung: ${S.express?"Expressfertigung ("+TIMES.exp.join("–")+" Wochen)":"Standard ("+TIMES.std.join("–")+" Wochen)"}, Liefer-Wunschzeitraum ab ${p.from}.
-Ansicht, bemaßte Skizze${S.photo?" und Fotomontage vor Ort":""} liegen als Bilder bei.
+Anlagen: ${anl.join(", ")}
 
 Mit freundlichen Grüßen
-Stahl & Verstand
+${FIRMA.name}
+${FIRMA.strasse}, ${FIRMA.ort}
+${FIRMA.mail}
 Aufgenommen am ${d}`;
 }
 function updateOut(){const o=$("#out");if(!o)return;const t=requestText();o.textContent=t;
@@ -882,14 +917,14 @@ function layoutPhoto(){
   const lay=$("#lay-"+i);if(lay)lay.style.transform=`matrix3d(${h[0]},${h[3]},0,${h[6]},${h[1]},${h[4]},0,${h[7]},0,0,1,0,${h[2]},${h[5]},0,1)`;
   const act=(S.activePart||0)===i;
   g+=`<polygon points="${q.map(v=>v.join(",")).join(" ")}" class="qd${act?" act":""}"/>`;
-  if(act)q.forEach((v,k)=>g+=`<circle cx="${v[0]}" cy="${v[1]}" r="15" class="hd" data-h="${k}"/><circle cx="${v[0]}" cy="${v[1]}" r="3" class="hdc"/>`);
+  if(act)q.forEach((v,k)=>g+=`<circle cx="${v[0]}" cy="${v[1]}" r="26" class="hd" data-h="${k}"/><circle cx="${v[0]}" cy="${v[1]}" r="3" class="hdc"/>`);
  });
  hs.innerHTML=g;
 }
 let phDrag=null;
 document.addEventListener("pointerdown",e=>{const c=e.target.closest("#handles");if(!c)return;
  const r=c.getBoundingClientRect(),x=(e.clientX-r.left)/r.width,y=(e.clientY-r.top)/r.height,i=S.activePart||0,pts=S.place[i];if(!pts)return;
- let k=pts.findIndex(p=>Math.hypot((p[0]-x)*r.width,(p[1]-y)*r.height)<28);
+ let k=pts.findIndex(p=>Math.hypot((p[0]-x)*r.width,(p[1]-y)*r.height)<46);
  if(k<0){const cx=pts.reduce((a,p)=>a+p[0],0)/4,cy=pts.reduce((a,p)=>a+p[1],0)/4;k="all";phDrag={k,x,y,start:pts.map(p=>[...p])}}else phDrag={k};
  c.setPointerCapture(e.pointerId);e.preventDefault()});
 document.addEventListener("pointermove",e=>{if(!phDrag)return;const c=$("#handles");const r=c.getBoundingClientRect(),x=Math.max(0,Math.min(1,(e.clientX-r.left)/r.width)),y=Math.max(0,Math.min(1,(e.clientY-r.top)/r.height)),i=S.activePart||0;
@@ -1134,6 +1169,118 @@ document.addEventListener("change",e=>{const t=e.target;
 /* ---------- Logo (aus config.js, nur in der Online-Version) ---------- */
 window.LOGO_DATA=window.LOGO_DATA||null;
 (async function(){const c=window.SV_CONFIG;if(!c||!c.logo)return;try{const r=await fetch(c.logo);if(!r.ok)return;const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="Stahl & Verstand">`;el.classList.add("haslogo")});refresh(false)};fr.readAsDataURL(await r.blob())}catch(e){}})();
+/* ---------- Positionen bearbeiten ---------- */
+function note(t){const m=$("#copyMsg");if(m){m.textContent=t}}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="posAdd"){if(!Array.isArray(S.positions))S.positions=[];S.positions.push(posSnap());posLoad(null);S.step=0;refresh(true);window.scrollTo({top:0,behavior:"smooth"});return}
+ if(b.dataset.posedit!==undefined){const i=+b.dataset.posedit,cur=posSnap(),o=S.positions[i];S.positions[i]=cur;posLoad(o);S.step=1;refresh(true);window.scrollTo({top:0,behavior:"smooth"});return}
+ if(b.dataset.posdel!==undefined){if(!b.dataset.armed){b.dataset.armed=1;b.textContent="Wirklich entfernen?";return}S.positions.splice(+b.dataset.posdel,1);refresh(true);return}
+ if(b.id==="btnPrep")return prepFiles(b);
+ if(b.id==="btnShare")return shareFiles();
+});
+
+/* ---------- Bilder für ELEO erzeugen ---------- */
+function svgPngP(el){return new Promise(res=>svgToImg(el,{"--draw":"#22313b","--dim":"#c8262a","--grid":"#dfe5e9","--muted":"#5d6972"},img=>res(img?img.src:null)))}
+function montageData(){
+ return new Promise(resolve=>{
+  if(!S.photo)return resolve(null);
+  const base=new Image();base.onerror=()=>resolve(null);
+  base.onload=()=>{
+   const c=document.createElement("canvas");c.width=base.width;c.height=base.height;const ctx=c.getContext("2d");ctx.drawImage(base,0,0);
+   ensurePlace();const parts=photoParts();let left=parts.length;
+   const done=()=>resolve(c.toDataURL("image/jpeg",.88));
+   parts.forEach((p,i)=>{const info=partSvg(p,true),im=new Image();
+    im.onload=()=>{const q=S.place[i].map(([x,y])=>[x*c.width,y*c.height]),h=homography([[0,0],[PW,0],[PW,info.H],[0,info.H]],q);
+     const cols=24,rows=12,y0=-info.pad,yh=info.H;
+     for(let a=0;a<cols;a++)for(let b=0;b<rows;b++){
+      const xs=[PW*a/cols,PW*(a+1)/cols],ys=[y0+(yh-y0)*b/rows,y0+(yh-y0)*(b+1)/rows];
+      const P=[[xs[0],ys[0]],[xs[1],ys[0]],[xs[1],ys[1]],[xs[0],ys[1]]],S2=P.map(([x,y])=>[x*2,(y+info.pad)*2]),D2=P.map(([x,y])=>hApply(h,x,y));
+      tri(ctx,im,[S2[0],S2[1],S2[2]],[D2[0],D2[1],D2[2]]);tri(ctx,im,[S2[0],S2[2],S2[3]],[D2[0],D2[2],D2[3]]);
+     }
+     if(--left===0)done()};
+    im.onerror=()=>{if(--left===0)done()};
+    im.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(info.svg)});
+  };
+  base.src=S.photo;
+ });
+}
+function dataToFile(data,name){const [h,b]=data.split(","),type=h.match(/:(.*?);/)[1],bin=atob(b),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new File([u],name,{type})}
+let shareList=[];
+async function prepFiles(btn){
+ try{navigator.clipboard&&navigator.clipboard.writeText(MAIL).catch(()=>{})}catch(e){}
+ btn.disabled=true;btn.textContent="Bilder werden erstellt …";
+ const keep=posSnap(),view=S.view,pos=allPositions(),multi=pos.length>1,out=[];
+ try{
+  for(let i=0;i<pos.length;i++){
+   posLoad(pos[i]);fixState();drawLook();drawSketch();
+   const n=multi?"-pos"+(i+1):"";
+   const look=await svgPngP($("#look")),sk=await svgPngP($("#sketch"));
+   if(look)out.push({name:"ansicht"+n+".png",data:look,cap:(multi?"Position "+(i+1)+": ":"")+"Ansicht"});
+   if(sk)out.push({name:"skizze"+n+".png",data:sk,cap:(multi?"Position "+(i+1)+": ":"")+"Skizze mit Maßen"});
+   const m=await montageData();if(m)out.push({name:"fotomontage"+n+".jpg",data:m,cap:(multi?"Position "+(i+1)+": ":"")+"Fotomontage vor Ort"});
+  }
+ }finally{posLoad(keep);S.view=view;refresh(false)}
+ shareList=out;
+ const w=$("#pngWrap");w.innerHTML=out.map(f=>`<figure class="png"><img src="${f.data}" alt="${esc(f.cap)}"><figcaption>${esc(f.name)}</figcaption></figure>`).join("");
+ const canFiles=!!(navigator.canShare&&navigator.canShare({files:[dataToFile(out[0].data,out[0].name)]}));
+ btn.disabled=false;btn.textContent="1. Bilder neu erstellen";
+ const sb=$("#btnShare");if(sb)sb.disabled=!canFiles;
+ note(canFiles?`${out.length} Bilder bereit. Die ELEO-Adresse ist kopiert. Jetzt auf „2. Mit Bildern an ELEO senden“ tippen.`:"Senden mit Anhang geht in dieser Ansicht nicht. Öffne das Tool in Safari über deinen Link, oder halte die Bilder unten gedrückt und sichere sie.");
+}
+async function shareFiles(){
+ if(!shareList.length){note("Bitte zuerst „1. Bilder vorbereiten“ tippen.");return}
+ const t=requestText(),subj=t.split("\n")[0].replace("Betreff: ",""),body=t.split("\n").slice(2).join("\n");
+ try{await navigator.share({title:subj,text:t,files:shareList.map(f=>dataToFile(f.data,f.name))});note("Geteilt. Prüfe in der Mail-App, dass bei „An“ "+MAIL+" steht.")}
+ catch(e){if(e&&e.name==="AbortError")return;note("Teilen hat nicht geklappt ("+(e&&e.name||"Fehler")+"). Tippe nochmal auf „1. Bilder vorbereiten“ und dann sofort auf „2.“.")}
+}
+/* ---------- KI erkennt Bestand auf Foto / Live-Bild ---------- */
+function frameData(){
+ return new Promise(res=>{
+  const v=$("#liveVid");
+  const draw=(src,w,h)=>{const k=Math.min(1,1024/Math.max(w,h)),c=document.createElement("canvas");c.width=Math.round(w*k);c.height=Math.round(h*k);c.getContext("2d").drawImage(src,0,0,c.width,c.height);return c.toDataURL("image/jpeg",.8)};
+  if(LIVE&&v&&v.videoWidth)return res(draw(v,v.videoWidth,v.videoHeight));
+  if(!S.photo)return res(null);
+  const im=new Image();im.onload=()=>res(draw(im,im.width,im.height));im.onerror=()=>res(null);im.src=S.photo;
+ });
+}
+async function aiVision(prompt,jpeg){
+ if(aiKey()){
+  const r=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":aiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+   body:JSON.stringify({model:load("sv-ai-model","claude-sonnet-5-5"),max_tokens:500,messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:jpeg.split(",")[1]}},{type:"text",text:prompt}]}]})});
+  const j=await r.json();if(!r.ok)throw new Error(r.status===401?"API-Schlüssel ungültig (Assistent → Zahnrad)":"KI-Fehler "+r.status);
+  return (j.content||[]).map(c=>c.text||"").join("");
+ }
+ if(AI.sample){const blob=dataToFile(jpeg,"foto.jpg");const r=await AI.sample(prompt,{images:[blob],cache:false});return r.text||""}
+ throw new Error("Kein KI-Zugang. Tippe unten rechts auf „Assistent“ und dann auf das Zahnrad, um den Schlüssel einzutragen.");
+}
+let detectResult=null;
+async function detectExisting(btn){
+ const box=$("#aiDetect");btn.disabled=true;btn.textContent="KI schaut sich das Bild an …";box.innerHTML="";
+ try{
+  const jpeg=await frameData();if(!jpeg)throw new Error("Kein Bild vorhanden. Erst Foto machen oder Live-Kamera starten.");
+  const want=prodShort();
+  const raw=await aiVision(`Du hilfst einem Metallbauer. Auf dem Foto soll ein neuer ${want} geplant werden.
+Finde im Bild den vorhandenen Zaun, das Tor, Geländer oder die Grundstücksgrenze/Mauer, an deren Stelle der neue ${want} kommt. Gibt es nichts Vorhandenes, nimm die wahrscheinlichste Linie (z. B. Rasenkante, Mauerkrone, Balkonkante).
+Antworte ausschließlich mit JSON:
+{"gefunden":true|false,"art":"kurze Beschreibung des Bestands","punkte":[[x,y],[x,y],[x,y],[x,y]],"laenge_cm":Zahl|null,"hoehe_cm":Zahl|null,"sicherheit":"hoch|mittel|niedrig","hinweis":"1 Satz"}
+"punkte" = die vier Ecken der Fläche, die der neue ${want} einnehmen soll, als Anteile von Bildbreite und Bildhöhe (0 bis 1), in dieser Reihenfolge: oben links, oben rechts, unten rechts, unten links. Unten = Bodenlinie. Oben = Oberkante des Bestands bzw. ca. ${S.height||100} cm über dem Boden.
+Länge und Höhe in cm nur schätzen, wenn ein Maßstab erkennbar ist (Tür ~200 cm hoch, Ziegel, Auto, Zollstock), sonst null.`,jpeg);
+  const m=raw.match(/\{[\s\S]*\}/);if(!m)throw new Error("Die KI hat keine verwertbare Antwort gegeben. Bitte nochmal versuchen.");
+  const j=JSON.parse(m[0]);
+  const ok=Array.isArray(j.punkte)&&j.punkte.length===4&&j.punkte.every(p=>Array.isArray(p)&&p.length===2&&p.every(v=>typeof v==="number"&&v>=-0.05&&v<=1.05));
+  if(!ok)throw new Error("Die KI konnte keine passende Stelle bestimmen. Ziehe die Eckpunkte bitte von Hand.");
+  ensurePlace();S.place[S.activePart||0]=j.punkte.map(([x,y])=>[Math.max(0,Math.min(1,x)),Math.max(0,Math.min(1,y))]);
+  detectResult=j;save();renderPhotoStep();
+  const L=layout(),canDims=(j.laenge_cm>0||j.hoehe_cm>0)&&!L.planned;
+  box.innerHTML=`<div class="aibox"><b>${j.gefunden?"Bestand erkannt":"Kein Bestand gefunden, Vorschlag gesetzt"}:</b> ${esc(j.art||"")}${j.hinweis?" · "+esc(j.hinweis):""}<br><span class="hint">Sicherheit: ${esc(j.sicherheit||"?")}. Die Eckpunkte kannst du jederzeit nachziehen.</span>
+   ${canDims?`<div class="row" style="margin-top:8px"><span>Geschätzt: ${j.laenge_cm>0?"Länge ca. "+(Math.round(j.laenge_cm/10)/10).toLocaleString("de-DE")+" m":""}${j.laenge_cm>0&&j.hoehe_cm>0?", ":""}${j.hoehe_cm>0?"Höhe ca. "+Math.round(j.hoehe_cm)+" cm":""}</span><button type="button" id="aiDims">Als Maße übernehmen</button></div><p class="hint" style="margin:4px 0 0">Nur eine Schätzung aus dem Bild. Vor der Bestellung immer nachmessen.</p>`:""}</div>`;
+ }catch(e){box.innerHTML=`<p class="warn">${esc(e.message||e)}</p>`}
+ btn.disabled=false;btn.textContent="KI: Bestand erkennen";
+}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="aiDetectBtn")detectExisting(b);
+ if(b.id==="aiDims"&&detectResult){if(detectResult.laenge_cm>0)S.total=Math.round(detectResult.laenge_cm/5)*5;if(detectResult.hoehe_cm>0)S.height=Math.round(detectResult.hoehe_cm/5)*5;S.fields=0;refresh(false);renderPhotoStep();b.textContent="Übernommen";b.disabled=true}
+});
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
