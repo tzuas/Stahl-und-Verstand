@@ -131,6 +131,30 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 .arbtn{display:inline-flex;align-items:center;gap:10px;padding:12px 18px;min-height:48px;border-radius:6px;background:var(--muted);color:#fff;font:600 15px var(--f-body);text-decoration:none;pointer-events:none;opacity:.75}
 .arbtn.ready{background:#111;pointer-events:auto;opacity:1}.arbtn.small{padding:6px 12px;min-height:38px;font-size:13px}
 .arcard{border:1.5px solid var(--line);border-radius:6px;padding:14px 16px;background:var(--sheet)}.arcard p{margin:0 0 10px;max-width:60ch}
+#aiFab{position:fixed;right:max(18px,calc(env(safe-area-inset-right,0px) + 18px));bottom:max(18px,calc(env(safe-area-inset-bottom,0px) + 18px));z-index:50;display:flex;align-items:center;gap:8px;padding:14px 20px 14px 16px;border-radius:999px;background:var(--steel);color:var(--bg);border:none;font:700 15px var(--f-body);box-shadow:0 6px 20px rgba(0,0,0,.25);min-height:56px}
+#aiFab:hover{background:var(--steel);filter:brightness(1.1)}
+#aiPanel{position:fixed;right:max(12px,calc(env(safe-area-inset-right,0px) + 12px));bottom:max(12px,calc(env(safe-area-inset-bottom,0px) + 12px));z-index:50;width:min(420px,calc(100vw - 24px));height:min(620px,calc(100vh - 24px));display:flex;flex-direction:column;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.28);overflow:hidden}
+#aiPanel[hidden]{display:none}
+#aiPanel header{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--steel);color:var(--bg)}
+#aiPanel header b{font:700 17px var(--f-display);text-transform:uppercase;letter-spacing:.03em}
+#aiPanel header span{font:11px var(--f-mono);opacity:.75;flex:1}
+#aiPanel header button{border:none;color:var(--bg);background:transparent;min-height:36px;padding:4px 8px;font-size:16px}
+#aiSettings{padding:12px 14px;border-bottom:1px solid var(--line);background:var(--sheet);font-size:13.5px}#aiSettings p{margin:0 0 8px}
+#aiLog{flex:1;overflow-y:auto;padding:14px;display:flex;flex-direction:column;gap:10px}
+.aim{max-width:85%;padding:10px 13px;border-radius:14px;line-height:1.45;font-size:15px}
+.aim.user{align-self:flex-end;background:var(--accent);color:var(--accent-ink);border-bottom-right-radius:4px}
+.aim.assistant{align-self:flex-start;background:var(--sheet);border:1px solid var(--line);border-bottom-left-radius:4px}
+.aim.err{color:var(--warn)}.aim small{display:block;margin-top:6px;font:11px var(--f-mono);color:var(--muted)}
+.aim.busy{display:flex;gap:5px}.aim.busy i{width:7px;height:7px;border-radius:50%;background:var(--muted);animation:aib 1s infinite}.aim.busy i:nth-child(2){animation-delay:.15s}.aim.busy i:nth-child(3){animation-delay:.3s}
+@keyframes aib{0%,80%,100%{opacity:.25}40%{opacity:1}}
+.aihello{display:flex;flex-direction:column;gap:8px;align-items:flex-start}.aihello p{margin:0 0 4px;color:var(--muted)}.aihello .chip{text-align:left}
+.ailive{min-height:0;padding:0 14px;font-style:italic;color:var(--muted)}
+.aiin{display:flex;flex-direction:column;gap:8px;padding:12px;border-top:1px solid var(--line)}
+#aiMic{display:flex;align-items:center;justify-content:center;gap:10px;min-height:64px;border-radius:12px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:16px}
+#aiMic:hover{background:var(--accent);filter:brightness(1.07)}#aiMic.on{background:#c62828;border-color:#c62828;color:#fff}
+#aiMic .pulse{width:14px;height:14px;border-radius:50%;background:#fff;animation:aib 1s infinite}
+#aiForm{display:flex;gap:8px}#aiForm input{flex:1;min-width:0}#aiForm button{flex:none}
+@media (prefers-reduced-motion:reduce){.aim.busy i,#aiMic .pulse{animation:none}}
 @media (prefers-reduced-motion:no-preference){.tile,.chip,button{transition:border-color .12s,background .12s}}
 </style>
 
@@ -927,6 +951,137 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
  if(b.id==="liveSnap")snapLive();
 });
 document.addEventListener("visibilitychange",()=>{if(document.hidden&&LIVE){stopLive();refresh(true)}});
+/* ---------- KI-Assistent (Sprache) ---------- */
+const AI={open:false,hist:[],busy:false,listening:false,speak:true,sample:null,rec:null};
+AI.speak=load("sv-ai-speak",true);
+function aiKey(){return load("sv-ai-key","")}
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+(async()=>{try{if(window.claude&&claude.use){AI.sample=await claude.use("sample");aiRender()}}catch(e){}})();
+
+function aiMode(){return AI.sample?"claude":aiKey()?"api":"none"}
+function aiSystem(){
+ const ms=MODELS.map(m=>`${m.n} (${m.t}; ${m.sp?"mit Zierspitzen":"ohne Spitzen"}; Formen: ${m.f>1?FORMS.join("/"):"nur Gerade"}; Stäbe: ${m.st.join(" oder ")}; erhältlich als ${m.av.join(", ")}${m.noZink?"; nicht feuerverzinkt":""})`).join("\n");
+ const sc=SCREENS.map(m=>`${m.n}${m.p?" / teilflächig "+m.p:""}: ${m.t}`).join("\n");
+ return `Du bist der freundliche Verkaufs-Assistent von „Stahl & Verstand“, einem Fachhändler für Metallzäune. Du stehst mit dem Händler beim Kunden vor Ort und sprichst über das Tablet. Sprich Deutsch, per Sie, locker und kompetent wie ein guter Handwerksmeister. Deine Antworten werden vorgelesen: höchstens 3 kurze Sätze, keine Aufzählungszeichen, keine Emojis, Zahlen ausgeschrieben lesbar (z. B. "1,20 Meter").
+
+Du kannst den Konfigurator auf dem Tablet direkt umstellen. Wenn der Kunde etwas sehen oder ändern will, setze die passenden Felder in "aendern". Erfinde keine Preise; Preise nennt ELEO im Angebot. Lieferzeit laut Hersteller: Angebot in 1–2 Werktagen, Fertigung 8–10 Wochen, Express 6–7 Wochen, unverbindlich. Alles wird nach Maß gefertigt. Zahlung: 50 % Anzahlung, Rest bei Lieferung, 2 % Skonto bei Vorkasse.
+
+PRODUKTE: ${PRODUCTS.map(p=>p.id).join(", ")}
+MODELLE:
+${ms}
+SICHTSCHUTZ-MODELLE (Blech 1,5 mm, Metall oder Cortenstahl):
+${sc}
+BESCHICHTUNGEN: ${COATS.join(", ")}. Bei Sonderfarbe RAL-Nummer in "ral" (z. B. "6005" Moosgrün, "7016" Anthrazitgrau, "9005" Tiefschwarz). Anthrazit und Sonderfarben im Duplex-Verfahren (verzinkt + pulverbeschichtet), sehr langlebig. Unbeschichtet bekommt Edelrost-Optik.
+FORMEN: ${FORMS.join(", ")}. ZIERSPITZEN: ${TIPS.join(", ")}.
+FÜLLUNG: ${FILLS.join(", ")}.
+GELÄNDER-MONTAGE: Aufgesetzt, Stirnseitig. FRANZ. BALKON: In der Laibung, Vor der Fassade.
+PFOSTEN: Zum Einbetonieren, Zum Aufschrauben, Bestehende Pfosten (Montage dazwischen), Keine Pfosten.
+SCHRITTE (step): 0 Produkt, 1 Modell, 2 Ausführung, 3 Wünsche, 4 Maße, 5 Foto/AR, 6 Kunde, 7 Anfrage.
+ANSICHT (view): "look" farbige Ansicht, "tech" technische Skizze, "3d" 3D-Modell.
+
+AKTUELLE KONFIGURATION:
+${specRows().map(([k,v])=>k+": "+v).join("\n")}
+Aktueller Schritt: ${S.step} (${STEPS[S.step]})
+
+ANTWORTFORMAT: Antworte ausschließlich mit einem JSON-Objekt, ohne Text davor oder danach:
+{"sagen":"Was du sagst","aendern":{ … nur geänderte Felder … } oder null}
+Erlaubte Felder in "aendern": product, model, coat, ral, form, tip, fill, bar, height (cm, Zahl), total (cm, Zahl), fields (Zahl, 0=auto), posts, mount, slab (cm), express (true/false), screenMat, screenVar ("voll"/"teil"), wishText, notes, shipNote, cFirst, cLast, cStreet, cZip, cCity, cPhone, cMail, step (Zahl), view.
+Werte müssen exakt einer der oben genannten Schreibweisen entsprechen. Wenn der Kunde ein Modell nennt, das es für das gewählte Produkt nicht gibt, sag das und schlag ein passendes vor.`;
+}
+const AI_FIELDS=["product","model","coat","ral","form","tip","fill","bar","height","total","fields","posts","mount","slab","express","screenMat","screenVar","wishText","notes","shipNote","cFirst","cLast","cStreet","cZip","cCity","cPhone","cMail","step","view"];
+function aiApply(ch){
+ if(!ch||typeof ch!=="object")return [];
+ const done=[];let view=null;
+ for(const k of AI_FIELDS){if(!(k in ch))continue;let v=ch[k];
+  if(k==="view"){if(["look","tech","3d"].includes(v))view=v;continue}
+  if(["height","total","fields","slab","step"].includes(k)){v=+v;if(!isFinite(v))continue;if(k==="step")v=Math.max(0,Math.min(STEPS.length-1,Math.round(v)))}
+  if(k==="express")v=!!v;
+  if(k==="product"&&!PRODUCTS.some(p=>p.id===v))continue;
+  if(k==="coat"&&!COATS.includes(v))continue;
+  if(k==="ral")v=String(v).replace(/\D/g,"").slice(0,4);
+  if(k==="product"&&v!==S.product)S.fields=0;
+  S[k]=v;done.push(k);
+ }
+ if(done.length||view){if(view)S.view=view;refresh(true)}
+ return done;
+}
+async function aiAsk(text){
+ if(!text.trim()||AI.busy)return;
+ AI.hist.push({role:"user",content:text});AI.hist=AI.hist.slice(-14);
+ AI.busy=true;aiRender();
+ let raw="";
+ try{
+  const sys=aiSystem(),msgs=AI.hist.map(m=>({role:m.role,content:m.role==="assistant"?m.json||m.content:m.content}));
+  if(aiMode()==="claude"){
+   const r=await AI.sample([{role:"user",content:sys+"\n\n--- Gesprächsbeginn ---"},{role:"assistant",content:'{"sagen":"Verstanden.","aendern":null}'},...msgs],{cache:false,modelTier:"default"});raw=r.text||"";
+  }else if(aiMode()==="api"){
+   const res=await fetch("https://api.anthropic.com/v1/messages",{method:"POST",headers:{"content-type":"application/json","x-api-key":aiKey(),"anthropic-version":"2023-06-01","anthropic-dangerous-direct-browser-access":"true"},
+    body:JSON.stringify({model:load("sv-ai-model","claude-sonnet-5-5"),max_tokens:700,system:sys,messages:msgs})});
+   const j=await res.json();
+   if(!res.ok)throw new Error(res.status===401?"Der API-Schlüssel stimmt nicht. Bitte in den Einstellungen prüfen.":res.status===429?"Zu viele Anfragen. Bitte kurz warten.":(j.error&&j.error.message)||"Fehler "+res.status);
+   raw=(j.content||[]).map(c=>c.text||"").join("");
+  }else throw new Error("Kein KI-Zugang eingerichtet. Tippen Sie auf das Zahnrad.");
+  let out={sagen:raw,aendern:null};
+  const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=JSON.parse(m[0])}catch(e){}}
+  const changed=aiApply(out.aendern);
+  AI.hist.push({role:"assistant",content:out.sagen||"…",json:JSON.stringify(out),changed});
+  aiSay(out.sagen);
+ }catch(e){AI.hist.push({role:"assistant",content:e.code==="not_granted"?"Der KI-Zugriff wurde nicht erlaubt.":String(e.message||e),err:true})}
+ AI.busy=false;aiRender();
+}
+/* Stimme */
+let voiceDE=null;
+function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));voiceDE=vs.find(v=>/premium|enhanced|anna|helena|petra|markus/i.test(v.name))||vs[0]||null}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function aiSay(t){if(!AI.speak||!t||!("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[*_#]/g,""));u.lang="de-DE";if(voiceDE)u.voice=voiceDE;u.rate=1.02;speechSynthesis.speak(u)}
+function aiListen(){
+ if(AI.listening){AI.rec&&AI.rec.stop();return}
+ if(!SR){aiNote("Spracheingabe gibt es in diesem Browser nicht. Bitte tippen Sie die Frage ein.");return}
+ if("speechSynthesis" in window)speechSynthesis.cancel();
+ const r=new SR();r.lang="de-DE";r.interimResults=true;r.continuous=false;AI.rec=r;
+ let final="";const live=$("#aiLive");
+ r.onresult=e=>{let t="";for(const x of e.results){t+=x[0].transcript;if(x.isFinal)final=t}if(live)live.textContent=t};
+ r.onerror=e=>{AI.listening=false;aiRender();aiNote(e.error==="not-allowed"||e.error==="service-not-allowed"?"Mikrofon nicht erlaubt. Erlauben Sie es in den Einstellungen (Safari → Mikrofon). Auf dem iPad muss außerdem Siri/Diktieren aktiv sein.":e.error==="no-speech"?"Nichts gehört. Bitte noch einmal.":"Spracheingabe nicht verfügbar ("+e.error+").")};
+ r.onend=()=>{AI.listening=false;const t=(final||(live&&live.textContent)||"").trim();aiRender();if(t)aiAsk(t)};
+ try{r.start();AI.listening=true;aiRender()}catch(e){aiNote("Spracheingabe konnte nicht starten.")}
+}
+function aiNote(t){const n=$("#aiNote");if(n){n.textContent=t;n.hidden=!t}}
+/* Oberfläche */
+function aiMount(){
+ if($("#aiFab"))return;
+ document.body.insertAdjacentHTML("beforeend",`<button type="button" id="aiFab" aria-label="Assistent öffnen"><svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg><span>Assistent</span></button>
+ <section id="aiPanel" hidden aria-label="Sprach-Assistent"><header><b>Assistent</b><span id="aiMode"></span><button type="button" id="aiSpk" aria-label="Sprachausgabe"></button><button type="button" id="aiSet" aria-label="Einstellungen">⚙</button><button type="button" id="aiClose" aria-label="Schließen">✕</button></header>
+ <div id="aiSettings" hidden></div><div id="aiLog" aria-live="polite"></div><p id="aiNote" class="warn" hidden></p>
+ <div id="aiLive" class="ailive"></div>
+ <div class="aiin"><button type="button" id="aiMic" aria-label="Sprechen"></button><form id="aiForm"><input id="aiText" placeholder="Frage eintippen …" autocomplete="off"><button type="submit">Senden</button></form></div></section>`);
+}
+function aiRender(){
+ aiMount();const P=$("#aiPanel");P.hidden=!AI.open;$("#aiFab").hidden=AI.open;
+ const mode=aiMode();$("#aiMode").textContent=mode==="claude"?"über Claude":mode==="api"?"verbunden":"nicht eingerichtet";
+ $("#aiSpk").textContent=AI.speak?"🔊":"🔇";
+ const log=$("#aiLog");
+ const ex=['„Zeig mir Bologna in Moosgrün mit Bogen“','„Was ist der Unterschied zwischen verzinkt und Duplex?“','„Mach den Zaun 1,20 Meter hoch und 12 Meter lang“','„Wie lange dauert die Lieferung?“'];
+ log.innerHTML=AI.hist.length?AI.hist.map(m=>`<div class="aim ${m.role}${m.err?" err":""}">${esc(m.content)}${m.changed&&m.changed.length?`<small>Eingestellt: ${esc(m.changed.join(", "))}</small>`:""}</div>`).join(""):`<div class="aihello"><p>Tippen Sie auf das Mikrofon und fragen Sie einfach drauflos, zum Beispiel:</p>${ex.map(e=>`<button type="button" class="chip" data-aiex="${esc(e.slice(1,-1))}">${e}</button>`).join("")}</div>`;
+ if(AI.busy)log.insertAdjacentHTML("beforeend",'<div class="aim assistant busy"><i></i><i></i><i></i></div>');
+ log.scrollTop=log.scrollHeight;
+ const mic=$("#aiMic");mic.classList.toggle("on",AI.listening);mic.innerHTML=AI.listening?'<span class="pulse"></span>Ich höre zu …':'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+ if(!AI.listening)$("#aiLive").textContent="";
+ const st=$("#aiSettings");
+ const show=AI.showSet||mode==="none";st.hidden=!show;
+ if(show){st.innerHTML=mode==="claude"?`<p>Der Assistent läuft hier über Claude, ohne eigenen Schlüssel. Sprechen geht nur in der iPad-Version im Browser, hier tippen Sie die Frage ein.</p>`:`<p><b>KI-Zugang einrichten</b><br>Für die iPad-Version brauchen Sie einen API-Schlüssel von Anthropic (console.anthropic.com → API Keys). Er wird nur auf diesem Gerät gespeichert, nie online im Projekt. Abgerechnet wird nach Nutzung, eine Frage kostet meist unter einem Cent.</p><label class="f">API-Schlüssel<input id="aiKeyIn" type="password" placeholder="sk-ant-…" value="${esc(aiKey())}" autocomplete="off"></label><div class="row" style="margin-top:8px"><button type="button" class="primary" id="aiKeySave">Speichern</button>${aiKey()?'<button type="button" id="aiKeyDel">Schlüssel löschen</button>':""}</div>`}
+}
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="aiFab"){AI.open=true;aiRender();setTimeout(()=>{const t=$("#aiText");if(t&&!SR)t.focus()},50)}
+ if(b.id==="aiClose"){AI.open=false;if(AI.listening)AI.rec.stop();if("speechSynthesis" in window)speechSynthesis.cancel();aiRender()}
+ if(b.id==="aiMic")aiListen();
+ if(b.id==="aiSpk"){AI.speak=!AI.speak;store("sv-ai-speak",AI.speak);if(!AI.speak&&"speechSynthesis" in window)speechSynthesis.cancel();aiRender()}
+ if(b.id==="aiSet"){AI.showSet=!AI.showSet;aiRender()}
+ if(b.id==="aiKeySave"){const v=$("#aiKeyIn").value.trim();store("sv-ai-key",v);AI.showSet=false;aiNote(v?"":"Kein Schlüssel eingetragen.");aiRender()}
+ if(b.id==="aiKeyDel"){store("sv-ai-key","");aiRender()}
+ if(b.dataset.aiex){aiAsk(b.dataset.aiex)}
+});
+document.addEventListener("submit",e=>{if(e.target.id!=="aiForm")return;e.preventDefault();const t=$("#aiText");const v=t.value;t.value="";aiAsk(v)});
+aiRender();
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
