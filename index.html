@@ -153,6 +153,7 @@ figure.png{margin:10px 0 0}figure.png figcaption{font:12px var(--f-mono);color:v
 #aiMic{display:flex;align-items:center;justify-content:center;gap:10px;min-height:64px;border-radius:12px;background:var(--accent);border-color:var(--accent);color:var(--accent-ink);font-size:16px}
 #aiMic:hover{background:var(--accent);filter:brightness(1.07)}#aiMic.on{background:#c62828;border-color:#c62828;color:#fff}
 #aiMic .pulse{width:14px;height:14px;border-radius:50%;background:#fff;animation:aib 1s infinite}
+.aihr{border:none;border-top:1px solid var(--line);margin:12px 0}
 #aiForm{display:flex;gap:8px}#aiForm input{flex:1;min-width:0}#aiForm button{flex:none}
 @media (prefers-reduced-motion:reduce){.aim.busy i,#aiMic .pulse{animation:none}}
 @media (prefers-reduced-motion:no-preference){.tile,.chip,button{transition:border-color .12s,background .12s}}
@@ -1031,10 +1032,23 @@ async function aiAsk(text){
 }
 /* Stimme */
 let voiceDE=null;
-function pickVoice(){const vs=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));voiceDE=vs.find(v=>/premium|enhanced|anna|helena|petra|markus/i.test(v.name))||vs[0]||null}
+function deVoices(){try{return speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang))}catch(e){return[]}}
+function pickVoice(){const vs=deVoices(),want=load("sv-ai-voice","");voiceDE=vs.find(v=>v.name===want)||vs.find(v=>/premium|erweitert|enhanced/i.test(v.name))||vs.find(v=>/anna|helena|petra|markus|viktor/i.test(v.name))||vs[0]||null;if(AI.showSet)aiRender()}
+let ttsUnlocked=false;
+function ttsUnlock(){if(ttsUnlocked||!("speechSynthesis" in window))return;try{const u=new SpeechSynthesisUtterance(" ");u.volume=0;u.lang="de-DE";speechSynthesis.speak(u);ttsUnlocked=true}catch(e){}}
 if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
-function aiSay(t){if(!AI.speak||!t||!("speechSynthesis" in window))return;speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t.replace(/[*_#]/g,""));u.lang="de-DE";if(voiceDE)u.voice=voiceDE;u.rate=1.02;speechSynthesis.speak(u)}
+function aiSay(t,force){
+ if((!AI.speak&&!force)||!t||!("speechSynthesis" in window)){if(AI.convo&&AI.open&&!force)setTimeout(aiListen,400);return}
+ if(!voiceDE)pickVoice();
+ try{speechSynthesis.cancel()}catch(e){}
+ const u=new SpeechSynthesisUtterance(t.replace(/[*_#„“"]/g,""));u.lang="de-DE";if(voiceDE)u.voice=voiceDE;u.rate=+load("sv-ai-rate",1);u.pitch=1;u.volume=1;
+ AI.talking=true;aiRender();
+ u.onend=u.onerror=()=>{AI.talking=false;aiRender();if(AI.convo&&AI.open&&!force)setTimeout(aiListen,300)};
+ setTimeout(()=>{speechSynthesis.speak(u);try{speechSynthesis.resume()}catch(e){}},60);
+}
+AI.convo=load("sv-ai-convo",false);
 function aiListen(){
+ if(!AI.open)return;
  if(AI.listening){AI.rec&&AI.rec.stop();return}
  if(!SR){aiNote("Spracheingabe gibt es in diesem Browser nicht. Bitte tippen Sie die Frage ein.");return}
  if("speechSynthesis" in window)speechSynthesis.cancel();
@@ -1064,16 +1078,16 @@ function aiRender(){
  log.innerHTML=AI.hist.length?AI.hist.map(m=>`<div class="aim ${m.role}${m.err?" err":""}">${esc(m.content)}${m.changed&&m.changed.length?`<small>Eingestellt: ${esc(m.changed.join(", "))}</small>`:""}</div>`).join(""):`<div class="aihello"><p>Tippen Sie auf das Mikrofon und fragen Sie einfach drauflos, zum Beispiel:</p>${ex.map(e=>`<button type="button" class="chip" data-aiex="${esc(e.slice(1,-1))}">${e}</button>`).join("")}</div>`;
  if(AI.busy)log.insertAdjacentHTML("beforeend",'<div class="aim assistant busy"><i></i><i></i><i></i></div>');
  log.scrollTop=log.scrollHeight;
- const mic=$("#aiMic");mic.classList.toggle("on",AI.listening);mic.innerHTML=AI.listening?'<span class="pulse"></span>Ich höre zu …':'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
+ const mic=$("#aiMic");mic.classList.toggle("on",AI.listening);mic.innerHTML=AI.talking&&!AI.listening?'<span class="pulse"></span>Spricht … (antippen zum Unterbrechen)':AI.listening?'<span class="pulse"></span>Ich höre zu …':'<svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>';
  if(!AI.listening)$("#aiLive").textContent="";
  const st=$("#aiSettings");
  const show=AI.showSet||mode==="none";st.hidden=!show;
- if(show){st.innerHTML=mode==="claude"?`<p>Der Assistent läuft hier über Claude, ohne eigenen Schlüssel. Sprechen geht nur in der iPad-Version im Browser, hier tippen Sie die Frage ein.</p>`:`<p><b>KI-Zugang einrichten</b><br>Für die iPad-Version brauchen Sie einen API-Schlüssel von Anthropic (console.anthropic.com → API Keys). Er wird nur auf diesem Gerät gespeichert, nie online im Projekt. Abgerechnet wird nach Nutzung, eine Frage kostet meist unter einem Cent.</p><label class="f">API-Schlüssel<input id="aiKeyIn" type="password" placeholder="sk-ant-…" value="${esc(aiKey())}" autocomplete="off"></label><div class="row" style="margin-top:8px"><button type="button" class="primary" id="aiKeySave">Speichern</button>${aiKey()?'<button type="button" id="aiKeyDel">Schlüssel löschen</button>':""}</div>`}
+ if(show){st.innerHTML=(mode==="claude"?`<p>Der Assistent läuft hier über Claude, ohne eigenen Schlüssel. Sprechen geht nur in der iPad-Version im Browser, hier tippen Sie die Frage ein.</p>`:`<p><b>KI-Zugang einrichten</b><br>Für die iPad-Version brauchen Sie einen API-Schlüssel von Anthropic (console.anthropic.com → API Keys). Er wird nur auf diesem Gerät gespeichert, nie online im Projekt. Abgerechnet wird nach Nutzung, eine Frage kostet meist unter einem Cent.</p><label class="f">API-Schlüssel<input id="aiKeyIn" type="password" placeholder="sk-ant-…" value="${esc(aiKey())}" autocomplete="off"></label><div class="row" style="margin-top:8px"><button type="button" class="primary" id="aiKeySave">Speichern</button>${aiKey()?'<button type="button" id="aiKeyDel">Schlüssel löschen</button>':""}</div>`)+voiceSettings()}
 }
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
  if(b.id==="aiFab"){AI.open=true;aiRender();setTimeout(()=>{const t=$("#aiText");if(t&&!SR)t.focus()},50)}
  if(b.id==="aiClose"){AI.open=false;if(AI.listening)AI.rec.stop();if("speechSynthesis" in window)speechSynthesis.cancel();aiRender()}
- if(b.id==="aiMic")aiListen();
+ if(b.id==="aiMic"){if(AI.talking&&!AI.listening){speechSynthesis.cancel();AI.talking=false}aiListen()}
  if(b.id==="aiSpk"){AI.speak=!AI.speak;store("sv-ai-speak",AI.speak);if(!AI.speak&&"speechSynthesis" in window)speechSynthesis.cancel();aiRender()}
  if(b.id==="aiSet"){AI.showSet=!AI.showSet;aiRender()}
  if(b.id==="aiKeySave"){const v=$("#aiKeyIn").value.trim();store("sv-ai-key",v);AI.showSet=false;aiNote(v?"":"Kein Schlüssel eingetragen.");aiRender()}
@@ -1082,6 +1096,25 @@ document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)r
 });
 document.addEventListener("submit",e=>{if(e.target.id!=="aiForm")return;e.preventDefault();const t=$("#aiText");const v=t.value;t.value="";aiAsk(v)});
 aiRender();
+
+function voiceSettings(){
+ const vs=deVoices();
+ return `<hr class="aihr"><p><b>Stimme</b></p>
+ ${vs.length?`<label class="f">Stimme<select id="aiVoice">${vs.map(v=>`<option ${voiceDE&&v.name===voiceDE.name?"selected":""}>${esc(v.name)}</option>`).join("")}</select></label>`:'<p class="hint">Keine deutsche Stimme gefunden.</p>'}
+ <label class="f" style="margin-top:8px">Sprechtempo<select id="aiRate">${[["0.9","ruhig"],["1","normal"],["1.1","flott"]].map(([v,n])=>`<option value="${v}" ${String(load("sv-ai-rate",1))===v?"selected":""}>${n}</option>`).join("")}</select></label>
+ <label class="ck" style="margin-top:6px"><input type="checkbox" id="aiConvo" ${AI.convo?"checked":""}> Gesprächsmodus: nach jeder Antwort automatisch weiter zuhören</label>
+ <div class="row" style="margin-top:8px"><button type="button" id="aiTest">Stimme testen</button></div>
+ <p class="hint" style="margin-top:8px">Kein Ton? iPad lauter stellen und prüfen, dass der Ton nicht stumm ist. Natürlichere Stimmen laden: iPad-Einstellungen → Bedienungshilfen → Gesprochene Inhalte → Stimmen → Deutsch → z. B. „Anna (Premium)“ laden. Danach hier auswählen.</p>`;
+}
+document.addEventListener("pointerdown",e=>{if(e.target.closest("#aiPanel,#aiFab"))ttsUnlock()},true);
+document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
+ if(b.id==="aiTest"){ttsUnlock();aiSay("Guten Tag! Ich bin Ihr Assistent von Stahl und Verstand. Fragen Sie mich einfach nach Ihrem Wunschzaun.",true)}
+});
+document.addEventListener("change",e=>{const t=e.target;
+ if(t.id==="aiVoice"){store("sv-ai-voice",t.value);pickVoice();aiSay("So klinge ich jetzt.",true)}
+ if(t.id==="aiRate"){store("sv-ai-rate",+t.value)}
+ if(t.id==="aiConvo"){AI.convo=t.checked;store("sv-ai-convo",AI.convo)}
+});
 </script>
 <script type="importmap">{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js","three/addons/":"https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"}}</script>
 <script type="module">
