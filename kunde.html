@@ -699,8 +699,9 @@ async function callAI(){
  if(!r.ok)throw new Error(j.error||"Fehler "+r.status);
  return j.text||"";
 }
+let pendingAsk=null;
 async function ask(text,img){
- if(busy)return;
+ if(busy){if(text!==null)pendingAsk={text,img};return}
  if(text!==null)K.chat.push({role:"user",text,img:img||null});
  busy=true;renderChat();
  try{
@@ -719,6 +720,7 @@ async function ask(text,img){
   K.chat.push({role:"assistant",text:String(e.message).includes("eingerichtet")?"Der Assistent ist gerade nicht erreichbar. Sie können Ihr Projekt trotzdem unten Schritt für Schritt eingeben und absenden.":"Da hat die Verbindung nicht geklappt. Bitte tippen Sie auf „Nochmal versuchen“.",opts:["Nochmal versuchen"],act:null,err:true,fallback:String(e.message).includes("eingerichtet")});
  }
  busy=false;drawPreview();renderChat();save();
+ if(pendingAsk){const p=pendingAsk;pendingAsk=null;ask(p.text,p.img)}
 }
 /* ---------- Grundriss-Zeichner ---------- */
 const PLAN={w:600,h:380,grid:20};
