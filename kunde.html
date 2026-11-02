@@ -135,6 +135,36 @@ body.noscroll{overflow:hidden}
 .shotlist li.done .sn{background:var(--ok)}.shotlist .st{display:flex;flex-direction:column;min-width:0}.shotlist small{color:var(--muted);font-size:12.5px}
 .shotlist img{width:52px;height:52px;object-fit:cover;border-radius:4px}
 @media (prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto!important}}
+
+/* Professor Funke */
+.prof{display:block;overflow:visible}
+.prof .bob{animation:pbob 4s ease-in-out infinite;transform-origin:100px 250px}
+@keyframes pbob{50%{transform:translateY(-3px) rotate(-.6deg)}}
+.prof .eye{transform-box:fill-box;transform-origin:center;animation:pblink 5s infinite}
+@keyframes pblink{0%,93%,100%{transform:scaleY(1)}96%{transform:scaleY(.1)}}
+.prof .mouth{transform-box:fill-box;transform-origin:center}
+.prof.talk .mouth{animation:ptalk .28s ease-in-out infinite alternate}
+@keyframes ptalk{from{transform:scaleY(1)}to{transform:scaleY(3.4)}}
+.prof .gear,.prof .waves{opacity:0;transition:opacity .3s}
+.prof.think .gear{opacity:1;transform-box:fill-box;transform-origin:center;animation:pspin 2.2s linear infinite}
+@keyframes pspin{to{transform:rotate(360deg)}}
+.prof.think .brow{transform:translateY(-3px)}
+.prof.listen .waves{opacity:1;animation:pwave 1s ease-in-out infinite}
+@keyframes pwave{50%{opacity:.25}}
+.prof .rule{transform-box:fill-box;transform-origin:50% 90%}
+.prof.talk .rule{animation:pwag 1.2s ease-in-out infinite}
+@keyframes pwag{50%{transform:rotate(-8deg)}}
+#profDock{position:fixed;right:max(10px,env(safe-area-inset-right,0px));bottom:calc(118px + env(safe-area-inset-bottom,0px));z-index:5;width:78px;pointer-events:none;filter:drop-shadow(0 4px 8px rgba(0,0,0,.18))}
+#profDock .prof{width:78px;height:auto}
+#profDock .ptag{display:block;text-align:center;font:600 10.5px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;background:var(--steel);color:var(--bg);border-radius:6px;padding:2px 0;margin:-6px -8px 0;white-space:nowrap;position:relative}
+.profintro{display:flex;align-items:flex-end;gap:12px;margin:6px 0 14px}
+.profintro .prof{width:110px;flex:none;height:auto}
+.pbub{position:relative;background:var(--panel);border:1px solid var(--line);border-radius:16px 16px 16px 4px;padding:12px 14px;font-size:15px;line-height:1.45;margin-bottom:34px}
+.pbub::before{content:"";position:absolute;left:-8px;bottom:10px;border:8px solid transparent;border-right-color:var(--line);border-left:0}
+.km.bot{position:relative;padding-left:42px}
+.km.bot>.profhead{position:absolute;left:0;top:0;width:34px;height:34px;border-radius:50%;background:var(--panel);border:1px solid var(--line)}
+#kLog{padding-bottom:210px}
+@media (prefers-reduced-motion:reduce){.prof *{animation:none!important}}
 </style>
 </head>
 <body>
@@ -594,7 +624,7 @@ function sysPrompt(){
  const sc=SCREENS.map(m=>`${m.n}: ${m.t}`).join("\n");
  return `Du bist der digitale Projekt-Assistent von „${CFG.firma}“${CFG.inhaber?" (Inhaber "+CFG.inhaber+")":""}, einem Fachbetrieb für Metallzäune, Tore, Geländer und Sichtschutz (Hersteller ELEO, Fertigung nach Maß). Ein Interessent hat einen Link bekommen und bereitet hier sein Projekt vor, damit der Betrieb ohne Anfahrt ein Angebot erstellen kann.
 
-DEIN STIL: Deutsch, per Sie, aber richtig locker und sympathisch, wie ein gut gelaunter Handwerksmeister, der gern mal einen kleinen Spruch macht (z. B. „Der Zaun steht schon fast, fehlen nur noch ein paar Zahlen.“). Humor dezent, nie albern, nie auf Kosten des Kunden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot.
+DEIN STIL: Deutsch, per Sie, aber richtig locker und sympathisch, wie ein gut gelaunter Handwerksmeister, der gern mal einen kleinen Spruch macht (z. B. „Der Zaun steht schon fast, fehlen nur noch ein paar Zahlen.“). Humor dezent, nie albern, nie auf Kosten des Kunden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot. Du heißt Professor Funke und bist eine freundliche Figur auf der Seite: ein erfahrener Metallbau-Professor mit Schweißerbrille und Zollstock. In deiner ersten Nachricht stellst du dich kurz als Professor Funke vor. Du hast trockenen Werkstatthumor, z. B. „Zweimal messen, einmal schweißen.“ oder „Ein guter Zaun fängt mit einem guten Zollstock an.“, aber sparsam, höchstens ein Spruch alle paar Nachrichten.
 
 DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
 1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion "produkt" zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz sowie „Reparatur“ und „Etwas anderes“). Der Kunde kann auch frei schreiben.
@@ -1010,7 +1040,7 @@ function sysPromptRep(){
  const m=Object.entries(K.rep.masse||{}).filter(([,v])=>v!=="").map(([k,v])=>k+": "+v).join("; ");
  return `Du bist der digitale Service-Assistent von „${CFG.firma}“${CFG.inhaber?" (Inhaber "+CFG.inhaber+")":""}, einem Metallbau-Fachbetrieb. ${isFrei()?`Ein Kunde hat eine individuelle Anfrage. Das kann alles sein, was ein Metallbau-Fachbetrieb macht: Treppe, Podest, Balkon, Vordach, Terrassen- oder Carport-Überdachung, Handlauf, Geländer nach Maß, Fenster- oder Kellergitter, Stahltür, Mülltonnenbox, Brennholzregal, Möbel oder Deko aus Stahl, Schweiß- und Schlosserarbeiten, Sonderanfertigungen. Nimm jede Anfrage freundlich auf. Passt sie eindeutig nicht zu einem Metallbaubetrieb, sag ehrlich, dass du sie trotzdem an ${CFG.firma} weitergibst und sich jemand meldet.`:`Ein Kunde meldet einen Schaden oder Reparaturbedarf (Zaun, Tor, Geländer, Treppe, Schloss, Scharnier, Torantrieb, Schweißnaht, Rost, verbogene oder gebrochene Teile, Pulverbeschichtung).`} Dein Ziel: so viele genaue Infos, Maße und Fotos, dass ${CFG.firma} Material und Aufwand einschätzen kann, ohne extra hinzufahren.
 
-DEIN STIL: Deutsch, per Sie, locker und sympathisch wie ein gut gelaunter Handwerksmeister, beruhigend bei Schäden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage oder Aufgabe. Fachbegriffe kurz erklären. Keine Emojis. Keine Preise, keine Reparaturanleitungen zum Selbermachen bei tragenden oder sicherheitsrelevanten Teilen. Bei akuter Gefahr (Geländer locker, Tor kippt, scharfe Bruchkanten) zuerst sagen: Bereich absichern und nicht benutzen. Bei tragenden Bauteilen (Treppen, Balkone, Überdachungen) keine Statik-Aussagen, das prüft der Betrieb.
+DEIN STIL: Deutsch, per Sie, locker und sympathisch wie ein gut gelaunter Handwerksmeister, beruhigend bei Schäden. Du heißt Professor Funke und bist eine freundliche Figur auf der Seite: ein erfahrener Metallbau-Professor mit Schweißerbrille und Zollstock. In deiner ersten Nachricht stellst du dich kurz als Professor Funke vor. Du hast trockenen Werkstatthumor, z. B. „Zweimal messen, einmal schweißen.“ oder „Ein guter Zaun fängt mit einem guten Zollstock an.“, aber sparsam, höchstens ein Spruch alle paar Nachrichten. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage oder Aufgabe. Fachbegriffe kurz erklären. Keine Emojis. Keine Preise, keine Reparaturanleitungen zum Selbermachen bei tragenden oder sicherheitsrelevanten Teilen. Bei akuter Gefahr (Geländer locker, Tor kippt, scharfe Bruchkanten) zuerst sagen: Bereich absichern und nicht benutzen. Bei tragenden Bauteilen (Treppen, Balkone, Überdachungen) keine Statik-Aussagen, das prüft der Betrieb.
 
 ABLAUF (überspringe, was bekannt ist):
 1. ${isFrei()?"Was genau soll entstehen und wofür? Wo (innen/außen, an Haus, Garten, Balkon)? Gewünschte Optik und Material (Stahl roh/Edelrost, verzinkt, pulverbeschichtet in RAL-Farbe, Edelstahl), gibt es Vorbilder oder eine Skizze?":"Was ist betroffen und was ist passiert? Seit wann? Material (Stahl, verzinkt, pulverbeschichtet, Edelstahl, Aluminium), ungefähres Alter."}
@@ -1056,7 +1086,7 @@ async function liveHelp(btn){
  try{
   const jpeg=await frameData();if(!jpeg)throw new Error("Bitte erst die Kamera starten oder ein Foto machen.");
   const ctx=K.chat.slice(-8).map(m=>(m.role==="user"?"Kunde: ":"Assistent: ")+m.text).join("\n");
-  const raw=await aiVision(`Du bist der Service-Assistent von ${CFG.firma} und siehst gerade live durch die Kamera des Kunden. Bisheriges Gespräch:\n${ctx}\nBereits gemessen: ${JSON.stringify(K.rep.masse||{})}\nBereits fotografiert: ${(K.rep.fotos||[]).map(f=>f.titel).join(", ")||"nichts"}\n\nSag dem Kunden in 1–2 kurzen, gesprochenen Sätzen genau, was er als Nächstes tun soll (z. B. Kamera näher ran, von oben fotografieren, Zollstock anlegen, Gewinde von vorn zeigen, Typenschild zeigen). Wenn das aktuelle Bild für die Dokumentation gut geeignet ist, setze "bild_ok" auf true und gib ihm einen kurzen Titel.\nAntworte nur mit JSON: {"sagen":"…","bild_ok":true|false,"titel":"…","erkannt":"was du im Bild siehst, kurz"}`,jpeg);
+  const raw=await aiVision(`Du bist Professor Funke, der Service-Assistent von ${CFG.firma}, und siehst gerade live durch die Kamera des Kunden. Bisheriges Gespräch:\n${ctx}\nBereits gemessen: ${JSON.stringify(K.rep.masse||{})}\nBereits fotografiert: ${(K.rep.fotos||[]).map(f=>f.titel).join(", ")||"nichts"}\n\nSag dem Kunden in 1–2 kurzen, gesprochenen Sätzen genau, was er als Nächstes tun soll (z. B. Kamera näher ran, von oben fotografieren, Zollstock anlegen, Gewinde von vorn zeigen, Typenschild zeigen). Wenn das aktuelle Bild für die Dokumentation gut geeignet ist, setze "bild_ok" auf true und gib ihm einen kurzen Titel.\nAntworte nur mit JSON: {"sagen":"…","bild_ok":true|false,"titel":"…","erkannt":"was du im Bild siehst, kurz"}`,jpeg);
   const mm=raw.match(/\{[\s\S]*\}/);if(!mm)throw new Error("Keine verwertbare Antwort. Bitte nochmal tippen.");
   const j=JSON.parse(mm[0]);liveTalk.push(j);window._lastFrame=j.bild_ok?jpeg:null;
   speakOn=true;speak(j.sagen);
@@ -1351,4 +1381,65 @@ window.LOGO_DATA=null;
  if(!CFG.logo)return;
  try{const r=await fetch(CFG.logo);if(!r.ok)return;const bl=await r.blob();const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="${esc(CFG.firma)}">`;el.classList.add("haslogo")});drawPreview()};fr.readAsDataURL(bl)}catch(e){}
 })();
+/* ---------- Professor Funke: animierte Figur ---------- */
+function profSVG(cls){
+ return `<svg class="prof ${cls||""}" viewBox="0 0 200 250" role="img" aria-label="Professor Funke">
+ <g class="bob">
+  <path d="M36 250 C40 188 68 170 100 170 C132 170 160 188 164 250 Z" fill="#2c3a44"/>
+  <path d="M86 171 L100 200 L114 171 Z" fill="#f4f1ea"/>
+  <path d="M100 178 L84 170 L84 188 Z M100 178 L116 170 L116 188 Z" fill="#c8262a"/><circle cx="100" cy="179" r="4" fill="#9e1d21"/>
+  <path d="M132 196 l9 -5 l9 5 v10 l-9 5 l-9 -5 z" fill="#c8262a"/><path d="M137 200 l4 -2 l4 2 v4" stroke="#fff" stroke-width="1.6" fill="none"/>
+  <rect x="88" y="150" width="24" height="22" rx="6" fill="#e8b994"/>
+  <circle cx="57" cy="110" r="9" fill="#e8b994"/><circle cx="143" cy="110" r="9" fill="#e8b994"/>
+  <ellipse cx="100" cy="106" rx="43" ry="49" fill="#f2c9a5"/>
+  <g fill="#f4f4f2"><circle cx="58" cy="92" r="11"/><circle cx="54" cy="104" r="10"/><circle cx="60" cy="80" r="9"/><circle cx="142" cy="92" r="11"/><circle cx="146" cy="104" r="10"/><circle cx="140" cy="80" r="9"/><path d="M88 58 q4 -10 10 -2 q4 -9 9 0 q6 -8 8 3" stroke="#e9e9e6" stroke-width="3" fill="none"/></g>
+  <rect x="62" y="68" width="76" height="9" rx="4.5" fill="#3a3f44"/>
+  <g><circle cx="84" cy="72" r="12" fill="#2f5d66" stroke="#3a3f44" stroke-width="3"/><circle cx="116" cy="72" r="12" fill="#2f5d66" stroke="#3a3f44" stroke-width="3"/><path d="M79 67 a6 6 0 0 1 7 -2 M111 67 a6 6 0 0 1 7 -2" stroke="#9fd3dc" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>
+  <path class="brow" d="M72 92 q12 -8 24 -1" stroke="#f4f4f2" stroke-width="5" fill="none" stroke-linecap="round"/><path class="brow" d="M104 91 q12 -7 24 1" stroke="#f4f4f2" stroke-width="5" fill="none" stroke-linecap="round"/>
+  <g class="eyes"><circle class="eye" cx="84" cy="106" r="3.8" fill="#1d2328"/><circle class="eye" cx="116" cy="106" r="3.8" fill="#1d2328"/></g>
+  <circle cx="84" cy="106" r="13" fill="#ffffff" fill-opacity=".18" stroke="#2c3a44" stroke-width="3"/><circle cx="116" cy="106" r="13" fill="#ffffff" fill-opacity=".18" stroke="#2c3a44" stroke-width="3"/><path d="M97 106 h6" stroke="#2c3a44" stroke-width="3"/>
+  <path d="M100 110 q-6 12 0 16 q4 1 6 -2" stroke="#d49a76" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <ellipse class="mouth" cx="100" cy="143" rx="8" ry="2.6" fill="#7a2e2a"/>
+  <path d="M100 133 q-14 -3 -26 6 q-3 3 2 3 q12 -2 24 -4 q12 2 24 4 q5 0 2 -3 q-12 -9 -26 -6 z" fill="#f4f4f2"/>
+  <ellipse cx="73" cy="124" rx="7" ry="4" fill="#e9a58a" opacity=".45"/><ellipse cx="127" cy="124" rx="7" ry="4" fill="#e9a58a" opacity=".45"/>
+  <g class="rule"><rect x="150" y="150" width="12" height="70" rx="2" fill="#f2c230" stroke="#b88e10" stroke-width="1.5" transform="rotate(14 156 185)"/><g stroke="#3a3f44" stroke-width="1.4" transform="rotate(14 156 185)"><path d="M150 160 h5 M150 168 h3 M150 176 h5 M150 184 h3 M150 192 h5 M150 200 h3 M150 208 h5"/></g><circle cx="152" cy="214" r="11" fill="#f2c9a5"/></g>
+  <g class="gear"><path d="M166 40 l3 -6 l5 2 l0 6 l5 3 l5 -3 l3 4 l-3 5 l2 5 l6 1 l0 5 l-6 1 l-2 5 l3 5 l-4 3 l-5 -3 l-5 3 l0 6 l-5 1 l-3 -6 l-5 -1 l-4 4 l-4 -3 l3 -5 l-2 -5 l-6 -1 l0 -5 l6 -1 l2 -5 l-3 -5 l4 -3 l5 3 z" fill="#c8262a"/><circle cx="170" cy="57" r="5" fill="#fff"/></g>
+  <g class="waves" stroke="#c8262a" stroke-width="3" fill="none" stroke-linecap="round"><path d="M30 100 q-8 10 0 20"/><path d="M22 94 q-12 16 0 32"/></g>
+ </g></svg>`;
+}
+function profHead(){return `<svg class="profhead" viewBox="40 40 120 120" aria-hidden="true"><use href="#profsym" x="0" y="0" width="200" height="250"/></svg>`}
+(function mountProf(){
+ /* Symbol für kleine Köpfe an den Sprechblasen */
+ const sym=document.createElement("div");sym.hidden=true;sym.innerHTML=`<svg xmlns="http://www.w3.org/2000/svg"><symbol id="profsym" viewBox="0 0 200 250">${profSVG("").replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"")}</symbol></svg>`;document.body.appendChild(sym);
+ /* großer Professor unten rechts im Chat */
+ const dock=document.createElement("div");dock.id="profDock";dock.innerHTML=profSVG("idle")+`<span class="ptag">Prof. Funke</span>`;dock.hidden=true;document.body.appendChild(dock);
+ /* Begrüßung auf der Startseite */
+ const intro=document.getElementById("kIntro");
+ if(intro)intro.insertAdjacentHTML("afterbegin",`<div class="profintro">${profSVG("idle talk")}<div class="pbub">Grüß Gott! Ich bin <b>Professor Funke</b>, der digitale Metallbau-Professor von ${esc(CFG.firma)}. Erzählen Sie mir, was Sie vorhaben, ich helfe Ihnen beim Planen, Messen und Fotografieren.</div></div>`);
+ setTimeout(()=>{const p=document.querySelector(".profintro .prof");if(p)p.classList.remove("talk")},2600);
+})();
+let profTalkUntil=0,lastBotCount=0,speaking=false;
+function profTick(){
+ const dock=document.getElementById("profDock"),app=document.getElementById("kApp");
+ if(!dock)return;
+ const show=app&&!app.hidden&&!K.sent&&document.getElementById("studio").hidden;
+ dock.hidden=!show;if(!show)return;
+ const bots=K.chat.filter(m=>m.role==="assistant").length;
+ if(bots>lastBotCount){lastBotCount=bots;if(!speakOn)profTalkUntil=Date.now()+1800}
+ const st=busy?"think":listening?"listen":(speaking||Date.now()<profTalkUntil)?"talk":"idle";
+ const svg=dock.querySelector(".prof");
+ if(svg.dataset.st!==st){svg.dataset.st=st;svg.setAttribute("class","prof "+st)}
+}
+setInterval(profTick,180);
+/* Stimme: lieber eine männliche deutsche Stimme, Mundbewegung synchron */
+speak=function(t){
+ if(!speakOn||!t||!("speechSynthesis" in window))return;
+ try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(t);u.lang="de-DE";u.pitch=.9;u.rate=1;
+  const v=speechSynthesis.getVoices().filter(v=>/^de/i.test(v.lang));
+  u.voice=v.find(x=>/markus|yannick|viktor|martin|helmut|reed|eddy|grandpa|opa/i.test(x.name)&&/premium|erweitert|enhanced/i.test(x.name))||v.find(x=>/markus|yannick|viktor|martin|helmut|reed|eddy|grandpa|opa/i.test(x.name))||v.find(x=>/premium|erweitert|enhanced/i.test(x.name))||v[0]||null;
+  u.onstart=()=>speaking=true;u.onend=u.onerror=()=>speaking=false;speechSynthesis.speak(u)}catch(e){}
+};
+/* kleine Professor-Köpfe an den Antworten */
+const _renderChat=renderChat;
+renderChat=function(){_renderChat();document.querySelectorAll("#kLog .km.bot").forEach(b=>{if(!b.querySelector(".profhead")){const bub=b.querySelector(".bub");if(bub)bub.insertAdjacentHTML("beforebegin",profHead())}})};
 </script></body></html>
