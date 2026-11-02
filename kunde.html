@@ -292,7 +292,7 @@ const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:MODELS.fin
 function modelsFor(p){return p==="Sichtschutz"?SCREENS:MODELS.filter(m=>m.av.includes(p))}
 function fixState(){
  const ms=modelsFor(S.product);
- if(!ms.find(m=>m.n===S.model))S.model=ms[0].n;
+ if(ms.length&&!ms.find(m=>m.n===S.model))S.model=ms[0].n;
  const m=model();
  if(!isScreen()){
   if(m.f===1)S.form="Gerade";
@@ -321,7 +321,7 @@ function finish(){
 function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.round(v+(255-v)*a);return"#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
 
 function layout(){
- const p=prod(),gate=S.product==="Tor"||S.product==="Gartentor";
+ const p=prod()||PRODUCTS[0],gate=S.product==="Tor"||S.product==="Gartentor";
  const post=gate?10:5;
  if(gate){const total=Math.max(30,+S.total||0),clear=total-2*post,per=S.product==="Tor"?clear/2:clear;return{n:S.product==="Tor"?2:1,post,clear,per,total,gate,width:total,segs:[],fields:[clear],corners:[]}}
  const planned=S.pts.length>=2&&S.lens.slice(0,S.pts.length-1).every(v=>+v>0);
