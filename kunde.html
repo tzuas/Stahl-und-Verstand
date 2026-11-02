@@ -181,6 +181,7 @@ body.noscroll{overflow:hidden}
   </ol>
   <label class="consent"><input type="checkbox" id="kConsent"><span>Ich bin einverstanden, dass meine Angaben und Fotos zur Erstellung eines Angebots verarbeitet werden. Dabei hilft ein KI-Assistent. <a href="#ds" onclick="document.getElementById('ds').open=true">Datenschutzhinweis</a></span></label>
   <button type="button" class="primary big" id="kStart">Los geht's</button>
+  <button type="button" class="linkbtn" id="kWeiter" hidden style="margin-top:10px">Wo ich aufgehört habe ›</button>
   <details id="ds"><summary>Datenschutzhinweis</summary><p>Ihre Eingaben, Fotos und Kontaktdaten werden ausschließlich zur Vorbereitung Ihres Angebots verwendet. Für den Gesprächs-Assistenten werden Ihre Antworten und Fotos an den KI-Dienst Anthropic (USA) übermittelt; Name, Telefon und E-Mail werden dem Assistenten nicht übergeben. Die fertige Anfrage wird per E-Mail an uns gesendet (Dienstleister: Cloudflare, Resend). Die Seite selbst liegt bei GitHub. Auf Ihrem Gerät wird Ihr Zwischenstand gespeichert, damit Sie später weitermachen können. Weitere Informationen und Ihre Rechte finden Sie in unserer Datenschutzerklärung.</p></details>
  </section>
 
@@ -1315,7 +1316,8 @@ function showDone(){
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
- if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;S=Object.assign(DEF(),{view:"look"});K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kWeiter"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kMic")return listen();
  if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
  if(b.dataset.pv){S.view=b.dataset.pv;drawPreview();return}
@@ -1371,7 +1373,8 @@ function boot(){
  renderChat();
  if(!K.chat.length)ask(null);
 }
-if(K.started&&K.consent)boot();
+/* Weitermachen-Button zeigen wenn gespeicherter Fortschritt vorhanden */
+(function showWeiterBtn(){const chat=K.chat&&K.chat.length;if(!chat)return;const btn=document.getElementById("kWeiter");if(btn)btn.hidden=false})();
 (function foot(){const f=$("#kFoot");if(!f)return;const l=[];if(CFG.impressum)l.push(`<a href="${esc(CFG.impressum)}" target="_blank" rel="noopener">Impressum</a>`);if(CFG.datenschutz)l.push(`<a href="${esc(CFG.datenschutz)}" target="_blank" rel="noopener">Datenschutz</a>`);if(CFG.website)l.push(`<a href="${esc(CFG.website)}" target="_blank" rel="noopener">${esc(CFG.website.replace(/^https?:\/\//,""))}</a>`);f.innerHTML=`<span>© ${esc(CFG.firma)}</span>`+l.join("")})();
 const _showDone=showDone;showDone=function(){_showDone();const b=$("#kBar");if(b)b.hidden=true;const p=$(".pv");if(p&&K.absage)p.hidden=true};
 
