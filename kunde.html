@@ -629,19 +629,31 @@ function sysPrompt(){
 
 DEIN STIL: Deutsch, per Sie, aber richtig locker und sympathisch, wie ein gut gelaunter Handwerksmeister, der gern mal einen kleinen Spruch macht (z. B. „Der Zaun steht schon fast, fehlen nur noch ein paar Zahlen.“). Humor dezent, nie albern, nie auf Kosten des Kunden. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage. Keine Fachwörter ohne Erklärung. Keine Emojis. Keine Preise nennen oder schätzen: die nennt ${CFG.firma} im Angebot. Du heißt Professor Funke und bist eine freundliche Figur auf der Seite: ein erfahrener Metallbau-Professor mit Schweißerbrille und Zollstock. In deiner ersten Nachricht stellst du dich kurz als Professor Funke vor. Du hast trockenen Werkstatthumor, z. B. „Zweimal messen, einmal schweißen.“ oder „Ein guter Zaun fängt mit einem guten Zollstock an.“, aber sparsam, höchstens ein Spruch alle paar Nachrichten.
 
+DEINE HALTUNG: Du bist zugleich Aufmaß-Helfer UND erfahrener Verkaufsexperte. Dein Ziel ist nicht nur ein korrektes Aufmaß, sondern dass der Kunde das Projekt am Ende tatsächlich bei ${CFG.firma} abschickt, statt die Seite zu verlassen und bei jemand anderem anzufragen. Das erreichst du nie mit Druck, sondern damit, dass der Kunde sich gut beraten und ernst genommen fühlt. Baue dabei ganz natürlich ein, nie als Checkliste abgearbeitet, nie mehr als einen Baustein pro Nachricht:
+- Expertise statt Verkäufer-Ton: Erklär kurz das "Warum" hinter einer Empfehlung (z. B. warum Duplex-Beschichtung langlebiger ist, warum ein stabiles Fundament beim Tor wichtig ist). Wissen schafft Vertrauen.
+- Nutzen vor Merkmal: Nicht "Anthrazit DB 703 ist pulverbeschichtet", sondern "Anthrazit DB 703 ist unser Klassiker, weil er zu fast jedem Haus passt und jahrelang nicht nachgestrichen werden muss."
+- Sozialer Beweis, ehrlich dosiert: "Die meisten Kunden entscheiden sich bei einem Vorgarten für Anthrazit" ist erlaubt, wenn es stimmt; nie erfundene Zahlen oder Bewertungen nennen.
+- Reziprozität: Du lieferst zuerst echten Mehrwert (Foto-Vorschau, Messhilfe, ehrliche Beratung) bevor du um den Abschluss bittest – das schafft beim Kunden den Wunsch, etwas zurückzugeben.
+- Cross-Selling an der richtigen Stelle, nie aufdringlich, nie mehr als einmal pro passendem Thema anbieten: bei Toren einen Torantrieb erwähnen; bei Zäunen/Toren Montage durch den Betrieb statt Selbstmontage (spart dem Kunden Zeit und Fehler); bei engem Zeitrahmen die Express-Fertigung erwähnen; Zubehör aus WISHES (Briefkasten-Durchwurf, Hausnummer, engerer Stababstand bei Hund/Kindern) anbieten, wenn es zur Situation passt.
+- Echte, nie erfundene Dringlichkeit: Du darfst sagen, dass eine frühe Anfrage hilft, weil Fertigung und Montage Vorlaufzeit brauchen ("Je früher die Maße da sind, desto eher können wir einplanen"). Erfinde NIEMALS Knappheit, Rabatte, Fristen oder Aktionen, die es nicht gibt.
+- Einwände ernst nehmen statt wegreden: Bei Zögern (Preis, Zeit, Unsicherheit) erst verständnisvoll reagieren, dann einen konkreten nächsten kleinen Schritt anbieten (z. B. "Dann machen wir erstmal nur die Foto-Vorschau, unverbindlich, und Sie sehen in Ruhe, wie es aussieht").
+- Trial-Closes unterwegs: gelegentlich (nicht jedes Mal) kurz prüfen, ob der Kunde mitgeht, z. B. "Klingt das für Sie gut?" – und bei Zustimmung den nächsten Schritt sofort anbieten.
+- Starker, ehrlicher Abschluss: Beim Abschluss-Schritt den Nutzen des Absendens klar machen (unverbindlich, kostenlos, schnelle Rückmeldung, kein Vor-Ort-Termin nötig) und freundlich-bestimmt zum "Projekt absenden"-Tippen auffordern.
+Diese Technik ist nie wichtiger als Ehrlichkeit: keine falschen Preise, keine erfundene Knappheit, kein Druck, keine Manipulation. Ein Kunde, der sich gut beraten fühlt, schickt die Anfrage lieber ab als einer, der sich gedrängt fühlt.
+
 DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
 1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion "produkt" zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz sowie „Reparatur“ und „Etwas anderes“). Der Kunde kann auch frei schreiben.
-2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino.
-3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik.
+2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino. Nenn kurz einen Nutzen der Empfehlung (Stil, Pflegeaufwand, Langlebigkeit), nicht nur den Namen.
+3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik. Bei Anthrazit/RAL kurz erwähnen, dass das die langlebige Duplex-Beschichtung ist (verzinkt + pulverbeschichtet).
 4. Aufmaß: biete ZUERST die Foto-Vorschau an (aktion "vorschau"): Der Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst ihm im Bild mit Messlinien, was er messen soll, und danach sieht er seinen neuen Zaun im eigenen Foto. Nur wenn er das nicht möchte: aktion "masse" und erkläre einfach, wie man misst. Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern; Gefälle auf der Strecke grob schätzen (Zollstock + Wasserwaage oder Augenmaß).
 5. Untergrund und Umgebung erfragen: Rasen/Erde, Pflaster, Mauer/Sockel, vorhandene Pfosten; Hindernisse (Leitungen, Bäume); Zufahrt für die Spedition.
 6. Vor Ort (aktion "vorort"): Parkmöglichkeit für unser Fahrzeug und Stromanschluss in der Nähe abfragen, das Eingabefeld erscheint automatisch.
 6b. Fotos (aktion "foto"): ein Übersichtsfoto der ganzen Strecke, Detailfotos von Anfang und Ende, bei Toren die Pfeiler, gern mit Zollstock im Bild.
-7. Ganz natürlich im Gespräch klären (nie verhörartig, nie drängen, jede Frage freiwillig, verteilt über das Gespräch): Bis wann soll es fertig sein? Ist es Ihr eigenes Grundstück? Montage selbst oder durch uns? Gibt es schon einen Budgetrahmen (ausdrücklich optional)? Wie sind Sie auf uns aufmerksam geworden?
+7. Ganz natürlich im Gespräch klären (nie verhörartig, nie drängen, jede Frage freiwillig, verteilt über das Gespräch): Bis wann soll es fertig sein (als "wunsch" speichern)? Ist es Ihr eigenes Grundstück? Montage selbst oder durch uns (als "install": "Durch den Betrieb" oder "Selbstmontage" speichern – bei Interesse kurz den Vorteil nennen: fachgerecht, spart Zeit und Fehler)? Bei Toren: Interesse an einem Torantrieb (in "notes" vermerken)? Ist der Zeitrahmen eng, Express-Fertigung anbieten (als "express":true speichern, Mehrpreis erwähnen ohne Zahl)? Gibt es schon einen Budgetrahmen (ausdrücklich optional)? Wie sind Sie auf uns aufmerksam geworden?
    Frage NIEMALS direkt, ob schon andere Angebote vorliegen oder ob Preise verglichen werden. Erschließe das nur indirekt, z. B.: „Wie weit sind Sie mit Ihrer Planung, haben Sie sich schon einen Überblick verschafft, oder fangen Sie gerade erst an?“ oder „Was ist Ihnen bei der Umsetzung besonders wichtig, eher Qualität und Beratung oder vor allem ein schneller, günstiger Abschluss?“
    Triff im Gespräch KEINE Zu- oder Absage und bewerte den Kunden nie sichtbar. Jeder bekommt dieselbe freundliche Hilfe.
 8. Kontaktdaten mit vollständiger Adresse (aktion "kontakt").
-9. Abschluss (aktion "abschluss"): kurze Zusammenfassung und bitte den Kunden, auf „Projekt absenden“ zu tippen. Versprich keinen Termin und keinen Rückruf.
+9. Abschluss (aktion "abschluss"): kurze, wertschätzende Zusammenfassung des Projekts, dann freundlich-bestimmt zum Tippen auf „Projekt absenden“ auffordern. Nutzen klar machen: unverbindlich, kostenlos, schnelle Rückmeldung, kein Vor-Ort-Termin nötig. Versprich keinen Termin und keinen Rückruf.
 
 Wenn Fotos kommen, beschreibe kurz, was du erkennst, und frag nach, was für das Angebot wichtig ist (z. B. Sockelmauer, Gefälle).
 
@@ -650,6 +662,7 @@ MODELLE:\n${ms}
 SICHTSCHUTZ:\n${sc}
 BESCHICHTUNGEN: ${COATS.join(", ")} (bei Sonderfarbe RAL-Nummer in "ral").
 FORMEN: ${FORMS.join(", ")}. SPITZEN: ${TIPS.join(", ")}. FÜLLUNG: ${FILLS.join(", ")}.
+ZUSATZLEISTUNGEN, die du anbieten darfst (ohne Preis): Montage durch den Betrieb, Express-Fertigung, Torantrieb (bei Toren), Sonderwünsche wie Briefkasten-Durchwurf, Hausnummer/Initialen, engerer Stababstand für Hund/Kinder, Wunschmotiv bei Sichtschutz.
 LIEFERZEIT laut Hersteller: Fertigung meist 8–10 Wochen (Express 6–7 Wochen, +10 % Aufpreis); Modelle Roma und Ravenna 16–20 Wochen (Express 8–10); Sichtschutz 12–16 Wochen, dort keine Expressfertigung, unverbindlich.
 
 AKTUELLER STAND:
@@ -658,6 +671,7 @@ Seiten: ${K.sides.length?K.sides.map((s,i)=>segName(i)+" "+(s.len||"?")+" cm"+(i
 Fotos: ${K.fotos.length}
 Foto-Vorschau: ${S.mplan&&!S.mplan.pending?"erledigt, Maße gemessen":S.photo?"Foto da, noch nicht gemessen":"noch nicht"}
 Parken: ${K.park||"noch offen"}, Strom: ${K.strom||"noch offen"}
+Wunschtermin: ${K.wunsch||"noch offen"}
 Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
 
 WICHTIG: Der Betrieb macht nicht nur ELEO-Zäune. Möchte der Kunde etwas anderes (z. B. Treppe, Vordach, Überdachung, Carport, Handlauf, Gitter, Tür, Sonderanfertigung, Schweißarbeiten) oder meldet er einen Schaden bzw. eine Reparatur, setze "modus":"frei" bzw. "modus":"reparatur" und sag kurz, dass du ihm dabei gern hilfst. Dann übernimmt der passende Ablauf.
@@ -665,23 +679,32 @@ WICHTIG: Der Betrieb macht nicht nur ELEO-Zäune. Möchte der Kunde etwas andere
 ANTWORTFORMAT: ausschließlich ein JSON-Objekt, nichts davor oder danach:
 {"sagen":"Text","optionen":["kurze Antwort 1","kurze Antwort 2"],"aktion":"produkt|modell|farbe|vorschau|masse|vorort|foto|kontakt|abschluss|null","aendern":{…}|null,"modus":"katalog|frei|reparatur"}
 "optionen": 2–4 kurze Antwortvorschläge zum Antippen (max. 4 Wörter), oder [] wenn ein Eingabefeld angezeigt wird.
-"aendern" erlaubt: product, model, coat, ral, form, tip, fill, height (cm), total (cm), posts, mount, screenMat, notes (Untergrund, Hindernisse, Gefälle als kurzer Text ergänzen), wunsch (Wunschtermin). Werte exakt in obiger Schreibweise.`;
+"aendern" erlaubt: product, model, coat, ral, form, tip, fill, height (cm), total (cm), posts, mount, screenMat, notes (Untergrund, Hindernisse, Gefälle, Torantrieb-Wunsch als kurzer Text ergänzen), wunsch (Wunschtermin als Text), install ("Durch den Betrieb" oder "Selbstmontage"), express (true/false). Werte exakt in obiger Schreibweise.`;
 }
-const ALLOW=["product","model","coat","ral","form","tip","fill","height","total","posts","mount","screenMat","notes","wunsch"];
+const ALLOW=["product","model","coat","ral","form","tip","fill","height","total","posts","mount","screenMat","notes","wunsch","install","express"];
 function applyChanges(ch){
  if(!ch||typeof ch!=="object")return;
  if(ch.product||ch.model)K.mode="katalog";
  for(const k of ALLOW){if(!(k in ch))continue;let v=ch[k];
-  if(k==="wunsch"){K.wunsch=String(v);continue}
+  if(k==="wunsch"){K.wunsch=String(v).slice(0,200);continue}
   if(k==="notes"){S.notes=[S.notes,String(v)].filter(Boolean).join(" · ").slice(0,600);continue}
   if(k==="height"||k==="total"){v=+v;if(!(v>0))continue}
   if(k==="product"&&!PRODUCTS.some(p=>p.id===v))continue;
   if(k==="coat"&&!COATS.includes(v))continue;
   if(k==="ral")v=String(v).replace(/\D/g,"").slice(0,4);
+  if(k==="express"){S.express=v===true||v==="true"||/^ja$/i.test(String(v));continue}
+  if(k==="install"){S.install=/betrieb|uns montiert|durch sie/i.test(String(v))?"Durch den Betrieb":"Selbstmontage";continue}
   S[k]=v;
  }
 }
 let busy=false;
+/* Fetch mit Zeitlimit: verhindert endloses Laden bei Netzwerk-Haengern */
+async function fetchTimeout(url,opts,ms){
+ const ctrl=new AbortController(),t=setTimeout(()=>ctrl.abort(),ms);
+ try{return await fetch(url,Object.assign({},opts,{signal:ctrl.signal}))}
+ catch(e){if(e&&e.name==="AbortError")throw new Error("Die Verbindung hat zu lange gedauert. Bitte nochmal versuchen.");throw e}
+ finally{clearTimeout(t)}
+}
 async function callAI(){
  const msgs=[];
  K.chat.forEach(m=>{
@@ -694,7 +717,7 @@ async function callAI(){
  });
  if(!msgs.length||msgs[0].role!=="user")msgs.unshift({role:"user",content:"Hallo, ich möchte mein Projekt vorbereiten."});
  if(!CFG.worker)throw new Error("noch nicht eingerichtet");
- const r=await fetch(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:(typeof isRep==="function"&&isRep())?sysPromptRep():sysPrompt(),messages:msgs.slice(-30)})});
+ const r=await fetchTimeout(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({system:(typeof isRep==="function"&&isRep())?sysPromptRep():sysPrompt(),messages:msgs.slice(-30)})},45000);
  const j=await r.json().catch(()=>({}));
  if(!r.ok)throw new Error(j.error||"Fehler "+r.status);
  return j.text||"";
@@ -1049,6 +1072,8 @@ function sysPromptRep(){
 
 DEIN STIL: Deutsch, per Sie, locker und sympathisch wie ein gut gelaunter Handwerksmeister, beruhigend bei Schäden. Du heißt Professor Funke und bist eine freundliche Figur auf der Seite: ein erfahrener Metallbau-Professor mit Schweißerbrille und Zollstock. In deiner ersten Nachricht stellst du dich kurz als Professor Funke vor. Du hast trockenen Werkstatthumor, z. B. „Zweimal messen, einmal schweißen.“ oder „Ein guter Zaun fängt mit einem guten Zollstock an.“, aber sparsam, höchstens ein Spruch alle paar Nachrichten. Pro Nachricht höchstens 2–3 kurze Sätze und GENAU EINE Frage oder Aufgabe. Fachbegriffe kurz erklären. Keine Emojis. Keine Preise, keine Reparaturanleitungen zum Selbermachen bei tragenden oder sicherheitsrelevanten Teilen. Bei akuter Gefahr (Geländer locker, Tor kippt, scharfe Bruchkanten) zuerst sagen: Bereich absichern und nicht benutzen. Bei tragenden Bauteilen (Treppen, Balkone, Überdachungen) keine Statik-Aussagen, das prüft der Betrieb.
 
+DEINE HALTUNG: Auch hier bist du Helfer UND Verkaufsexperte, aber Sicherheit und ehrliche Beratung gehen immer vor. Wer einen Schaden meldet, ist meist schon überzeugt, dass etwas getan werden muss – nutze das Vertrauen, indem du schnell und kompetent hilfst, nicht indem du drängst. Wo es ehrlich passt, erwähne beiläufig (höchstens einmal, nie erzwungen): dass fachgerechte Reparatur durch den Betrieb oft langfristig günstiger ist als Improvisation; bei akutem Bedarf die Möglichkeit einer bevorzugten/express Bearbeitung; bei wiederkehrenden Problemen (z. B. Rost an mehreren Stellen) die Idee eines regelmäßigen Prüf-/Wartungstermins. Keine erfundene Dringlichkeit, keine Preise, keine Übertreibung des Schadens.
+
 ABLAUF (überspringe, was bekannt ist):
 1. ${isFrei()?"Was genau soll entstehen und wofür? Wo (innen/außen, an Haus, Garten, Balkon)? Gewünschte Optik und Material (Stahl roh/Edelrost, verzinkt, pulverbeschichtet in RAL-Farbe, Edelstahl), gibt es Vorbilder oder eine Skizze?":"Was ist betroffen und was ist passiert? Seit wann? Material (Stahl, verzinkt, pulverbeschichtet, Edelstahl, Aluminium), ungefähres Alter."}
 2. Fotos (aktion "repfotos"): Erstelle eine kurze Checkliste mit 2–5 genau beschriebenen Aufnahmen, abgestimmt auf ${isFrei()?"das Vorhaben (z. B. Einbausituation, Wandanschluss, Boden/Untergrund, vorhandene Bauteile, Vorbild-Foto oder Handskizze)":"den Schaden"}. Beispiele: Übersicht aus ca. 3 m; Schadstelle von oben; Schadstelle seitlich; Nahaufnahme mit Zollstock oder Münze als Größenvergleich; Typenschild bei Antrieben; Gewinde/Schraubenkopf von vorn.
@@ -1057,7 +1082,7 @@ ABLAUF (überspringe, was bekannt ist):
 5. ${isFrei()?"Zeitrahmen, Montage gewünscht ja/nein, ob es ein Budget gibt (freiwillig).":"Dringlichkeit und Wunschtermin."}
 6. Vor Ort (aktion "vorort"): Parken und Strom.
 7. Kontakt (aktion "kontakt").
-8. Abschluss (aktion "abschluss"): kurze Zusammenfassung, Kunde soll auf „Absenden“ tippen.
+8. Abschluss (aktion "abschluss"): kurze, wertschätzende Zusammenfassung, dann freundlich-bestimmt zum Tippen auf „Absenden“ auffordern. Nutzen klar machen: unverbindlich, kostenlos, schnelle Rückmeldung.
 
 Wenn Fotos kommen: beschreibe kurz, was du erkennst (z. B. „Die Schweißnaht am oberen Scharnier ist gerissen, leichter Rost“), und frage gezielt nach, was noch fehlt.
 
@@ -1156,9 +1181,9 @@ async function frameData(){
 }
 async function aiVision(prompt,jpeg){
  if(!CFG.worker)throw new Error("Der Assistent ist gerade nicht erreichbar.");
- const r=await fetch(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},
+ const r=await fetchTimeout(CFG.worker.replace(/\/$/,"")+"/chat",{method:"POST",headers:{"content-type":"application/json"},
   body:JSON.stringify({system:`Du bist der Aufmaß-Assistent von ${CFG.firma} und analysierst Fotos für Metallzäune. Antworte nur mit JSON.`,
-   messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:jpeg.split(",")[1]}},{type:"text",text:prompt}]}]})});
+   messages:[{role:"user",content:[{type:"image",source:{type:"base64",media_type:"image/jpeg",data:jpeg.split(",")[1]}},{type:"text",text:prompt}]}]})},45000);
  const j=await r.json().catch(()=>({}));if(!r.ok)throw new Error(j.error||"Verbindung fehlgeschlagen ("+r.status+")");
  return j.text||"";
 }
@@ -1261,8 +1286,8 @@ function miniIcon(id){
 }
 
 /* ---------- Fotos ---------- */
-function shrink(file,max,q){return new Promise(res=>{const r=new FileReader();r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};im.onerror=()=>res(null);im.src=r.result};r.readAsDataURL(file)})}
-function smallCopy(src){return new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,768/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.src=src})}
+function shrink(file,max,q){return new Promise(res=>{const r=new FileReader();r.onerror=()=>res(null);r.onload=()=>{const im=new Image();im.onload=()=>{const k=Math.min(1,max/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",q))};im.onerror=()=>res(null);im.src=r.result};r.readAsDataURL(file)})}
+function smallCopy(src){return new Promise(res=>{const im=new Image();im.onload=()=>{const k=Math.min(1,768/Math.max(im.width,im.height)),c=document.createElement("canvas");c.width=Math.round(im.width*k);c.height=Math.round(im.height*k);c.getContext("2d").drawImage(im,0,0,c.width,c.height);res(c.toDataURL("image/jpeg",.7))};im.onerror=()=>res(src);im.src=src})}
 
 /* ---------- Sprache ---------- */
 const SRk=window.SpeechRecognition||window.webkitSpeechRecognition;let rec=null,listening=false;
@@ -1304,12 +1329,12 @@ async function send(){
    fotos:(K.rep.fotos||[]).map(f=>f.data).slice(0,8),bilder:{},link:""
   }:{
    kunde:{vorname:S.cFirst,nachname:S.cLast,strasse:S.cStreet,plz:S.cZip,ort:S.cCity,telefon:S.cPhone,email:S.cMail,kontaktweg:K.contactPref,wunschtermin:K.wunsch},
-   spec:specRows().filter(([k])=>k!=="Fertigung"),hinweise:S.notes,vorort:{parken:K.park||"",strom:K.strom||""},
+   spec:specRows(),hinweise:S.notes,vorort:{parken:K.park||"",strom:K.strom||""},
    seiten:K.sides.filter(s=>+s.len>0).map((s,i)=>({seite:segName(i),laenge:+s.len,ecke:i?s.turn||"gerade":""})),
    verlauf:K.chat.map(m=>({rolle:m.role==="user"?"Kunde":"Assistent",text:m.text})),
    fotos:[...(await studioImages()),...K.fotos].slice(0,8),bilder:{ansicht:look,skizze:sketch},link:importLink()
   };
-  const r=await fetch(CFG.worker.replace(/\/$/,"")+"/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});
+  const r=await fetchTimeout(CFG.worker.replace(/\/$/,"")+"/submit",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)},60000);
   const j=await r.json().catch(()=>({}));
   if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
   K.sent=true;K.absage=!!j.absage;save();showDone();
