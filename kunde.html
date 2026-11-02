@@ -103,8 +103,10 @@ details{font-size:13.5px;color:var(--muted)}details summary{cursor:pointer;font-
 .bar input{flex:1;min-width:0;border-radius:999px;padding-inline:16px}
 #kMic{border-radius:50%;width:48px;min-width:48px;padding:0;background:var(--steel);color:var(--bg);border-color:var(--steel)}
 #kMic.on{background:#c62828;border-color:#c62828;color:#fff;animation:kb 1.2s infinite}
+#kCam{border-radius:50%;width:48px;min-width:48px;padding:0;background:var(--panel);color:var(--steel)}
 #kSend2{border-radius:999px}
 .bar .tools{display:flex;justify-content:space-between;gap:8px;margin-bottom:8px}
+#kBack{display:flex;align-items:center;gap:4px}
 .linkbtn{border:none;min-height:0;padding:0;color:var(--accent);text-decoration:underline;font-weight:600}
 #kSpk[aria-pressed="true"]{background:var(--steel);color:var(--bg)}
 #kToast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(140px + env(safe-area-inset-bottom,0px));z-index:9;background:var(--steel);color:var(--bg);padding:10px 16px;border-radius:8px;max-width:calc(100% - 32px);font-size:14px}
@@ -194,8 +196,8 @@ body.noscroll{overflow:hidden}
   <div id="kChat" class="wrap"><div id="kLog" aria-live="polite"></div><div id="kEnd"></div></div>
   <div id="kDone" class="wrap done" hidden></div>
   <div class="bar" id="kBar"><div class="wrap">
-   <div class="tools"><button type="button" id="kSpk" class="xs" aria-pressed="false">Vorlesen</button><button type="button" id="kSumBtn" class="xs" hidden>Zusammenfassung &amp; absenden</button></div>
-   <form id="kForm"><button type="button" id="kMic" aria-label="Antwort sprechen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><input id="kText" placeholder="Antwort schreiben …" autocomplete="off" enterkeyhint="send"><button type="submit" class="primary" id="kSend2">Senden</button></form>
+   <div class="tools"><button type="button" id="kBack" class="xs" hidden>‹ Zurück</button><button type="button" id="kSpk" class="xs" aria-pressed="false">Vorlesen</button><button type="button" id="kSumBtn" class="xs" hidden>Zusammenfassung &amp; absenden</button></div>
+   <form id="kForm"><button type="button" id="kMic" aria-label="Antwort sprechen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button type="button" id="kCam" aria-label="Foto hinzufügen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h3l1.6-2h8.8L18 7h3v12H3z"/><circle cx="12" cy="13" r="3.6"/></svg></button><input id="kText" placeholder="Antwort schreiben …" autocomplete="off" enterkeyhint="send"><button type="submit" class="primary" id="kSend2">Senden</button></form>
   </div></div>
  </section>
  <div class="wrap"><footer id="kFoot"></footer></div>
@@ -1238,6 +1240,7 @@ function renderChat(){
  }).join("")+(busy?'<div class="km bot"><div class="bub typing"><i></i><i></i><i></i></div></div>':"")+(K.show?`<div class="km bot"><div class="bub">Hier können Sie es eintragen:</div>${widget(K.show,true)}</div>`:"");
  const end=$("#kEnd");if(end)end.scrollIntoView({block:"end",behavior:"smooth"});
  $("#kSumBtn").hidden=!(S.cLast||K.chat.length>8)||K.sent;
+ const bb=$("#kBack");if(bb)bb.hidden=busy||K.sent||K.chat.length<2;
 }
 function manualHtml(){return ["produkt","modell","farbe","masse","foto","kontakt","abschluss"].map(a=>`<h3 class="mh">${{produkt:"1. Was soll entstehen?",modell:"2. Modell",farbe:"3. Farbe",masse:"4. Maße",foto:"5. Fotos",kontakt:"6. Kontakt",abschluss:"7. Absenden"}[a]}</h3>${widget(a,true)}`).join("")}
 function coatSwatches(opts){
@@ -1325,6 +1328,8 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
  if(b.dataset.pv){S.view=b.dataset.pv;drawPreview();return}
  if(b.id==="kSumBtn"){K.show="abschluss";renderChat();return}
+ if(b.id==="kBack"){if(busy)return;if(K.chat.length&&K.chat[K.chat.length-1].role==="assistant")K.chat.pop();if(K.chat.length&&K.chat[K.chat.length-1].role==="user")K.chat.pop();K.show=null;save();renderChat();return}
+ if(b.id==="kCam"){K.show="foto";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
  if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
