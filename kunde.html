@@ -302,13 +302,19 @@ const cm=v=>(Math.round(v*10)/10).toLocaleString("de-DE")+" cm";
 /* Zeitplan */
 function addWorkdays(d,n){d=new Date(d);while(n>0){d.setDate(d.getDate()+1);if(d.getDay()%6)n--}return d}
 function isoWeek(d){d=new Date(Date.UTC(d.getFullYear(),d.getMonth(),d.getDate()));const day=d.getUTCDay()||7;d.setUTCDate(d.getUTCDate()+4-day);const y=new Date(Date.UTC(d.getUTCFullYear(),0,1));return Math.ceil(((d-y)/864e5+1)/7)}
+/* Lieferzeiten laut ELEO-Angebot 10/2026: Roma/Ravenna 16–20 (Express 8–10), Sichtschutz 12–16 (kein Express), sonst 8–10 (Express 6–7, +10 %) */
+function leadFor(o){const p=o.product,m=o.model;if(p==="Sichtschutz")return{std:[12,16],exp:null,why:"Sichtschutz"};if(m==="Roma"||m==="Ravenna")return{std:[16,20],exp:[8,10],why:m};return{std:TIMES.std,exp:TIMES.exp,why:""}}
+function leadTime(){const ps=(typeof allPositions==="function"?allPositions():[{product:S.product,model:S.model}]).map(leadFor);
+ const std=[Math.max(...ps.map(x=>x.std[0])),Math.max(...ps.map(x=>x.std[1]))],noExp=ps.some(x=>!x.exp);
+ const exp=noExp?null:[Math.max(...ps.map(x=>x.exp[0])),Math.max(...ps.map(x=>x.exp[1]))];
+ return{std,exp,why:ps.map(x=>x.why).filter(Boolean)}}
 function plan(){
- const now=new Date(),w=S.express?TIMES.exp:TIMES.std;
+ const now=new Date(),lt=leadTime(),w=S.express&&lt.exp?lt.exp:lt.std;
  const offer=addWorkdays(now,TIMES.offer[1]);
  const from=new Date(offer);from.setDate(from.getDate()+w[0]*7);
  const to=new Date(offer);to.setDate(to.getDate()+w[1]*7);
  const f=d=>d.toLocaleDateString("de-DE",{day:"2-digit",month:"2-digit",year:"numeric"});
- return{w,offer:f(offer),from:f(from),to:f(to),kw:`KW ${isoWeek(from)}–${isoWeek(to)}`};
+ return{w,lt,offer:f(offer),from:f(from),to:f(to),kw:`KW ${isoWeek(from)}–${isoWeek(to)}`};
 }
 
 /* ---------- Positionen (mehrere Produkte in einer Anfrage) ---------- */
@@ -611,7 +617,7 @@ MODELLE:\n${ms}
 SICHTSCHUTZ:\n${sc}
 BESCHICHTUNGEN: ${COATS.join(", ")} (bei Sonderfarbe RAL-Nummer in "ral").
 FORMEN: ${FORMS.join(", ")}. SPITZEN: ${TIPS.join(", ")}. FÜLLUNG: ${FILLS.join(", ")}.
-LIEFERZEIT laut Hersteller: Fertigung 8–10 Wochen, Express 6–7 Wochen, unverbindlich.
+LIEFERZEIT laut Hersteller: Fertigung meist 8–10 Wochen (Express 6–7 Wochen, +10 % Aufpreis); Modelle Roma und Ravenna 16–20 Wochen (Express 8–10); Sichtschutz 12–16 Wochen, dort keine Expressfertigung, unverbindlich.
 
 AKTUELLER STAND:
 ${specRows().map(([k,v])=>k+": "+v).join("\n")}
