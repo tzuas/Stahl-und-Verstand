@@ -71,7 +71,7 @@ async function chat(body, env) {
       m.content = m.content.filter(c => c.type === "text" || (c.type === "image" && ++n <= 3 && /image\/(jpeg|png)/.test(c.source?.media_type || "")));
     }
   }
-  const text = await claude(env, system, messages, 700);
+  const text = await claude(env, system, messages, 1400);
   return { text };
 }
 

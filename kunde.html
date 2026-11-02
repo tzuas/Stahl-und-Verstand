@@ -705,6 +705,8 @@ async function ask(text,img){
   const raw=await callAI();
   let out={sagen:raw,optionen:[],aktion:null,aendern:null};
   const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=Object.assign(out,JSON.parse(m[0]))}catch(e){}}
+  /* Fallback: JSON abgeschnitten oder kaputt → sagen-Feld per Regex retten */
+  if(out.sagen===raw){const sg=raw.match(/"sagen"\s*:\s*"((?:[^"\\]|\\.)*)"/);if(sg)out.sagen=sg[1].replace(/\\n/g,"\n").replace(/\\"/g,'"')}
   if(!(typeof isRep==="function"&&isRep()))applyChanges(out.aendern);
   if(out.zusammenfassung&&K.rep)K.rep.summary=String(out.zusammenfassung);if(out.dringend&&K.rep)K.rep.dringend=true;
   const switchMode=(out.modus==="frei"||out.modus==="reparatur")&&K.mode!==out.modus;if(switchMode){K.mode=out.modus;out.aktion=null}
