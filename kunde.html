@@ -901,10 +901,20 @@ function exportPhoto(){
 var LIVE=null;
 async function startLive(){
  const msg=$("#liveMsg");msg.textContent="";
+ /* Jede Fehlerursache bekommt jetzt ihre eigene, passende Meldung statt einer
+    zusammengewürfelten Nachricht - sonst liest sich z. B. eine abgelehnte
+    Berechtigung wie ein Konfigurationsfehler ("Datei direkt öffnen"), obwohl
+    die Seite ganz normal über https läuft und der Kunde nur erlauben muss. */
  const blocked="Die Live-Kamera ist in dieser Ansicht gesperrt. Öffnen Sie die Datei „stahl-und-verstand.html“ direkt im Browser des Tablets (über https), dann läuft die Kamera live. Hier können Sie weiterhin ein Foto aufnehmen.";
  if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia||!window.isSecureContext){msg.textContent=blocked;return}
  try{LIVE=await navigator.mediaDevices.getUserMedia({video:{facingMode:{ideal:"environment"},width:{ideal:1920},height:{ideal:1080}},audio:false})}
- catch(e){LIVE=null;msg.textContent=e&&e.name==="NotAllowedError"?"Der Kamerazugriff wurde abgelehnt. Erlauben Sie die Kamera in den Browser-Einstellungen für diese Seite. "+blocked:blocked;return}
+ catch(e){LIVE=null;
+  const name=e&&e.name;
+  if(name==="NotAllowedError")msg.textContent="Der Kamerazugriff wurde nicht erlaubt. Tippen Sie oben in der Adressleiste auf das Kamera- bzw. Schloss-Symbol, erlauben Sie die Kamera für diese Seite und laden Sie die Seite neu. Hier können Sie weiterhin ein Foto aufnehmen.";
+  else if(name==="NotFoundError"||name==="OverconstrainedError")msg.textContent="Es wurde keine Kamera gefunden. Hier können Sie weiterhin ein Foto aufnehmen.";
+  else if(name==="NotReadableError")msg.textContent="Die Kamera wird gerade von einer anderen App benutzt. Schließen Sie andere Kamera-Apps und versuchen Sie es erneut, oder nehmen Sie weiterhin ein Foto auf.";
+  else msg.textContent=blocked;
+  return}
  try{navigator.wakeLock&&navigator.wakeLock.request("screen").catch(()=>{})}catch(e){}
  refresh(true);
 }
