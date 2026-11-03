@@ -643,6 +643,7 @@ Diese Technik ist nie wichtiger als Ehrlichkeit: keine falschen Preise, keine er
 
 DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
 1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion "produkt" zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz sowie „Reparatur“ und „Etwas anderes“). Der Kunde kann auch frei schreiben.
+1b. Wählt der Kunde "Geländer": frage in der nächsten Nachricht kurz, ob ein Stahl-Geländer aus dem ELEO-Katalog (Pulverbeschichtung/verzinkt, Modelle siehe unten) gewünscht ist, oder ein Glas-Geländer bzw. ein Edelstahl-Geländer als Sonderanfertigung. Bei Glas oder Edelstahl setze "modus":"frei" – ab dort führt die Sonderanfertigungs-Beratung (siehe GELÄNDER-SONDERANFERTIGUNG unten) gezielt durch Form, Material, Montage, Boden und ggf. Glas.
 2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino. Nenn kurz einen Nutzen der Empfehlung (Stil, Pflegeaufwand, Langlebigkeit), nicht nur den Namen.
 3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik. Bei Anthrazit/RAL kurz erwähnen, dass das die langlebige Duplex-Beschichtung ist (verzinkt + pulverbeschichtet).
 4. Aufmaß: biete ZUERST die Foto-Vorschau an (aktion "vorschau"): Der Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst ihm im Bild mit Messlinien, was er messen soll, und danach sieht er seinen neuen Zaun im eigenen Foto. Nur wenn er das nicht möchte: aktion "masse" und erkläre einfach, wie man misst. Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern; Gefälle auf der Strecke grob schätzen (Zollstock + Wasserwaage oder Augenmaß).
@@ -674,7 +675,7 @@ Parken: ${K.park||"noch offen"}, Strom: ${K.strom||"noch offen"}
 Wunschtermin: ${K.wunsch||"noch offen"}
 Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
 
-WICHTIG: Der Betrieb macht nicht nur ELEO-Zäune. Möchte der Kunde etwas anderes (z. B. Treppe, Vordach, Überdachung, Carport, Handlauf, Gitter, Tür, Sonderanfertigung, Schweißarbeiten) oder meldet er einen Schaden bzw. eine Reparatur, setze "modus":"frei" bzw. "modus":"reparatur" und sag kurz, dass du ihm dabei gern hilfst. Dann übernimmt der passende Ablauf.
+WICHTIG: Der Betrieb macht nicht nur ELEO-Zäune. Möchte der Kunde etwas anderes (z. B. Treppe, Vordach, Überdachung, Carport, Handlauf, Gitter, Tür, Glas-Geländer, Edelstahl-Geländer, Sonderanfertigung, Schweißarbeiten) oder meldet er einen Schaden bzw. eine Reparatur, setze "modus":"frei" bzw. "modus":"reparatur" und sag kurz, dass du ihm dabei gern hilfst. Dann übernimmt der passende Ablauf.
 
 ANTWORTFORMAT: ausschließlich ein JSON-Objekt, nichts davor oder danach:
 {"sagen":"Text","optionen":["kurze Antwort 1","kurze Antwort 2"],"aktion":"produkt|modell|farbe|vorschau|masse|vorort|foto|kontakt|abschluss|null","aendern":{…}|null,"modus":"katalog|frei|reparatur"}
@@ -817,14 +818,22 @@ function partSvg(part,standalone){
  const body=`<style>${css("#"+id,f.c,f.hi)}#${id} .fx .panel{opacity:1}#${id} .pat *{stroke:${f.hi};opacity:.85}</style><defs>${isScreen()?patternDef(m,"pp"+id,Math.max(.6,sc*1.2)):""}${postGrad(id,f)}</defs><g class="fx"${f.rust?` filter="url(#rust${id})"`:""}>${fence(m,o,part.L,sc,0,H,H,"pp"+id).replace(/class="post"/g,`class="post" style="fill:url(#pg${id})"`)}</g><g class="fx hl" transform="translate(-.6 -.5)">${fence(m,o,part.L,sc,0,H,H,"pp"+id)}</g>${f.rust?rustFilter("rust"+id):""}`;
  return{H,pad,sc,svg:standalone?`<svg xmlns="http://www.w3.org/2000/svg" id="${id}" width="${PW*2}" height="${(H+pad)*2}" viewBox="0 ${-pad} ${PW} ${H+pad}">${body}</svg>`:`<svg id="${id}" width="${PW}" height="${H}" viewBox="0 0 ${PW} ${H}" style="overflow:visible">${body}</svg>`};
 }
-function renderPhotoStep(){
- const st=$("#stage");if(!st)return;
- const img=$("#photoImg");
- const live=!!LIVE,vid=$("#liveVid");
- if(!S.photo&&!live){st.hidden=true;$("#partBar").innerHTML="";return}
+/* Zeigt Live-Kamera bzw. aufgenommenes Foto im Stage-Element an - unabhaengig davon, ob
+   schon ein Produkt gewaehlt wurde. Ohne diese von renderPhotoStep() entkoppelte Variante
+   blieb die Kamera schwarz/leer, wenn sie VOR der Produktwahl (oder im Reparatur-Modus)
+   geoeffnet wurde, weil renderPhotoStep() - und damit die einzige Stelle, die vid.srcObject
+   setzt - nur bei S.product&&K.mode==="katalog" aufgerufen wurde. */
+function showStage(withOverlay){
+ const st=$("#stage");if(!st)return false;
+ const img=$("#photoImg"),live=!!LIVE,vid=$("#liveVid");
+ if(!S.photo&&!live){st.hidden=true;return false}
  st.hidden=false;img.hidden=live;vid.hidden=!live;
- if(live){if(vid.srcObject!==LIVE){vid.srcObject=LIVE;vid.onloadedmetadata=()=>{vid.play().catch(()=>{});layoutPhoto()};vid.onresize=layoutPhoto}}
- else{img.onload=layoutPhoto;if(img.getAttribute("src")!==S.photo)img.src=S.photo}
+ if(live){vid.onloadedmetadata=()=>{vid.play().catch(()=>{});if(withOverlay)layoutPhoto()};vid.onresize=()=>{if(withOverlay)layoutPhoto()};if(vid.srcObject!==LIVE)vid.srcObject=LIVE}
+ else{img.onload=()=>{if(withOverlay)layoutPhoto()};if(img.getAttribute("src")!==S.photo)img.src=S.photo}
+ return true;
+}
+function renderPhotoStep(){
+ if(!showStage(true)){$("#partBar").innerHTML="";return}
  ensurePlace();
  const parts=photoParts();
  $("#partBar").innerHTML=parts.length>1?`<div class="chips">${parts.map((p,i)=>`<button type="button" class="chip" data-part="${i}" aria-pressed="${(S.activePart||0)===i}">${p.name}</button>`).join("")}</div>`:"";
@@ -1084,7 +1093,17 @@ ABLAUF (überspringe, was bekannt ist):
 7. Kontakt (aktion "kontakt").
 8. Abschluss (aktion "abschluss"): kurze, wertschätzende Zusammenfassung, dann freundlich-bestimmt zum Tippen auf „Absenden“ auffordern. Nutzen klar machen: unverbindlich, kostenlos, schnelle Rückmeldung.
 
-Wenn Fotos kommen: beschreibe kurz, was du erkennst (z. B. „Die Schweißnaht am oberen Scharnier ist gerissen, leichter Rost“), und frage gezielt nach, was noch fehlt.
+${isFrei()?`GELÄNDER-SONDERANFERTIGUNG (Glas oder Edelstahl, nicht ELEO-Katalog): Geht es um ein Balkon-, Terrassen- oder Treppengeländer als Sonderanfertigung, frage der Reihe nach, verteilt auf mehrere Nachrichten, nie alles auf einmal:
+(1) Form: gerade, L-Form, U-Form oder eine andere Form – bei „andere Form“ freundlich um ein Foto einer kurzen Strichzeichnung oder Handskizze bitten (die normale Foto-Funktion reicht dafür).
+(2) Material, getrennt erfragen: Pfosten/Rahmen aus verzinktem Stahl oder Edelstahl, und Handlauf verzinkt oder Edelstahl.
+(3) Montage: aufgesetzt (auf der Fläche verschraubt) oder stirnseitig (an der Kante montiert) – bei stirnseitig zusätzlich kurz die Dicke der Stirnseite/Balkonplatte erfragen (wichtig für die passenden Konsolen).
+(4) Bodenbelag am Geländer: Fliesen, Beton oder Holz.
+(5) Ausführung der Füllung: Glas-Geländer oder Stahlgeländer mit Stäben.
+(6) Nur falls Glas gewählt wurde: wie das Glas gehalten wird – mit einem Bodenprofil, entweder stirnseitig montiert oder oben aufgesetzt. Weise freundlich darauf hin, dass ein aufgesetztes Profil eine gewisse Breite hat und dadurch etwas nutzbare Fläche kostet, stirnseitig dagegen nicht.
+(7) Nur falls Glas gewählt wurde: Glasart Milchglas (satiniert, blickdicht) oder Klarglas, und Glastyp ESG oder VSG. Erkläre den Unterschied kurz und korrekt: ESG (Einscheibensicherheitsglas) zerfällt bei Bruch in kleine, stumpfe Krümel und ist günstiger; VSG (Verbundsicherheitsglas) besteht aus mehreren Scheiben mit einer reißfesten Folie dazwischen und bleibt bei Bruch zusammenhängend, fällt also nicht heraus. Für absturzsichernde Verglasung an Geländern ist in Deutschland in der Regel VSG vorgeschrieben – sag klar, dass ${CFG.firma} das für den konkreten Fall verbindlich prüft, mach selbst keine verbindliche Zusage.
+Trage die Antworten als normale Maß-/Zusatzfelder ein (aktion "repmasse", auch Text-Felder sind erlaubt, z. B. einheit:"Text" für Form oder Glasart).
+
+`:""}Wenn Fotos kommen: beschreibe kurz, was du erkennst (z. B. „Die Schweißnaht am oberen Scharnier ist gerissen, leichter Rost“), und frage gezielt nach, was noch fehlt.
 
 AKTUELLER STAND:
 Fotos: ${K.fotos.length}${(K.rep.fotos||[]).length?" ("+K.rep.fotos.map(f=>f.titel).join(", ")+")":""}
@@ -1162,7 +1181,7 @@ function renderStudio(){
  $("#stAiRow").hidden=!(S.photo||live);
  $("#stHint").textContent=live?'Halten Sie das Tablet bzw. Handy ruhig auf die Stelle, an der der Zaun stehen soll. Tippen Sie dann auf „Was muss ich messen?“.':S.photo?'Ziehen Sie die runden Punkte, um den Zaun genau anzupassen: unten auf den Boden, oben auf die gewünschte Höhe.':'Fotografieren Sie die Stelle, an der der neue Zaun stehen soll, möglichst gerade von vorn und mit der ganzen Strecke im Bild.';
  if(S.product&&K.mode==="katalog")renderPhotoStep();
- else{const ly=$("#layers"),hs=$("#handles"),pb=$("#partBar");if(ly)ly.innerHTML="";if(hs)hs.innerHTML="";if(pb)pb.innerHTML=""}
+ else{const ly=$("#layers"),hs=$("#handles"),pb=$("#partBar");if(ly)ly.innerHTML="";if(hs)hs.innerHTML="";if(pb)pb.innerHTML="";showStage(false)}
  const ab=$("#aiDetectBtn");
  const hd=document.querySelector(".sthead b");if(hd)hd.textContent=K.repStudio?"Live-Hilfe":S.product?"Ihre Anlage im Foto":"Foto & Live-Kamera";
  if(K.repStudio){$("#liveSnap").hidden=true;$("#stAiRow").hidden=!(S.photo||live);if(ab)ab.textContent="KI: Was brauchen Sie noch?";$("#stHint").textContent=live?'Halten Sie die Kamera ruhig auf die Schadstelle und tippen Sie auf „Was brauchen Sie noch?“.':'Starten Sie die Live-Kamera und halten Sie sie auf die Schadstelle.';return}
