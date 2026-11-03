@@ -1162,6 +1162,7 @@ function renderStudio(){
  $("#stAiRow").hidden=!(S.photo||live);
  $("#stHint").textContent=live?'Halten Sie das Tablet bzw. Handy ruhig auf die Stelle, an der der Zaun stehen soll. Tippen Sie dann auf „Was muss ich messen?“.':S.photo?'Ziehen Sie die runden Punkte, um den Zaun genau anzupassen: unten auf den Boden, oben auf die gewünschte Höhe.':'Fotografieren Sie die Stelle, an der der neue Zaun stehen soll, möglichst gerade von vorn und mit der ganzen Strecke im Bild.';
  if(S.product&&K.mode==="katalog")renderPhotoStep();
+ else{const ly=$("#layers"),hs=$("#handles"),pb=$("#partBar");if(ly)ly.innerHTML="";if(hs)hs.innerHTML="";if(pb)pb.innerHTML=""}
  const ab=$("#aiDetectBtn");
  const hd=document.querySelector(".sthead b");if(hd)hd.textContent=K.repStudio?"Live-Hilfe":S.product?"Ihre Anlage im Foto":"Foto & Live-Kamera";
  if(K.repStudio){$("#liveSnap").hidden=true;$("#stAiRow").hidden=!(S.photo||live);if(ab)ab.textContent="KI: Was brauchen Sie noch?";$("#stHint").textContent=live?'Halten Sie die Kamera ruhig auf die Schadstelle und tippen Sie auf „Was brauchen Sie noch?“.':'Starten Sie die Live-Kamera und halten Sie sie auf die Schadstelle.';return}
@@ -1338,6 +1339,8 @@ async function send(){
   const j=await r.json().catch(()=>({}));
   if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
   K.sent=true;K.absage=!!j.absage;save();showDone();
+  /* Daten wurden erfolgreich per E-Mail verschickt: lokal gespeicherten Entwurf (Aufmaß, Fotos, Kontaktdaten) jetzt löschen, damit auf diesem Gerät nichts vom nächsten Kunden vorausgefüllt bleibt. Die bereits angezeigte Dankes-Seite bleibt unverändert, da showDone() ihren Text schon vorher gerendert hat. */
+  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
  }catch(e){if(btn){btn.disabled=false;btn.textContent="Projekt absenden"}toast(String(e.message||e))}
 }
 function showDone(){
