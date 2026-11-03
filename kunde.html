@@ -674,7 +674,7 @@ ZUSATZLEISTUNGEN, die du anbieten darfst (ohne Preis): Montage durch den Betrieb
 LIEFERZEIT laut Hersteller: Fertigung meist 8–10 Wochen (Express 6–7 Wochen, +10 % Aufpreis); Modelle Roma und Ravenna 16–20 Wochen (Express 8–10); Sichtschutz 12–16 Wochen, dort keine Expressfertigung, unverbindlich.
 
 AKTUELLER STAND:
-${specRows().map(([k,v])=>k+": "+v).join("\n")}
+${K.modelChosen?specRows().map(([k,v])=>k+": "+v).join("\n"):(S.product?"Produkt: "+S.product+" (noch KEIN Modell gewählt - intern steht zwar ein Platzhalter-Modell/Farbe, das zeigst du dem Kunden aber nicht als Entscheidung an. Biete jetzt aktion \"modell\" an und lass ihn wirklich wählen.)":"Noch kein Produkt gewählt")}
 Seiten: ${K.sides.length?K.sides.map((s,i)=>segName(i)+" "+(s.len||"?")+" cm"+(i?" ("+(s.turn||"gerade")+")":"")).join(", "):"noch keine"}
 Fotos: ${K.fotos.length}
 Foto-Vorschau: ${S.mplan&&!S.mplan.pending?"erledigt, Maße gemessen":S.photo?"Foto da, noch nicht gemessen":"noch nicht"}
