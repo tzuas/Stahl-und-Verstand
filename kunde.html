@@ -734,6 +734,21 @@ async function callAI(){
  if(!r.ok)throw new Error(j.error||"Fehler "+r.status);
  return j.text||"";
 }
+/* Ist ein Baustein schon erledigt? Verhindert, dass ein Widget (z.B. Foto-Checkliste)
+   verschwindet, nur weil die KI in einer Antwort das "aktion"-Feld vergisst. */
+function stepDone(act){
+ if(act==="repfotos")return (K.rep.fotos||[]).some(f=>f.sent);
+ if(act==="repmasse")return Object.values(K.rep.masse||{}).some(v=>v!=="");
+ if(act==="live")return true;
+ if(act==="vorort")return !!(K.park&&K.strom);
+ if(act==="kontakt")return !!(S.cLast&&(S.cPhone||S.cMail));
+ if(act==="produkt")return !!S.product;
+ if(act==="modell")return !!K.modelChosen;
+ if(act==="farbe")return !!S.coat;
+ if(act==="masse")return !!(S.height&&(S.total||(K.sides||[]).some(s=>s.len)));
+ if(act==="foto")return K.fotos.length>0;
+ return false;
+}
 let pendingAsk=null;
 async function ask(text,img){
  if(busy){if(text!==null)pendingAsk={text,img};return}
@@ -745,6 +760,13 @@ async function ask(text,img){
   const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=Object.assign(out,JSON.parse(m[0]))}catch(e){}}
   /* Fallback: JSON abgeschnitten oder kaputt → sagen-Feld per Regex retten */
   if(out.sagen===raw){const sg=raw.match(/"sagen"\s*:\s*"((?:[^"\\]|\\.)*)"/);if(sg)out.sagen=sg[1].replace(/\\n/g,"\n").replace(/\\"/g,'"')}
+  /* Fallback: "aktion" fehlt in der Antwort, der zuletzt angefragte Baustein ist aber noch
+     nicht erledigt (z.B. Foto-Checkliste) -> Widget aus der Vorgänger-Nachricht beibehalten,
+     statt es kommentarlos verschwinden zu lassen. */
+  if(!out.aktion){
+   const prevA=[...K.chat].reverse().find(x=>x.role==="assistant"&&x.act);
+   if(prevA&&!stepDone(prevA.act)){out.aktion=prevA.act;if(!out.checkliste&&prevA.check)out.checkliste=prevA.check;if(!out.felder&&prevA.felder)out.felder=prevA.felder}
+  }
   if(!(typeof isRep==="function"&&isRep()))applyChanges(out.aendern);
   if(out.zusammenfassung&&K.rep)K.rep.summary=String(out.zusammenfassung);if(out.dringend&&K.rep)K.rep.dringend=true;
   const switchMode=(out.modus==="frei"||out.modus==="reparatur")&&K.mode!==out.modus;if(switchMode){K.mode=out.modus;out.aktion=null}
