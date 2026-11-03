@@ -68,7 +68,10 @@ details{font-size:13.5px;color:var(--muted)}details summary{cursor:pointer;font-
 #look,#sketch{display:block;width:100%;height:auto;max-height:30vh}
 #look{background:#eef3f4}#sketch{background:var(--sheet)}
 #kLog{display:flex;flex-direction:column;gap:12px;padding-block:12px 120px}
-.km{display:flex;flex-direction:column;gap:8px;max-width:100%}
+@keyframes kwIn{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+@keyframes blockIn{from{opacity:0;transform:translateY(8px) scale(.97)}to{opacity:1;transform:translateY(0) scale(1)}}
+.km{display:flex;flex-direction:column;gap:8px;max-width:100%;animation:kwIn .38s cubic-bezier(.2,.8,.2,1) both}
+.tiles .tile,.sw .swb,.ral .ralb,.mlist .mrow,.shotlist li,.chips .chip{animation:blockIn .32s cubic-bezier(.2,.8,.2,1) both;animation-delay:calc(var(--i,0) * 45ms)}
 .km.user{align-self:flex-end;max-width:85%;background:var(--accent);color:var(--accent-ink);padding:10px 14px;border-radius:16px 16px 4px 16px}
 .km.bot .bub{align-self:flex-start;max-width:88%;background:var(--panel);border:1px solid var(--line);padding:10px 14px;border-radius:16px 16px 16px 4px}
 .km.err .bub{border-color:var(--warn)}
@@ -140,6 +143,7 @@ body.noscroll{overflow:hidden}
 
 /* Professor Funke */
 .prof{display:block;overflow:visible}
+.prof-logo{visibility:hidden}.logo-ready .prof-logo{visibility:visible}
 .prof .bob{animation:pbob 4s ease-in-out infinite;transform-origin:100px 250px}
 @keyframes pbob{50%{transform:translateY(-3px) rotate(-.6deg)}}
 .prof .eye{transform-box:fill-box;transform-origin:center;animation:pblink 5s infinite}
@@ -597,7 +601,7 @@ const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
 const CFG=Object.assign({worker:"",whatsapp:"",firma:"Stahl & Verstand",inhaber:"",telefon:"",impressum:"",datenschutz:""},window.SV_CONFIG||{});
 
 /* eigener Speicher, getrennt vom Berater-Tool */
-const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:""},load("svk-meta",{}));
+const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:"",modelChosen:false},load("svk-meta",{}));
 S=Object.assign(DEF(),load("svk-draft",{}),{step:0,view:"look"});
 function save(){store("svk-draft",S);try{store("svk-meta",Object.assign({},K,{fotos:K.fotos.slice(0,6)}))}catch(e){store("svk-meta",Object.assign({},K,{fotos:[]}))}}
 
@@ -612,7 +616,10 @@ function applySides(){
 
 /* ---------- Vorschau ---------- */
 function drawPreview(){
- const pv=document.querySelector(".pv");if(pv)pv.hidden=K.mode!=="katalog";
+ /* Vorschau bleibt leer, bis der Kunde wirklich ein Modell gewählt hat (K.modelChosen) -
+    sonst stünde beim bloßen Antippen eines Produkts sofort ein Beispielmodell (Standard
+    aus fixState()) da, obwohl der Kunde noch nichts selbst zusammengebaut hat. */
+ const pv=document.querySelector(".pv");if(pv)pv.hidden=K.mode!=="katalog"||!K.modelChosen;
  fixState();
  try{drawLook()}catch(e){console.warn(e)}
  try{drawSketch()}catch(e){console.warn(e)}
@@ -686,6 +693,9 @@ const ALLOW=["product","model","coat","ral","form","tip","fill","height","total"
 function applyChanges(ch){
  if(!ch||typeof ch!=="object")return;
  if(ch.product||ch.model)K.mode="katalog";
+ /* Vorschau soll erst live mitlaufen, wenn wirklich ein Modell feststeht - wechselt der
+    Kunde per Chat das Produkt ohne neues Modell zu nennen, erst wieder ausblenden. */
+ const prodChanged=ch.product&&ch.product!==S.product;
  for(const k of ALLOW){if(!(k in ch))continue;let v=ch[k];
   if(k==="wunsch"){K.wunsch=String(v).slice(0,200);continue}
   if(k==="notes"){S.notes=[S.notes,String(v)].filter(Boolean).join(" · ").slice(0,600);continue}
@@ -697,6 +707,7 @@ function applyChanges(ch){
   if(k==="install"){S.install=/betrieb|uns montiert|durch sie/i.test(String(v))?"Durch den Betrieb":"Selbstmontage";continue}
   S[k]=v;
  }
+ if("model" in ch)K.modelChosen=true; else if(prodChanged)K.modelChosen=false;
 }
 let busy=false;
 /* Fetch mit Zeitlimit: verhindert endloses Laden bei Netzwerk-Haengern */
@@ -1131,10 +1142,10 @@ ANTWORTFORMAT: ausschließlich ein JSON-Objekt:
 }
 function repWidget(act,m){
  if(act==="repfotos"){const list=(m.check&&m.check.length?m.check:[{id:"f1",titel:"Übersicht",hilfe:"Aus ca. 3 m Entfernung"},{id:"f2",titel:"Schadstelle nah",hilfe:"Mit Zollstock als Größenvergleich"}]).slice(0,6);
-  return `<div class="kw"><ul class="shotlist">${list.map((c,i)=>{const done=(K.rep.fotos||[]).find(f=>f.id===c.id);return `<li class="${done?"done":""}"><span class="sn">${done?"✓":i+1}</span><span class="st"><b>${esc(c.titel)}</b><small>${esc(c.hilfe||"")}</small></span>${done?`<img src="${done.data}" alt="">`:""}<label class="btn ${done?"":"primary"} filebtn" for="rf-${esc(c.id)}">${done?"Neu":"Foto"}</label><input type="file" accept="image/*" capture="environment" class="vh" id="rf-${esc(c.id)}" data-rfid="${esc(c.id)}" data-rftitel="${esc(c.titel)}"></li>`}).join("")}</ul>
+  return `<div class="kw"><ul class="shotlist">${list.map((c,i)=>{const done=(K.rep.fotos||[]).find(f=>f.id===c.id);return `<li class="${done?"done":""}" style="--i:${i}"><span class="sn">${done?"✓":i+1}</span><span class="st"><b>${esc(c.titel)}</b><small>${esc(c.hilfe||"")}</small></span>${done?`<img src="${done.data}" alt="">`:""}<label class="btn ${done?"":"primary"} filebtn" for="rf-${esc(c.id)}">${done?"Neu":"Foto"}</label><input type="file" accept="image/*" capture="environment" class="vh" id="rf-${esc(c.id)}" data-rfid="${esc(c.id)}" data-rftitel="${esc(c.titel)}"></li>`}).join("")}</ul>
   <div class="row"><button type="button" class="primary" data-repfotos="1" ${(K.rep.fotos||[]).length?"":"disabled"}>Fotos senden</button><button type="button" data-repopen="1">Live-Hilfe mit Kamera</button></div></div>`}
  if(act==="repmasse"){const fl=(m.felder&&m.felder.length?m.felder:[]).slice(0,8);if(!fl.length)return"";
-  return `<div class="kw"><div class="mlist">${fl.map((f,i)=>`<label class="mrow"><span class="mid">${i+1}</span><span class="mtxt"><b>${esc(f.titel)}</b><small>${esc(f.hilfe||"")}</small></span><span class="unit"><input ${f.einheit==="Text"?'type="text"':'type="number" inputmode="decimal" step="any"'} data-rmk="${esc(f.titel)}" data-rmu="${esc(f.einheit||"")}" value="${esc((K.rep.masse||{})[f.titel+(f.einheit&&f.einheit!=="Text"?" ("+f.einheit+")":"")]||"")}"><span>${esc(f.einheit&&f.einheit!=="Text"?f.einheit:"")}</span></span></label>`).join("")}</div>
+  return `<div class="kw"><div class="mlist">${fl.map((f,i)=>`<label class="mrow" style="--i:${i}"><span class="mid">${i+1}</span><span class="mtxt"><b>${esc(f.titel)}</b><small>${esc(f.hilfe||"")}</small></span><span class="unit"><input ${f.einheit==="Text"?'type="text"':'type="number" inputmode="decimal" step="any"'} data-rmk="${esc(f.titel)}" data-rmu="${esc(f.einheit||"")}" value="${esc((K.rep.masse||{})[f.titel+(f.einheit&&f.einheit!=="Text"?" ("+f.einheit+")":"")]||"")}"><span>${esc(f.einheit&&f.einheit!=="Text"?f.einheit:"")}</span></span></label>`).join("")}</div>
   <p class="hint" style="margin:0">Unsicher, wo gemessen wird? Die Live-Hilfe zeigt es Ihnen.</p>
   <div class="row"><button type="button" class="primary" data-repmasse="1">Maße senden</button><button type="button" data-repopen="1">Live-Hilfe mit Kamera</button></div></div>`}
  if(act==="live")return `<div class="kw"><p style="margin:0">Halten Sie die Kamera auf die Stelle. Ich sage Ihnen, was ich noch brauche, und übernehme passende Bilder direkt.</p><div class="row"><button type="button" class="primary" data-repopen="1">Live-Hilfe starten</button></div></div>`;
@@ -1249,10 +1260,11 @@ const ICON_MIC='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stro
 function widget(act,live,m){
  if(!live)return"";
  if(typeof isRep==="function"&&isRep()){const r=repWidget(act,m||{});if(r)return r}
- if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-kprod="${p.id}" aria-pressed="${K.mode==="katalog"&&S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}<button type="button" class="tile reptile" data-krep="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M30 38 L62 10 M56 8 l10 -2 l-2 10 M44 30 l8 8 M70 26 a10 10 0 1 0 14 14"/></svg><strong>Reparatur</strong><span>Schaden, Instandhaltung, Ersatzteil</span></button><button type="button" class="tile reptile" data-kfrei="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M20 44 h16 v-8 h16 v-8 h16 v-8 h16 v-8 h16"/><path d="M20 44 V36 M100 12 v32"/></svg><strong>Etwas anderes</strong><span>Treppe, Vordach, Gitter, Sonderanfertigung …</span></button></div>`;
- if(act==="modell")return `<div class="kw tiles mt">${modelsFor(S.product).map(m=>`<button type="button" class="tile" data-kmodel="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}</strong><span>${m.t}</span></button>`).join("")}</div>`;
+ if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map((p,i)=>`<button type="button" class="tile" style="--i:${i}" data-kprod="${p.id}" aria-pressed="${K.mode==="katalog"&&S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}<button type="button" class="tile reptile" style="--i:${PRODUCTS.length}" data-krep="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M30 38 L62 10 M56 8 l10 -2 l-2 10 M44 30 l8 8 M70 26 a10 10 0 1 0 14 14"/></svg><strong>Reparatur</strong><span>Schaden, Instandhaltung, Ersatzteil</span></button><button type="button" class="tile reptile" style="--i:${PRODUCTS.length+1}" data-kfrei="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M20 44 h16 v-8 h16 v-8 h16 v-8 h16 v-8 h16"/><path d="M20 44 V36 M100 12 v32"/></svg><strong>Etwas anderes</strong><span>Treppe, Vordach, Gitter, Sonderanfertigung …</span></button></div>`;
+ if(act==="modell"){const matOpts=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS;
+  return `<div class="kw tiles mt">${modelsFor(S.product).map((m,i)=>`<button type="button" class="tile" style="--i:${i}" data-kmodel="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}</strong><span>${m.t}</span></button>`).join("")}</div><p class="hint" style="margin:0">Als Material/Ausführung stehen zur Wahl: ${matOpts.join(", ")}. Die Farbe wählen Sie gleich im nächsten Schritt.</p>`}
  if(act==="farbe"){const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
-  return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]])=>`<button type="button" class="ralb" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
+  return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]],i)=>`<button type="button" class="ralb" style="--i:${i}" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
  if(act==="masse"){
   if(!K.sides.length)K.sides=[{len:S.pts.length?"":(S.total||""),turn:""}];
   const gate=S.product==="Tor"||S.product==="Gartentor";
@@ -1293,7 +1305,7 @@ function renderChat(){
  log.innerHTML=K.chat.map(m=>{
   if(m.role==="user")return `<div class="km user">${m.img&&m.img.length?`<div class="mini">${m.img.map(s=>`<img src="${s}" alt="">`).join("")}</div>`:""}${esc(m.text)}</div>`;
   const live=m===lastA&&!K.sent;
-  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map(o=>`<button type="button" class="chip" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live,m)}${live&&m.fallback?manualHtml():""}</div>`;
+  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map((o,i)=>`<button type="button" class="chip" style="--i:${i}" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live,m)}${live&&m.fallback?manualHtml():""}</div>`;
  }).join("")+(busy?'<div class="km bot"><div class="bub typing"><i></i><i></i><i></i></div></div>':"")+(K.show?`<div class="km bot"><div class="bub">Hier können Sie es eintragen:</div>${widget(K.show,true)}</div>`:"");
  const end=$("#kEnd");if(end)end.scrollIntoView({block:"end",behavior:"smooth"});
  $("#kSumBtn").hidden=!(S.cLast||K.chat.length>8)||K.sent;
@@ -1301,8 +1313,8 @@ function renderChat(){
 }
 function manualHtml(){return ["produkt","modell","farbe","masse","foto","kontakt","abschluss"].map(a=>`<h3 class="mh">${{produkt:"1. Was soll entstehen?",modell:"2. Modell",farbe:"3. Farbe",masse:"4. Maße",foto:"5. Fotos",kontakt:"6. Kontakt",abschluss:"7. Absenden"}[a]}</h3>${widget(a,true)}`).join("")}
 function coatSwatches(opts){
- return `<div class="sw">${opts.map(o=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
-  return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Sonderfarbe RAL"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
+ return `<div class="sw">${opts.map((o,i)=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
+  return `<button type="button" class="swb" style="--i:${i}" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Sonderfarbe RAL"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
 }
 function miniIcon(id){
  const b='stroke="currentColor" fill="none" stroke-width="2"',bars=(x0,x1,y0,y1,st=10)=>{let s="";for(let x=x0;x<=x1;x+=st)s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;return s};let g="";
@@ -1369,7 +1381,7 @@ async function send(){
   if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
   K.sent=true;K.absage=!!j.absage;save();showDone();
   /* Daten wurden erfolgreich per E-Mail verschickt: lokal gespeicherten Entwurf (Aufmaß, Fotos, Kontaktdaten) jetzt löschen, damit auf diesem Gerät nichts vom nächsten Kunden vorausgefüllt bleibt. Die bereits angezeigte Dankes-Seite bleibt unverändert, da showDone() ihren Text schon vorher gerendert hat. */
-  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
+  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;K.modelChosen=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
  }catch(e){if(btn){btn.disabled=false;btn.textContent="Projekt absenden"}toast(String(e.message||e))}
 }
 function showDone(){
@@ -1381,7 +1393,7 @@ function showDone(){
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
- if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;K.modelChosen=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kWeiter"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kMic")return listen();
  if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
@@ -1391,10 +1403,10 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kCam"){K.show="foto";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
- if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.modelChosen=false;S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
  if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
- if(b.dataset.kprod){K.mode="katalog";S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
- if(b.dataset.kmodel){S.model=b.dataset.kmodel;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
+ if(b.dataset.kprod){K.mode="katalog";if(S.product!==b.dataset.kprod)K.modelChosen=false;S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
+ if(b.dataset.kmodel){S.model=b.dataset.kmodel;K.modelChosen=true;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
  if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;fixState();drawPreview();renderChat();save();return}
  if(b.dataset.kdone==="farbe"){K.show=null;return ask("Ich nehme die Farbe "+coatLabel()+".")}
  if(b.dataset.sadd){K.sides.push({len:"",turn:"rechts"});renderChat();return}
@@ -1449,13 +1461,14 @@ const _showDone=showDone;showDone=function(){_showDone();const b=$("#kBar");if(b
 window.LOGO_DATA=null;
 (async function loadLogo(){
  if(!CFG.logo)return;
- try{const r=await fetch(CFG.logo);if(!r.ok)return;const bl=await r.blob();const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="${esc(CFG.firma)}">`;el.classList.add("haslogo")});drawPreview()};fr.readAsDataURL(bl)}catch(e){}
+ try{const r=await fetch(CFG.logo);if(!r.ok)return;const bl=await r.blob();const fr=new FileReader();fr.onload=()=>{window.LOGO_DATA=fr.result;document.querySelectorAll("[data-logo]").forEach(el=>{el.innerHTML=`<img src="${fr.result}" alt="${esc(CFG.firma)}">`;el.classList.add("haslogo")});document.querySelectorAll(".prof-logo-img").forEach(im=>im.setAttribute("href",fr.result));document.body.classList.add("logo-ready");drawPreview()};fr.readAsDataURL(bl)}catch(e){}
 })();
 /* ---------- Professor Funke: animierte Figur ---------- */
 function profSVG(cls){
  return `<svg class="prof ${cls||""}" viewBox="0 0 200 250" role="img" aria-label="Professor Funke">
  <g class="bob">
   <path d="M36 250 C40 188 68 170 100 170 C132 170 160 188 164 250 Z" fill="#2c3a44"/>
+  <g class="prof-logo"><circle cx="70" cy="216" r="15" fill="#f4f1ea"/><image href="" x="57" y="203" width="26" height="26" preserveAspectRatio="xMidYMid slice" style="clip-path:circle(13px at 70px 216px)" class="prof-logo-img"/></g>
   <path d="M86 171 L100 200 L114 171 Z" fill="#f4f1ea"/>
   <path d="M100 178 L84 170 L84 188 Z M100 178 L116 170 L116 188 Z" fill="#c8262a"/><circle cx="100" cy="179" r="4" fill="#9e1d21"/>
   <path d="M132 196 l9 -5 l9 5 v10 l-9 5 l-9 -5 z" fill="#c8262a"/><path d="M137 200 l4 -2 l4 2 v4" stroke="#fff" stroke-width="1.6" fill="none"/>
