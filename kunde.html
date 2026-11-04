@@ -1524,7 +1524,12 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
   if(gate){const v=+$("#kTotal").value;if(v>0)S.total=v}
   const h=+$("#kHeight").value;if(h>0)S.height=h;
   K.massGiven=true;
-  applySides();drawPreview();K.show=null;K.quickShow=null;
+  /* applySides() ist nur fuer mehrseitige Strecken (Zaun & Co.) gedacht und
+     wuerde bei Toren das gerade eingegebene S.total mit dem veralteten
+     K.sides[0].len ueberschreiben (Bug: eingegebene Breite ging verloren) -
+     bei Toren daher NICHT aufrufen. */
+  if(!gate)applySides();
+  drawPreview();K.show=null;K.quickShow=null;
   const txt=gate?`Breite ${S.total} cm, Höhe ${S.height} cm.`:`Meine Maße: ${K.sides.filter(s=>+s.len>0).map((s,i)=>`Seite ${segName(i)} ${s.len} cm${i?" ("+(s.turn==="gerade"?"gerade weiter":"Ecke nach "+s.turn)+")":""}`).join(", ")}; Höhe ${S.height} cm.`;
   return advance(txt);
  }
