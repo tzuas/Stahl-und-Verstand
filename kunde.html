@@ -101,6 +101,14 @@ details{font-size:13.5px;color:var(--muted)}details summary{cursor:pointer;font-
 .thumbs{display:flex;flex-wrap:wrap;gap:8px}.thumbs span{position:relative}.thumbs img{width:84px;height:84px;object-fit:cover;border-radius:6px;display:block}.thumbs .xs{position:absolute;top:2px;right:2px;background:var(--panel)}
 .spec{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 12px;margin:0;font-size:14px}.spec dt{font:500 11px var(--f-mono);text-transform:uppercase;color:var(--muted);padding-top:3px}.spec dd{margin:0}
 .mh{font:700 16px var(--f-display);text-transform:uppercase;margin:10px 0 0}
+.qhead{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.qhead h2{font:800 22px var(--f-display);text-transform:uppercase;margin:0}
+.qstep{font:600 11px var(--f-mono);letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.qcrumbs{display:flex;gap:6px;margin:4px 0 14px}
+.qcrumb{width:30px;height:30px;border-radius:50%;border:1px solid var(--line);background:var(--sheet);color:var(--muted);font:700 13px var(--f-mono);display:flex;align-items:center;justify-content:center;padding:0}
+.qcrumb.on{border-color:var(--accent);color:var(--accent)}
+.qcrumb:disabled{opacity:.35}
+.qswitch{display:block;margin-top:18px;font-size:13px}
 .bar{position:fixed;left:0;right:0;bottom:0;z-index:6;background:var(--bg);border-top:1px solid var(--line);padding-bottom:max(10px,env(safe-area-inset-bottom,0px));padding-top:10px}
 .bar form{display:flex;gap:8px;align-items:center}
 .bar input{flex:1;min-width:0;border-radius:999px;padding-inline:16px}
@@ -179,7 +187,7 @@ body.noscroll{overflow:hidden}
 <main>
  <section id="kIntro" class="wrap intro">
   <h1>Ihr Projekt in fünf Minuten vorbereitet</h1>
-  <p>Ob Zaun, Tor, Geländer, Treppe, Vordach, Sonderanfertigung oder Reparatur: Unser digitaler Assistent fragt kurz nach, hilft Ihnen beim Aufmessen und Fotografieren und zeigt Ihnen neue Anlagen gleich in Farbe. Danach haben wir alles für Ihr Angebot, oft ganz ohne Vor-Ort-Termin.</p>
+  <p>Ob Zaun, Tor, Geländer, Treppe, Vordach, Sonderanfertigung oder Reparatur: Klicken Sie sich einfach selbst durch Modell, Farbe und Maße und sehen Sie Ihre Anlage gleich in Farbe entstehen. Professor Funke steht dabei nur auf Wunsch als Chat-Hilfe bereit. Danach haben wir alles für Ihr Angebot, oft ganz ohne Vor-Ort-Termin.</p>
   <ol class="steps3">
    <li><b>1</b><span><strong>Wünsche</strong><br><span class="hint">Sagen Sie uns, was Sie vorhaben, oder wählen Sie Zaun, Tor oder Geländer direkt aus.</span></span></li>
    <li><b>2</b><span><strong>Aufmaß</strong><br><span class="hint">Schritt für Schritt messen, ein paar Fotos machen.</span></span></li>
@@ -197,10 +205,11 @@ body.noscroll{overflow:hidden}
    <svg id="look" viewBox="0 0 820 400" role="img" aria-label="Ihre Anlage in Farbe"></svg>
    <svg id="sketch" viewBox="0 0 820 400" role="img" aria-label="Skizze mit Maßen" hidden></svg>
   </div></div></div>
-  <div id="kChat" class="wrap"><div id="kLog" aria-live="polite"></div><div id="kEnd"></div></div>
+  <div id="kQuick" class="wrap" hidden></div>
+  <div id="kChat" class="wrap" hidden><div id="kLog" aria-live="polite"></div><div id="kEnd"></div></div>
   <div id="kDone" class="wrap done" hidden></div>
   <div class="bar" id="kBar"><div class="wrap">
-   <div class="tools"><button type="button" id="kBack" class="xs" hidden>‹ Zurück</button><button type="button" id="kSpk" class="xs" aria-pressed="false">Vorlesen</button><button type="button" id="kSumBtn" class="xs" hidden>Zusammenfassung &amp; absenden</button></div>
+   <div class="tools"><button type="button" id="kBack" class="xs" hidden>‹ Zurück</button><button type="button" id="kSpk" class="xs" aria-pressed="false">Vorlesen</button><button type="button" id="kProfOff" class="xs">Schneller ohne Chat</button><button type="button" id="kSumBtn" class="xs" hidden>Zusammenfassung &amp; absenden</button></div>
    <form id="kForm"><button type="button" id="kMic" aria-label="Antwort sprechen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><button type="button" id="kCam" aria-label="Foto hinzufügen"><svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M3 7h3l1.6-2h8.8L18 7h3v12H3z"/><circle cx="12" cy="13" r="3.6"/></svg></button><input id="kText" placeholder="Antwort schreiben …" autocomplete="off" enterkeyhint="send"><button type="submit" class="primary" id="kSend2">Senden</button></form>
   </div></div>
  </section>
@@ -601,7 +610,7 @@ const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
 const CFG=Object.assign({worker:"",whatsapp:"",firma:"Stahl & Verstand",inhaber:"",telefon:"",impressum:"",datenschutz:""},window.SV_CONFIG||{});
 
 /* eigener Speicher, getrennt vom Berater-Tool */
-const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:"",modelChosen:false,massGiven:false,fotoSkipped:false,installAsked:false},load("svk-meta",{}));
+const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:"",modelChosen:false,massGiven:false,fotoSkipped:false,installAsked:false,coatChosen:false,profOn:false,quickShow:null},load("svk-meta",{}));
 S=Object.assign(DEF(),load("svk-draft",{}),{step:0,view:"look"});
 function save(){store("svk-draft",S);try{store("svk-meta",Object.assign({},K,{fotos:K.fotos.slice(0,6)}))}catch(e){store("svk-meta",Object.assign({},K,{fotos:[]}))}}
 
@@ -653,7 +662,7 @@ PFLICHTWEG bis zu den Kontaktdaten – halte dich STRENG an diese Reihenfolge un
 1b. Wählt der Kunde "Geländer": frage in der nächsten Nachricht kurz, ob ein Stahl-Geländer aus dem ELEO-Katalog (Pulverbeschichtung/verzinkt, Modelle siehe unten) gewünscht ist, oder ein Glas-Geländer bzw. ein Edelstahl-Geländer als Sonderanfertigung. Bei Glas oder Edelstahl setze "modus":"frei" – ab dort führt die Sonderanfertigungs-Beratung (siehe GELÄNDER-SONDERANFERTIGUNG unten) gezielt durch Form, Material, Montage, Boden und ggf. Glas.
 2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino. Nenn kurz einen Nutzen der Empfehlung (Stil, Pflegeaufwand, Langlebigkeit), nicht nur den Namen.
 3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik. Bei Anthrazit/RAL kurz erwähnen, dass das die langlebige Duplex-Beschichtung ist (verzinkt + pulverbeschichtet).
-4. Ungefähre Maße (aktion "vorschau" ZUERST anbieten – Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst Messlinien im Bild, danach sieht er seinen neuen Zaun im eigenen Foto; nur wenn er das nicht möchte: aktion "masse" mit einfacher Messanleitung). Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern. Grobe, geschätzte Werte reichen hier völlig – das wird vor der Bestellung ohnehin geprüft. WICHTIG: Hat der Kunde die Foto-Vorschau laut AKTUELLER STAND bereits einmal abgelehnt ("Foto bereits abgelehnt"), biete sie NICHT erneut an, sondern geh direkt zu aktion "masse".
+4. Ungefähre Maße (aktion "vorschau" ZUERST anbieten – Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst Messlinien im Bild, danach sieht er seinen neuen Zaun im eigenen Foto; nur wenn er das nicht möchte: aktion "masse" mit einfacher Messanleitung). Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren einfach die gewünschte Gesamtbreite, die sich der Kunde vorstellt (NIE den Fachbegriff "lichte Weite" verwenden oder erklären müssen – der Kunde nennt nur das Maß, das er haben möchte, Pfosten rechnen wir intern automatisch mit ein). Grobe, geschätzte Werte reichen hier völlig – das wird vor der Bestellung ohnehin geprüft. WICHTIG: Hat der Kunde die Foto-Vorschau laut AKTUELLER STAND bereits einmal abgelehnt ("Foto bereits abgelehnt"), biete sie NICHT erneut an, sondern geh direkt zu aktion "masse".
 5. Kontaktdaten mit vollständiger Adresse (aktion "kontakt"). Ab hier hat der Betrieb alles Nötige für ein erstes Angebot – mach das dem Kunden kurz klar ("Damit kann das Team schon loslegen").
 
 DANACH, GANZ LOCKER UND FREIWILLIG – erst NACH den Kontaktdaten, nie vor Schritt 5, und höchstens 1–2 davon pro Gespräch ansprechen, nie als Liste abfragen: Montage selbst oder durch uns (als "install" speichern – NUR wenn "Durch den Betrieb" gewünscht ist, direkt danach aktion "vorort" für Parken/Strom anbieten; bei Selbstmontage "vorort" NICHT anbieten); Übersichtsfotos der Strecke (aktion "foto", nur falls noch keine Fotos vorhanden und Foto-Vorschau nicht schon abgelehnt wurde); Untergrund/Hindernisse/Zufahrt (in "notes"); Wunschtermin (als "wunsch"); bei Toren Interesse an einem Torantrieb (in "notes"); bei engem Zeitrahmen Express-Fertigung (als "express":true, Mehrpreis ohne Zahl erwähnen); Budget (ausdrücklich optional); wie der Kunde aufmerksam wurde.
@@ -799,6 +808,51 @@ async function ask(text,img){
  }
  busy=false;drawPreview();renderChat();save();
  if(pendingAsk){const p=pendingAsk;pendingAsk=null;ask(p.text,p.img)}
+}
+/* ---------- Schnell-Klick-Modus (Prof. Funke ist optional) ----------
+   Ohne KI-Chat kommt der Kunde über dieselben Formular-Widgets (widget())
+   rein durch Anklicken/Ausfüllen zum Ziel - kein Warten auf Antworten,
+   kein Tippen. advance() ersetzt an den gemeinsamen Stellen den ask()-
+   Aufruf: im Klick-Modus wird nur der Zustand fortgeschrieben und die
+   nächste passende Kachel gezeigt, statt eine KI-Antwort abzuwarten. */
+function advance(text,img){
+ if(K.profOn)return ask(text,img);
+ if(text!==null)K.chat.push({role:"user",text,img:img||null});
+ save();renderQuick();
+}
+function render(){if(K.profOn)renderChat();else renderQuick()}
+const QUICK_ORDER=["produkt","modell","farbe","masse","kontakt","abschluss"];
+function quickStepDone(step){
+ if(step==="produkt")return !!S.product;
+ if(step==="modell")return K.modelChosen;
+ if(step==="farbe")return K.coatChosen;
+ if(step==="masse")return K.massGiven;
+ if(step==="kontakt")return !!(S.cLast&&(S.cPhone||S.cMail));
+ return false;
+}
+function quickStep(){for(const s of QUICK_ORDER)if(!quickStepDone(s))return s;return "abschluss"}
+const QUICK_TITLES={produkt:"Was soll entstehen?",modell:"Welches Modell?",farbe:"Welche Farbe?",masse:"Ungefähre Maße",kontakt:"Ihre Kontaktdaten",abschluss:"Bitte prüfen und absenden"};
+function renderQuick(){
+ const el=$("#kQuick");if(!el)return;
+ fixState();
+ const auto=quickStep(),autoIdx=QUICK_ORDER.indexOf(auto);
+ let step=K.quickShow&&QUICK_ORDER.includes(K.quickShow)&&QUICK_ORDER.indexOf(K.quickShow)<=autoIdx?K.quickShow:auto;
+ const idx=QUICK_ORDER.indexOf(step);
+ const crumbs=QUICK_ORDER.slice(0,autoIdx+1).map((s,i)=>`<button type="button" class="qcrumb ${s===step?"on":""}" data-qshow="${s}">${i+1}</button>`).join("");
+ el.innerHTML=`<div class="qhead"><h2>${QUICK_TITLES[step]}</h2><span class="qstep">Schritt ${idx+1} von ${QUICK_ORDER.length}</span></div>
+ <div class="qcrumbs">${crumbs}</div>
+ ${widget(step,true)}
+ <p class="qswitch"><button type="button" class="linkbtn" id="kProfOn">Lieber mit Professor Funke chatten (optionale Hilfe)</button></p>`;
+ drawPreview();
+}
+/* Wechsel zwischen Klick-Modus (#kQuick) und Chat-Modus (#kChat) - beide
+   teilen sich denselben S/K-Zustand, nichts geht beim Umschalten verloren. */
+function switchView(){
+ const q=$("#kQuick"),c=$("#kChat"),bar=$("#kBar");
+ if(!q||!c)return;
+ q.hidden=K.profOn;c.hidden=!K.profOn;
+ if(bar)bar.hidden=!K.profOn;
+ if(K.profOn)renderChat();else renderQuick();
 }
 /* ---------- Grundriss-Zeichner ---------- */
 const PLAN={w:600,h:380,grid:20};
@@ -1080,7 +1134,7 @@ async function planMeasure(btn){
   const raw=await aiVision(`Du bist ein erfahrener Metallbauer und planst das Aufmaß für einen neuen ${want} anhand dieses Fotos.
 1) Finde die Stelle, an die der neue ${want} kommt (vorhandener Zaun/Tor/Geländer, Mauer, Rasenkante, Balkonkante).
 2) Lege fest, welche Maße vor Ort mit Zollstock, Maßband oder Laser gemessen werden müssen, damit das Angebot exakt wird. Schätze NICHTS, frage die Maße ab.
-Pflicht: ${gate?"lichte Weite zwischen den Pfeilern/Mauern (typ 'laenge'), gewünschte Torhöhe (typ 'hoehe')":rail?"Länge der Absturzkante je gerader Seite (typ 'laenge'), Geländerhöhe ab Oberkante Boden (typ 'hoehe'), Stärke der Balkonplatte (typ 'platte')":"Länge je gerader Seite entlang der geplanten Linie (typ 'laenge', bei Ecken mehrere), gewünschte Zaunhöhe (typ 'hoehe')"}.
+Pflicht: ${gate?"gewünschte Gesamtbreite des Tors, einfach das Maß das sich der Kunde wünscht, kein Fachbegriff wie 'lichte Weite' verwenden (typ 'laenge'), gewünschte Torhöhe (typ 'hoehe')":rail?"Länge der Absturzkante je gerader Seite (typ 'laenge'), Geländerhöhe ab Oberkante Boden (typ 'hoehe'), Stärke der Balkonplatte (typ 'platte')":"Länge je gerader Seite entlang der geplanten Linie (typ 'laenge', bei Ecken mehrere), gewünschte Zaunhöhe (typ 'hoehe')"}.
 Zusätzlich nur wenn im Bild relevant: Höhenunterschied/Gefälle über die Strecke (typ "gefaelle"), Höhe von Sockel/Mauer (typ "sonstiges"), Pfeilerhöhe, Abstand zu Hindernissen (typ "sonstiges"). Höchstens 6 Maße.
 Antworte ausschließlich mit JSON:
 {"gefunden":true|false,"art":"kurze Beschreibung des Bestands","punkte":[[x,y],[x,y],[x,y],[x,y]],
@@ -1114,7 +1168,7 @@ function applyMeasure(){
  const L=v("laenge"),H=v("hoehe"),G=v("gefaelle"),P=v("platte");
  const gate=S.product==="Tor"||S.product==="Gartentor";
  if(L.length){
-  if(gate){S.total=Math.round(L[0]+20);S.pts=[];S.lens=[]}
+  if(gate){S.total=Math.round(L[0]);S.pts=[];S.lens=[]}
   else if(L.length>1){S.lens=L.slice();let x=100,y=300,h=0;S.pts=[[x,y]];L.forEach((len,i)=>{if(i>0)h+=90;const r=h*Math.PI/180;x+=Math.cos(r)*len/100*20;y+=Math.sin(r)*len/100*20;S.pts.push([Math.round(x),Math.round(y)])})}
   else{S.total=L[0];S.pts=[];S.lens=[]}
   S.fields=0;
@@ -1123,7 +1177,7 @@ function applyMeasure(){
  if(L.length||H.length)if(typeof K!=="undefined")K.massGiven=true;
  if(G.length){S.slope=G[0];S.slopeUnit="cm"}
  if(P.length)S.slab=P[0];
- const proto=(p.art?"Bestand laut Foto: "+p.art+". ":"")+"Aufmaß vor Ort ("+new Date().toLocaleDateString("de-DE")+"): "+p.items.filter(m=>+m.wert>0).map(m=>`${m.id} ${m.titel} ${m.wert} cm`).join("; ")+(gate&&L.length?" (Gesamtbreite inkl. Torpfosten = lichte Weite + 2 × 10 cm)":"");
+ const proto=(p.art?"Bestand laut Foto: "+p.art+". ":"")+"Aufmaß vor Ort ("+new Date().toLocaleDateString("de-DE")+"): "+p.items.filter(m=>+m.wert>0).map(m=>`${m.id} ${m.titel} ${m.wert} cm`).join("; ")+(gate&&L.length?" (vom Kunden gewünschte Gesamtbreite, lichte Weite für ELEO bei Bedarf vor Ort nachmessen)":"");
  S.notes=[String(S.notes||"").replace(/(Bestand laut Foto: [^.]*\. )?Aufmaß vor Ort \([^)]*\):[^\n·]*/g,"").replace(/^[\s·]+|[\s·]+$/g,""),proto].filter(Boolean).join(" · ");
  ensurePlace();if(p.place)S.place[S.activePart||0]=p.place;
  p.pending=false;save();refresh(false);renderPhotoStep();renderPlanBox();
@@ -1313,7 +1367,7 @@ function widget(act,live,m){
   if(!K.sides.length)K.sides=[{len:S.pts.length?"":(S.total||""),turn:""}];
   const gate=S.product==="Tor"||S.product==="Gartentor";
   return `<div class="kw kform">
-  ${gate?`<label class="f">Breite zwischen den Pfeilern (lichte Weite)<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(S.total)}"><span>cm</span></span></label>`:
+  ${gate?`<label class="f">Gewünschte Breite des Tors<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(S.total)}"><span>cm</span></span></label><p class="hint" style="margin:0">Einfach das Maß eintragen, das Sie sich wünschen - die Pfosten rechnen wir automatisch mit ein.</p>`:
   `<p class="hint" style="margin:0">Messen Sie jede gerade Seite einzeln, inklusive Pfosten. Bei einer Ecke fügen Sie eine neue Seite hinzu.</p>
   ${K.sides.map((s,i)=>`<div class="side"><b>Seite ${segName(i)}</b>${i?`<select data-sturn="${i}"><option value="gerade" ${s.turn==="gerade"?"selected":""}>gerade weiter</option><option value="links" ${s.turn==="links"?"selected":""}>Ecke nach links</option><option value="rechts" ${s.turn==="rechts"?"selected":""}>Ecke nach rechts</option></select>`:""}<span class="unit"><input type="number" inputmode="decimal" data-slen="${i}" value="${esc(s.len)}" placeholder="Länge"><span>cm</span></span>${i?`<button type="button" class="xs" data-sdel="${i}" aria-label="Seite entfernen">✕</button>`:""}</div>`).join("")}
   <button type="button" data-sadd="1">+ Weitere Seite (Ecke)</button>`}
@@ -1432,11 +1486,11 @@ async function send(){
   if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
   K.sent=true;K.absage=!!j.absage;save();showDone();
   /* Daten wurden erfolgreich per E-Mail verschickt: lokal gespeicherten Entwurf (Aufmaß, Fotos, Kontaktdaten) jetzt löschen, damit auf diesem Gerät nichts vom nächsten Kunden vorausgefüllt bleibt. Die bereits angezeigte Dankes-Seite bleibt unverändert, da showDone() ihren Text schon vorher gerendert hat. */
-  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
+  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;K.coatChosen=false;K.quickShow=null;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
  }catch(e){if(btn){btn.disabled=false;btn.textContent="Projekt absenden"}toast(String(e.message||e))}
 }
 function showDone(){
- $("#kChat").hidden=true;$("#kDone").hidden=false;
+ $("#kChat").hidden=true;$("#kQuick").hidden=true;$("#kDone").hidden=false;
  $("#kDone").innerHTML=K.absage?`<h2>Vielen Dank für Ihr Interesse</h2><p>Es tut uns leid, aber wir sind derzeit komplett ausgebucht und können leider keine neuen Projekte annehmen.</p><p>Wir wünschen Ihnen viel Erfolg bei der Umsetzung.</p>`
  :`<h2>Vielen Dank, ${esc(S.cFirst||S.cLast||"")}!</h2><p>Ihr Projekt ist bei ${esc(CFG.firma)} angekommen. Wir sehen uns Ihre Angaben und Fotos an und melden uns${K.contactPref?" per "+esc(K.contactPref):""} bei Ihnen.</p>${CFG.whatsapp?`<p><a class="btn" href="https://wa.me/${CFG.whatsapp.replace(/\D/g,"")}" target="_blank" rel="noopener">Fragen? Schreiben Sie uns auf WhatsApp</a></p>`:""}`;
  $("#kDone").insertAdjacentHTML("beforeend",`<p class="hint" style="margin-top:24px"><button type="button" id="kRestart" class="linkbtn">Neues Projekt beginnen</button></p>`);
@@ -1444,7 +1498,7 @@ function showDone(){
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
- if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;K.coatChosen=false;K.quickShow=null;K.profOn=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kWeiter"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kMic")return listen();
  if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
@@ -1454,30 +1508,33 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kCam"){K.show="foto";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
- if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;K.coatChosen=false;K.quickShow=null;K.profOn=false;S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
  if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
- if(b.dataset.kprod){K.mode="katalog";if(S.product!==b.dataset.kprod){K.modelChosen=false;K.massGiven=false}S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
- if(b.dataset.kmodel){S.model=b.dataset.kmodel;K.modelChosen=true;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
- if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;fixState();drawPreview();renderChat();save();return}
- if(b.dataset.kdone==="farbe"){K.show=null;return ask("Ich nehme die Farbe "+coatLabel()+".")}
- if(b.dataset.sadd){K.sides.push({len:"",turn:"rechts"});renderChat();return}
- if(b.dataset.sdel){K.sides.splice(+b.dataset.sdel,1);applySides();drawPreview();renderChat();return}
+ if(b.dataset.qshow){K.quickShow=b.dataset.qshow;renderQuick();return}
+ if(b.id==="kProfOn"){K.profOn=true;K.quickShow=null;save();switchView();if(!K.chat.some(m=>m.role==="assistant"))ask(null);else renderChat();return}
+ if(b.id==="kProfOff"){K.profOn=false;K.quickShow=null;save();switchView();return}
+ if(b.dataset.kprod){K.mode="katalog";if(S.product!==b.dataset.kprod){K.modelChosen=false;K.massGiven=false}S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;K.quickShow=null;return advance("Ich möchte: "+S.product)}
+ if(b.dataset.kmodel){S.model=b.dataset.kmodel;K.modelChosen=true;fixState();drawPreview();K.show=null;K.quickShow=null;return advance("Mir gefällt das Modell "+S.model+".")}
+ if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;fixState();drawPreview();render();save();return}
+ if(b.dataset.kdone==="farbe"){K.show=null;K.coatChosen=true;K.quickShow=null;return advance("Ich nehme die Farbe "+coatLabel()+".")}
+ if(b.dataset.sadd){K.sides.push({len:"",turn:"rechts"});render();return}
+ if(b.dataset.sdel){K.sides.splice(+b.dataset.sdel,1);applySides();drawPreview();render();return}
  if(b.dataset.kdone==="masse"){
   const gate=S.product==="Tor"||S.product==="Gartentor";
   if(gate){const v=+$("#kTotal").value;if(v>0)S.total=v}
   const h=+$("#kHeight").value;if(h>0)S.height=h;
   K.massGiven=true;
-  applySides();drawPreview();K.show=null;
+  applySides();drawPreview();K.show=null;K.quickShow=null;
   const txt=gate?`Breite ${S.total} cm, Höhe ${S.height} cm.`:`Meine Maße: ${K.sides.filter(s=>+s.len>0).map((s,i)=>`Seite ${segName(i)} ${s.len} cm${i?" ("+(s.turn==="gerade"?"gerade weiter":"Ecke nach "+s.turn)+")":""}`).join(", ")}; Höhe ${S.height} cm.`;
-  return ask(txt);
+  return advance(txt);
  }
- if(b.dataset.fdel){K.fotos.splice(+b.dataset.fdel,1);renderChat();save();return}
- if(b.dataset.kdone==="foto"){const sent=K.fotosSent||0,neu=K.fotos.slice(sent,sent+3);K.fotosSent=K.fotos.length;K.show=null;const small=await Promise.all(neu.map(smallCopy));return ask(`Hier ${K.fotos.length>1?"sind meine Fotos":"ist mein Foto"}.`,small)}
- if(b.dataset.kskip==="foto"){K.fotoSkipped=true;K.show=null;return ask("Fotos schicke ich später.")}
- if(b.dataset.kpark){K.park=b.dataset.kpark;renderChat();save();return}
- if(b.dataset.kstrom){K.strom=b.dataset.kstrom;renderChat();save();return}
+ if(b.dataset.fdel){K.fotos.splice(+b.dataset.fdel,1);render();save();return}
+ if(b.dataset.kdone==="foto"){const sent=K.fotosSent||0,neu=K.fotos.slice(sent,sent+3);K.fotosSent=K.fotos.length;K.show=null;K.quickShow=null;const small=await Promise.all(neu.map(smallCopy));return advance(`Hier ${K.fotos.length>1?"sind meine Fotos":"ist mein Foto"}.`,small)}
+ if(b.dataset.kskip==="foto"){K.fotoSkipped=true;K.show=null;K.quickShow=null;return advance("Fotos schicke ich später.")}
+ if(b.dataset.kpark){K.park=b.dataset.kpark;render();save();return}
+ if(b.dataset.kstrom){K.strom=b.dataset.kstrom;render();save();return}
  if(b.dataset.kdone==="vorort"){K.show=null;return ask(`Parken: ${K.park}. Strom in der Nähe: ${K.strom}.`)}
- if(b.dataset.kpref){K.contactPref=b.dataset.kpref;renderChat();save();return}
+ if(b.dataset.kpref){K.contactPref=b.dataset.kpref;render();save();return}
 });
 document.addEventListener("input",e=>{const t=e.target;
  if(t.dataset.slen!==undefined){K.sides[+t.dataset.slen].len=t.value;applySides();drawPreview();save()}
@@ -1487,13 +1544,13 @@ document.addEventListener("input",e=>{const t=e.target;
 });
 document.addEventListener("change",async e=>{const t=e.target;
  if(t.dataset.sturn!==undefined){K.sides[+t.dataset.sturn].turn=t.value;applySides();drawPreview();save()}
- if(t.id==="kFoto"){const files=[...t.files].slice(0,Math.max(0,8-K.fotos.length));for(const f of files){const d=await shrink(f,1280,.8);if(d)K.fotos.push(d)}renderChat();save()}
+ if(t.id==="kFoto"){const files=[...t.files].slice(0,Math.max(0,8-K.fotos.length));for(const f of files){const d=await shrink(f,1280,.8);if(d)K.fotos.push(d)}render();save()}
 });
 document.addEventListener("submit",e=>{
  if(e.target.id==="kForm"){e.preventDefault();const v=$("#kText").value.trim();if(v){$("#kText").value="";ask(v)}}
  if(e.target.id==="kContact"){e.preventDefault();const err=$("#kcErr");
   if(!S.cLast||!S.cStreet||!S.cZip||!S.cCity||!(S.cPhone||S.cMail)){err.textContent="Bitte Nachname, vollständige Adresse und Telefon oder E-Mail eintragen.";err.hidden=false;return}
-  K.show=null;ask(`Meine Kontaktdaten sind eingetragen (PLZ ${S.cZip}${S.cCity?" "+S.cCity:""}). Ich möchte per ${K.contactPref} kontaktiert werden.`)}
+  K.show=null;K.quickShow=null;advance(`Meine Kontaktdaten sind eingetragen (PLZ ${S.cZip}${S.cCity?" "+S.cCity:""}). Ich möchte per ${K.contactPref} kontaktiert werden.`)}
 });
 
 /* ---------- Start ---------- */
@@ -1501,8 +1558,8 @@ function boot(){
  $("#kIntro").hidden=true;$("#kApp").hidden=false;
  drawPreview();
  if(K.sent){showDone();return}
- renderChat();
- if(!K.chat.length)ask(null);
+ switchView();
+ if(K.profOn&&!K.chat.some(m=>m.role==="assistant"))ask(null);
 }
 /* Weitermachen-Button zeigen wenn gespeicherter Fortschritt vorhanden */
 (function showWeiterBtn(){const chat=K.chat&&K.chat.length;if(!chat)return;const btn=document.getElementById("kWeiter");if(btn)btn.hidden=false})();
@@ -1550,14 +1607,14 @@ function profHead(){return `<svg class="profhead" viewBox="40 40 120 120" aria-h
  const dock=document.createElement("div");dock.id="profDock";dock.innerHTML=profSVG("idle")+`<span class="ptag">Prof. Funke</span>`;dock.hidden=true;document.body.appendChild(dock);
  /* Begrüßung auf der Startseite */
  const intro=document.getElementById("kIntro");
- if(intro)intro.insertAdjacentHTML("afterbegin",`<div class="profintro">${profSVG("idle talk")}<div class="pbub">Grüß Gott! Ich bin <b>Professor Funke</b>, der digitale Metallbau-Professor von ${esc(CFG.firma)}. Erzählen Sie mir, was Sie vorhaben, ich helfe Ihnen beim Planen, Messen und Fotografieren.</div></div>`);
+ if(intro)intro.insertAdjacentHTML("afterbegin",`<div class="profintro">${profSVG("idle talk")}<div class="pbub">Grüß Gott! Ich bin <b>Professor Funke</b>. Klicken Sie sich einfach selbst durch - das geht am schnellsten. Wenn Sie lieber mit mir chatten möchten, können Sie das jederzeit einschalten.</div></div>`);
  setTimeout(()=>{const p=document.querySelector(".profintro .prof");if(p)p.classList.remove("talk")},2600);
 })();
 let profTalkUntil=0,lastBotCount=0,speaking=false;
 function profTick(){
  const dock=document.getElementById("profDock"),app=document.getElementById("kApp");
  if(!dock)return;
- const show=app&&!app.hidden&&!K.sent&&document.getElementById("studio").hidden;
+ const show=app&&!app.hidden&&!K.sent&&K.profOn&&document.getElementById("studio").hidden;
  dock.hidden=!show;if(!show)return;
  const bots=K.chat.filter(m=>m.role==="assistant").length;
  if(bots>lastBotCount){lastBotCount=bots;if(!speakOn)profTalkUntil=Date.now()+1800}
