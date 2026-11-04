@@ -1278,8 +1278,8 @@ function closeRepStudio(){if(LIVE)stopLive();$("#studio").hidden=true;$("#studio
  const n=(K.rep.fotos||[]).filter(f=>f.id.startsWith("live")).length;save();
  if(n)ask(`Ich habe mit der Live-Hilfe ${n} Bild${n>1?"er":""} aufgenommen.`,(K.rep.fotos||[]).filter(f=>f.id.startsWith("live")).slice(-3).map(f=>f.data));else renderChat();}
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
- if(b.dataset.krep){e.stopImmediatePropagation();K.mode="reparatur";K.show=null;save();ask("Ich brauche eine Reparatur bzw. Instandhaltung.");return}
- if(b.dataset.kfrei){e.stopImmediatePropagation();K.mode="frei";K.show=null;save();ask("Ich habe eine andere bzw. individuelle Anfrage.");return}
+ if(b.dataset.krep){e.stopImmediatePropagation();K.mode="reparatur";K.show=null;K.profOn=true;save();switchView();ask("Ich brauche eine Reparatur bzw. Instandhaltung.");return}
+ if(b.dataset.kfrei){e.stopImmediatePropagation();K.mode="frei";K.show=null;K.profOn=true;save();switchView();ask("Ich habe eine andere bzw. individuelle Anfrage.");return}
  if(b.dataset.repopen){e.stopImmediatePropagation();openRepStudio();return}
  if(K.repStudio&&b.id==="stClose"){e.stopImmediatePropagation();closeRepStudio();return}
  if(K.repStudio&&b.id==="aiDetectBtn"){e.stopImmediatePropagation();liveHelp(b);return}
