@@ -601,7 +601,7 @@ const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
 const CFG=Object.assign({worker:"",whatsapp:"",firma:"Stahl & Verstand",inhaber:"",telefon:"",impressum:"",datenschutz:""},window.SV_CONFIG||{});
 
 /* eigener Speicher, getrennt vom Berater-Tool */
-const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:"",modelChosen:false},load("svk-meta",{}));
+const K=Object.assign({started:false,consent:false,chat:[],sides:[],fotos:[],sent:false,contactPref:"WhatsApp",wunsch:"",ground:"",modelChosen:false,massGiven:false,fotoSkipped:false,installAsked:false},load("svk-meta",{}));
 S=Object.assign(DEF(),load("svk-draft",{}),{step:0,view:"look"});
 function save(){store("svk-draft",S);try{store("svk-meta",Object.assign({},K,{fotos:K.fotos.slice(0,6)}))}catch(e){store("svk-meta",Object.assign({},K,{fotos:[]}))}}
 
@@ -625,7 +625,7 @@ function drawPreview(){
  try{drawSketch()}catch(e){console.warn(e)}
  $("#look").toggleAttribute("hidden",S.view!=="look");$("#sketch").toggleAttribute("hidden",S.view!=="tech");
  document.querySelectorAll("[data-pv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.pv===S.view));
- $("#pvLine").textContent=[S.product,modelLabel(),coatLabel(),layout().total?Math.round(layout().total)/100+" m":"",S.height?(+S.height/100).toLocaleString("de-DE")+" m hoch":""].filter(Boolean).join(" · ");
+ $("#pvLine").textContent=[S.product,modelLabel(),coatLabel(),K.massGiven&&layout().total?Math.round(layout().total)/100+" m":"",K.massGiven&&S.height?(+S.height/100).toLocaleString("de-DE")+" m hoch":""].filter(Boolean).join(" · ");
 }
 
 /* ---------- KI ---------- */
@@ -648,20 +648,19 @@ DEINE HALTUNG: Du bist zugleich Aufmaß-Helfer UND erfahrener Verkaufsexperte. D
 - Starker, ehrlicher Abschluss: Beim Abschluss-Schritt den Nutzen des Absendens klar machen (unverbindlich, kostenlos, schnelle Rückmeldung, kein Vor-Ort-Termin nötig) und freundlich-bestimmt zum "Projekt absenden"-Tippen auffordern.
 Diese Technik ist nie wichtiger als Ehrlichkeit: keine falschen Preise, keine erfundene Knappheit, kein Druck, keine Manipulation. Ein Kunde, der sich gut beraten fühlt, schickt die Anfrage lieber ab als einer, der sich gedrängt fühlt.
 
-DEIN ZIEL in dieser Reihenfolge (überspringe, was schon bekannt ist):
+PFLICHTWEG bis zu den Kontaktdaten – halte dich STRENG an diese Reihenfolge und überspringe NUR, was laut AKTUELLER STAND schon bekannt ist. Häng an diesen Kernweg noch KEINE der optionalen Zusatzfragen aus Abschnitt "DANACH" weiter unten an, auch nicht beiläufig:
 1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion "produkt" zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz sowie „Reparatur“ und „Etwas anderes“). Der Kunde kann auch frei schreiben.
 1b. Wählt der Kunde "Geländer": frage in der nächsten Nachricht kurz, ob ein Stahl-Geländer aus dem ELEO-Katalog (Pulverbeschichtung/verzinkt, Modelle siehe unten) gewünscht ist, oder ein Glas-Geländer bzw. ein Edelstahl-Geländer als Sonderanfertigung. Bei Glas oder Edelstahl setze "modus":"frei" – ab dort führt die Sonderanfertigungs-Beratung (siehe GELÄNDER-SONDERANFERTIGUNG unten) gezielt durch Form, Material, Montage, Boden und ggf. Glas.
 2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino. Nenn kurz einen Nutzen der Empfehlung (Stil, Pflegeaufwand, Langlebigkeit), nicht nur den Namen.
 3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik. Bei Anthrazit/RAL kurz erwähnen, dass das die langlebige Duplex-Beschichtung ist (verzinkt + pulverbeschichtet).
-4. Aufmaß: biete ZUERST die Foto-Vorschau an (aktion "vorschau"): Der Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst ihm im Bild mit Messlinien, was er messen soll, und danach sieht er seinen neuen Zaun im eigenen Foto. Nur wenn er das nicht möchte: aktion "masse" und erkläre einfach, wie man misst. Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern; Gefälle auf der Strecke grob schätzen (Zollstock + Wasserwaage oder Augenmaß).
-5. Untergrund und Umgebung erfragen: Rasen/Erde, Pflaster, Mauer/Sockel, vorhandene Pfosten; Hindernisse (Leitungen, Bäume); Zufahrt für die Spedition.
-6. Vor Ort (aktion "vorort"): Parkmöglichkeit für unser Fahrzeug und Stromanschluss in der Nähe abfragen, das Eingabefeld erscheint automatisch.
-6b. Fotos (aktion "foto"): ein Übersichtsfoto der ganzen Strecke, Detailfotos von Anfang und Ende, bei Toren die Pfeiler, gern mit Zollstock im Bild.
-7. Ganz natürlich im Gespräch klären (nie verhörartig, nie drängen, jede Frage freiwillig, verteilt über das Gespräch): Bis wann soll es fertig sein (als "wunsch" speichern)? Ist es Ihr eigenes Grundstück? Montage selbst oder durch uns (als "install": "Durch den Betrieb" oder "Selbstmontage" speichern – bei Interesse kurz den Vorteil nennen: fachgerecht, spart Zeit und Fehler)? Bei Toren: Interesse an einem Torantrieb (in "notes" vermerken)? Ist der Zeitrahmen eng, Express-Fertigung anbieten (als "express":true speichern, Mehrpreis erwähnen ohne Zahl)? Gibt es schon einen Budgetrahmen (ausdrücklich optional)? Wie sind Sie auf uns aufmerksam geworden?
+4. Ungefähre Maße (aktion "vorschau" ZUERST anbieten – Kunde fotografiert die Stelle oder nutzt die Live-Kamera, du zeigst Messlinien im Bild, danach sieht er seinen neuen Zaun im eigenen Foto; nur wenn er das nicht möchte: aktion "masse" mit einfacher Messanleitung). Gesamtlänge entlang der geplanten Linie inkl. Pfosten; bei Ecken jede Seite einzeln; Höhe; bei Toren lichte Weite zwischen den Pfeilern oder Mauern. Grobe, geschätzte Werte reichen hier völlig – das wird vor der Bestellung ohnehin geprüft. WICHTIG: Hat der Kunde die Foto-Vorschau laut AKTUELLER STAND bereits einmal abgelehnt ("Foto bereits abgelehnt"), biete sie NICHT erneut an, sondern geh direkt zu aktion "masse".
+5. Kontaktdaten mit vollständiger Adresse (aktion "kontakt"). Ab hier hat der Betrieb alles Nötige für ein erstes Angebot – mach das dem Kunden kurz klar ("Damit kann das Team schon loslegen").
+
+DANACH, GANZ LOCKER UND FREIWILLIG – erst NACH den Kontaktdaten, nie vor Schritt 5, und höchstens 1–2 davon pro Gespräch ansprechen, nie als Liste abfragen: Montage selbst oder durch uns (als "install" speichern – NUR wenn "Durch den Betrieb" gewünscht ist, direkt danach aktion "vorort" für Parken/Strom anbieten; bei Selbstmontage "vorort" NICHT anbieten); Übersichtsfotos der Strecke (aktion "foto", nur falls noch keine Fotos vorhanden und Foto-Vorschau nicht schon abgelehnt wurde); Untergrund/Hindernisse/Zufahrt (in "notes"); Wunschtermin (als "wunsch"); bei Toren Interesse an einem Torantrieb (in "notes"); bei engem Zeitrahmen Express-Fertigung (als "express":true, Mehrpreis ohne Zahl erwähnen); Budget (ausdrücklich optional); wie der Kunde aufmerksam wurde.
    Frage NIEMALS direkt, ob schon andere Angebote vorliegen oder ob Preise verglichen werden. Erschließe das nur indirekt, z. B.: „Wie weit sind Sie mit Ihrer Planung, haben Sie sich schon einen Überblick verschafft, oder fangen Sie gerade erst an?“ oder „Was ist Ihnen bei der Umsetzung besonders wichtig, eher Qualität und Beratung oder vor allem ein schneller, günstiger Abschluss?“
    Triff im Gespräch KEINE Zu- oder Absage und bewerte den Kunden nie sichtbar. Jeder bekommt dieselbe freundliche Hilfe.
-8. Kontaktdaten mit vollständiger Adresse (aktion "kontakt").
-9. Abschluss (aktion "abschluss"): kurze, wertschätzende Zusammenfassung des Projekts, dann freundlich-bestimmt zum Tippen auf „Projekt absenden“ auffordern. Nutzen klar machen: unverbindlich, kostenlos, schnelle Rückmeldung, kein Vor-Ort-Termin nötig. Versprich keinen Termin und keinen Rückruf.
+   Stelle NIE zwei dieser optionalen Fragen in derselben Nachricht, und wiederhole NIE eine Frage, die laut AKTUELLER STAND schon beantwortet oder abgelehnt wurde.
+6. Abschluss (aktion "abschluss"), jederzeit möglich sobald Kontaktdaten da sind: kurze, wertschätzende Zusammenfassung des Projekts, dann freundlich-bestimmt zum Tippen auf „Projekt absenden“ auffordern. Nutzen klar machen: unverbindlich, kostenlos, schnelle Rückmeldung, kein Vor-Ort-Termin nötig. Versprich keinen Termin und keinen Rückruf.
 
 Wenn Fotos kommen, beschreibe kurz, was du erkennst, und frag nach, was für das Angebot wichtig ist (z. B. Sockelmauer, Gefälle).
 
@@ -674,13 +673,16 @@ ZUSATZLEISTUNGEN, die du anbieten darfst (ohne Preis): Montage durch den Betrieb
 LIEFERZEIT laut Hersteller: Fertigung meist 8–10 Wochen (Express 6–7 Wochen, +10 % Aufpreis); Modelle Roma und Ravenna 16–20 Wochen (Express 8–10); Sichtschutz 12–16 Wochen, dort keine Expressfertigung, unverbindlich.
 
 AKTUELLER STAND:
-${K.modelChosen?specRows().map(([k,v])=>k+": "+v).join("\n"):(S.product?"Produkt: "+S.product+" (noch KEIN Modell gewählt - intern steht zwar ein Platzhalter-Modell/Farbe, das zeigst du dem Kunden aber nicht als Entscheidung an. Biete jetzt aktion \"modell\" an und lass ihn wirklich wählen.)":"Noch kein Produkt gewählt")}
+${K.modelChosen?specRows().filter(([k])=>K.massGiven||!["Gesamtstrecke","Gesamtbreite","Höhe","Lichte Weite","Felder"].includes(k)).map(([k,v])=>k+": "+v).join("\n")+(K.massGiven?"":"\nMaße: noch NICHT angegeben - intern steht ein Platzhalter (nicht die echten Maße des Kunden), den zeigst du ihm nicht an. Frag aktiv nach den Maßen (aktion \"vorschau\" oder \"masse\").")
+:(S.product?"Produkt: "+S.product+" (noch KEIN Modell gewählt - intern steht zwar ein Platzhalter-Modell/Farbe, das zeigst du dem Kunden aber nicht als Entscheidung an. Biete jetzt aktion \"modell\" an und lass ihn wirklich wählen.)":"Noch kein Produkt gewählt")}
 Seiten: ${K.sides.length?K.sides.map((s,i)=>segName(i)+" "+(s.len||"?")+" cm"+(i?" ("+(s.turn||"gerade")+")":"")).join(", "):"noch keine"}
 Fotos: ${K.fotos.length}
-Foto-Vorschau: ${S.mplan&&!S.mplan.pending?"erledigt, Maße gemessen":S.photo?"Foto da, noch nicht gemessen":"noch nicht"}
-Parken: ${K.park||"noch offen"}, Strom: ${K.strom||"noch offen"}
+Foto-Vorschau: ${S.mplan&&!S.mplan.pending?"erledigt, Maße gemessen":S.photo?"Foto da, noch nicht gemessen":K.fotoSkipped?"vom Kunden bereits abgelehnt - NICHT erneut anbieten":"noch nicht angeboten"}
+Montage: ${K.installAsked?S.install:"noch offen (nur fragen NACH den Kontaktdaten)"}
+Parken: ${K.park||"noch offen (nur relevant und nur fragen, wenn Montage = Durch den Betrieb)"}, Strom: ${K.strom||"noch offen (nur relevant und nur fragen, wenn Montage = Durch den Betrieb)"}
 Wunschtermin: ${K.wunsch||"noch offen"}
-Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt"}
+Hinweise/Notizen bereits gespeichert: ${S.notes||"noch keine"} (NICHT wiederholen oder erneut speichern, nur wirklich Neues ergänzen)
+Kontakt: ${S.cFirst||S.cLast?"vorhanden":"fehlt - das ist das Ziel des Pflichtwegs"}
 
 WICHTIG: Der Betrieb macht nicht nur ELEO-Zäune. Möchte der Kunde etwas anderes (z. B. Treppe, Vordach, Überdachung, Carport, Handlauf, Gitter, Tür, Glas-Geländer, Edelstahl-Geländer, Sonderanfertigung, Schweißarbeiten) oder meldet er einen Schaden bzw. eine Reparatur, setze "modus":"frei" bzw. "modus":"reparatur" und sag kurz, dass du ihm dabei gern hilfst. Dann übernimmt der passende Ablauf.
 
@@ -698,16 +700,22 @@ function applyChanges(ch){
  const prodChanged=ch.product&&ch.product!==S.product;
  for(const k of ALLOW){if(!(k in ch))continue;let v=ch[k];
   if(k==="wunsch"){K.wunsch=String(v).slice(0,200);continue}
-  if(k==="notes"){S.notes=[S.notes,String(v)].filter(Boolean).join(" · ").slice(0,600);continue}
-  if(k==="height"||k==="total"){v=+v;if(!(v>0))continue}
+  if(k==="notes"){const nv=String(v).trim();if(!nv)continue;
+   /* Nie denselben Hinweis zweimal anhängen - die KI kennt den bisherigen Text nicht
+      wortgenau und wiederholt ihn sonst über mehrere Nachrichten hinweg. */
+   const already=S.notes&&S.notes.toLowerCase().includes(nv.toLowerCase());
+   if(!already)S.notes=[S.notes,nv].filter(Boolean).join(" · ").slice(0,600);
+   continue}
+  if(k==="height"||k==="total"){v=+v;if(!(v>0))continue;K.massGiven=true}
   if(k==="product"&&!PRODUCTS.some(p=>p.id===v))continue;
   if(k==="coat"&&!COATS.includes(v))continue;
   if(k==="ral")v=String(v).replace(/\D/g,"").slice(0,4);
   if(k==="express"){S.express=v===true||v==="true"||/^ja$/i.test(String(v));continue}
-  if(k==="install"){S.install=/betrieb|uns montiert|durch sie/i.test(String(v))?"Durch den Betrieb":"Selbstmontage";continue}
+  if(k==="install"){S.install=/betrieb|uns montiert|durch sie/i.test(String(v))?"Durch den Betrieb":"Selbstmontage";K.installAsked=true;continue}
   S[k]=v;
  }
  if("model" in ch)K.modelChosen=true; else if(prodChanged)K.modelChosen=false;
+ if(prodChanged&&!("height" in ch)&&!("total" in ch))K.massGiven=false;
 }
 let busy=false;
 /* Fetch mit Zeitlimit: verhindert endloses Laden bei Netzwerk-Haengern */
@@ -758,8 +766,21 @@ async function ask(text,img){
   const raw=await callAI();
   let out={sagen:raw,optionen:[],aktion:null,aendern:null};
   const m=raw.match(/\{[\s\S]*\}/);if(m){try{out=Object.assign(out,JSON.parse(m[0]))}catch(e){}}
-  /* Fallback: JSON abgeschnitten oder kaputt → sagen-Feld per Regex retten */
-  if(out.sagen===raw){const sg=raw.match(/"sagen"\s*:\s*"((?:[^"\\]|\\.)*)"/);if(sg)out.sagen=sg[1].replace(/\\n/g,"\n").replace(/\\"/g,'"')}
+  /* Fallback: JSON abgeschnitten oder kaputt → sagen-Feld per Regex retten.
+     Erst ein vollständiges "sagen":"…" versuchen; greift das nicht (Antwort mitten im
+     String abgeschnitten, keine schließende Anführung), den offenen Rest ab "sagen":"
+     bis zum Ende nehmen. Bleibt am Ende nichts Lesbares übrig, NIE das rohe JSON/die
+     Kunden anzeigen, sondern eine verständliche Ersatzmeldung. */
+  if(out.sagen===raw){
+   let rescued=null;
+   const full=raw.match(/"sagen"\s*:\s*"((?:[^"\\]|\\.)*)"/);
+   if(full)rescued=full[1];
+   else{const open=raw.match(/"sagen"\s*:\s*"((?:[^"\\]|\\.)*)$/);if(open)rescued=open[1]}
+   if(rescued)rescued=rescued.replace(/\\n/g,"\n").replace(/\\"/g,'"').replace(/\\u[0-9a-fA-F]{4}|\\[^"\\]$/,"").trim();
+   const ok=rescued&&rescued.length>3&&!/^\{|^"sagen"/.test(rescued);
+   out.sagen=ok?rescued:"Entschuldigung, da ist beim Antworten etwas schiefgelaufen. Bitte tippen Sie auf „Nochmal versuchen“ oder stellen Sie die Frage kurz anders.";
+   if(!ok)out.optionen=["Nochmal versuchen"];
+  }
   /* Fallback: "aktion" fehlt in der Antwort, der zuletzt angefragte Baustein ist aber noch
      nicht erledigt (z.B. Foto-Checkliste) -> Widget aus der Vorgänger-Nachricht beibehalten,
      statt es kommentarlos verschwinden zu lassen. */
@@ -1099,6 +1120,7 @@ function applyMeasure(){
   S.fields=0;
  }
  if(H.length)S.height=H[0];
+ if(L.length||H.length)if(typeof K!=="undefined")K.massGiven=true;
  if(G.length){S.slope=G[0];S.slopeUnit="cm"}
  if(P.length)S.slab=P[0];
  const proto=(p.art?"Bestand laut Foto: "+p.art+". ":"")+"Aufmaß vor Ort ("+new Date().toLocaleDateString("de-DE")+"): "+p.items.filter(m=>+m.wert>0).map(m=>`${m.id} ${m.titel} ${m.wert} cm`).join("; ")+(gate&&L.length?" (Gesamtbreite inkl. Torpfosten = lichte Weite + 2 × 10 cm)":"");
@@ -1264,7 +1286,7 @@ function closeStudio(){
 }
 document.addEventListener("click",e=>{const b=e.target.closest("button");if(!b)return;
  if(b.dataset.kstudio){K.show=null;openStudio();return}
- if(b.dataset.kmanual){K.show="masse";renderChat();return}
+ if(b.dataset.kmanual){K.fotoSkipped=true;K.show="masse";renderChat();return}
  if(b.id==="stClose")return closeStudio();
  if(b.id==="stLive")return startLive();
  if(b.id==="aiDetectBtn")return planMeasure(b);
@@ -1327,7 +1349,14 @@ function renderChat(){
  log.innerHTML=K.chat.map(m=>{
   if(m.role==="user")return `<div class="km user">${m.img&&m.img.length?`<div class="mini">${m.img.map(s=>`<img src="${s}" alt="">`).join("")}</div>`:""}${esc(m.text)}</div>`;
   const live=m===lastA&&!K.sent;
-  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${live&&m.opts&&m.opts.length?`<div class="chips kopts">${m.opts.map((o,i)=>`<button type="button" class="chip" style="--i:${i}" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${widget(m.act,live,m)}${live&&m.fallback?manualHtml():""}</div>`;
+  /* Hat dieser Schritt schon ein eigenes Bedien-Widget (Kacheln, Formular, Button) mit
+     klarer Aktion, zeigen wir die generischen Antwort-Chips NICHT zusätzlich an - das
+     führte sonst zu doppelten Wegen, z.B. Chip "Anthrazit nehmen" neben dem Formular-
+     Button "Diese Farbe nehmen" für denselben Schritt. Chips bleiben nur für Momente
+     ohne eigenes Widget (freies Gespräch, Rückfragen). */
+  const wHtml=widget(m.act,live,m);
+  const showChips=live&&m.opts&&m.opts.length&&!wHtml;
+  return `<div class="km bot${m.err?" err":""}"><div class="bub">${esc(m.text)}</div>${showChips?`<div class="chips kopts">${m.opts.map((o,i)=>`<button type="button" class="chip" style="--i:${i}" data-kopt="${esc(o)}">${esc(o)}</button>`).join("")}</div>`:""}${wHtml}${live&&m.fallback?manualHtml():""}</div>`;
  }).join("")+(busy?'<div class="km bot"><div class="bub typing"><i></i><i></i><i></i></div></div>':"")+(K.show?`<div class="km bot"><div class="bub">Hier können Sie es eintragen:</div>${widget(K.show,true)}</div>`:"");
  const end=$("#kEnd");if(end)end.scrollIntoView({block:"end",behavior:"smooth"});
  $("#kSumBtn").hidden=!(S.cLast||K.chat.length>8)||K.sent;
@@ -1403,7 +1432,7 @@ async function send(){
   if(!r.ok||!j.ok)throw new Error(j.error||"Fehler "+r.status);
   K.sent=true;K.absage=!!j.absage;save();showDone();
   /* Daten wurden erfolgreich per E-Mail verschickt: lokal gespeicherten Entwurf (Aufmaß, Fotos, Kontaktdaten) jetzt löschen, damit auf diesem Gerät nichts vom nächsten Kunden vorausgefüllt bleibt. Die bereits angezeigte Dankes-Seite bleibt unverändert, da showDone() ihren Text schon vorher gerendert hat. */
-  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;K.modelChosen=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
+  K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.wunsch="";K.ground="";K.fotosSent=0;K.show=null;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});save();
  }catch(e){if(btn){btn.disabled=false;btn.textContent="Projekt absenden"}toast(String(e.message||e))}
 }
 function showDone(){
@@ -1415,7 +1444,7 @@ function showDone(){
 
 /* ---------- Ereignisse ---------- */
 document.addEventListener("click",async e=>{const b=e.target.closest("button");if(!b)return;
- if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;K.modelChosen=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
+ if(b.id==="kStart"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.ground="";K.fotosSent=0;K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look",product:"",model:""});K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kWeiter"){if(!$("#kConsent").checked){toast("Bitte bestätigen Sie den Datenschutzhinweis.");return}K.started=true;K.consent=true;save();boot();return}
  if(b.id==="kMic")return listen();
  if(b.id==="kSpk"){speakOn=!speakOn;b.setAttribute("aria-pressed",speakOn);if(!speakOn&&"speechSynthesis" in window)speechSynthesis.cancel();return}
@@ -1425,9 +1454,9 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.id==="kCam"){K.show="foto";renderChat();return}
  if(b.dataset.kshow){K.show=b.dataset.kshow;renderChat();return}
  if(b.id==="kSend")return send();
- if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.modelChosen=false;S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
+ if(b.id==="kRestart"){K.chat=[];K.sides=[];K.fotos=[];K.mode="";K.rep={masse:{},fotos:[]};K.park="";K.strom="";K.sent=false;K.absage=false;K.show=null;K.wunsch="";K.modelChosen=false;K.massGiven=false;K.fotoSkipped=false;K.installAsked=false;S=Object.assign(DEF(),{view:"look"});save();location.reload();return}
  if(b.dataset.kopt){const t=b.dataset.kopt;if(t==="Nochmal versuchen"){K.chat.pop();return ask(null)}return ask(t)}
- if(b.dataset.kprod){K.mode="katalog";if(S.product!==b.dataset.kprod)K.modelChosen=false;S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
+ if(b.dataset.kprod){K.mode="katalog";if(S.product!==b.dataset.kprod){K.modelChosen=false;K.massGiven=false}S.product=b.dataset.kprod;S.fields=0;fixState();drawPreview();K.show=null;return ask("Ich möchte: "+S.product)}
  if(b.dataset.kmodel){S.model=b.dataset.kmodel;K.modelChosen=true;fixState();drawPreview();K.show=null;return ask("Mir gefällt das Modell "+S.model+".")}
  if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;fixState();drawPreview();renderChat();save();return}
  if(b.dataset.kdone==="farbe"){K.show=null;return ask("Ich nehme die Farbe "+coatLabel()+".")}
@@ -1437,13 +1466,14 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
   const gate=S.product==="Tor"||S.product==="Gartentor";
   if(gate){const v=+$("#kTotal").value;if(v>0)S.total=v}
   const h=+$("#kHeight").value;if(h>0)S.height=h;
+  K.massGiven=true;
   applySides();drawPreview();K.show=null;
   const txt=gate?`Breite ${S.total} cm, Höhe ${S.height} cm.`:`Meine Maße: ${K.sides.filter(s=>+s.len>0).map((s,i)=>`Seite ${segName(i)} ${s.len} cm${i?" ("+(s.turn==="gerade"?"gerade weiter":"Ecke nach "+s.turn)+")":""}`).join(", ")}; Höhe ${S.height} cm.`;
   return ask(txt);
  }
  if(b.dataset.fdel){K.fotos.splice(+b.dataset.fdel,1);renderChat();save();return}
  if(b.dataset.kdone==="foto"){const sent=K.fotosSent||0,neu=K.fotos.slice(sent,sent+3);K.fotosSent=K.fotos.length;K.show=null;const small=await Promise.all(neu.map(smallCopy));return ask(`Hier ${K.fotos.length>1?"sind meine Fotos":"ist mein Foto"}.`,small)}
- if(b.dataset.kskip==="foto"){K.show=null;return ask("Fotos schicke ich später.")}
+ if(b.dataset.kskip==="foto"){K.fotoSkipped=true;K.show=null;return ask("Fotos schicke ich später.")}
  if(b.dataset.kpark){K.park=b.dataset.kpark;renderChat();save();return}
  if(b.dataset.kstrom){K.strom=b.dataset.kstrom;renderChat();save();return}
  if(b.dataset.kdone==="vorort"){K.show=null;return ask(`Parken: ${K.park}. Strom in der Nähe: ${K.strom}.`)}
