@@ -1364,15 +1364,18 @@ function widget(act,live,m){
  if(act==="farbe"){const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
   return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]],i)=>`<button type="button" class="ralb" style="--i:${i}" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
  if(act==="masse"){
-  if(!K.sides.length)K.sides=[{len:S.pts.length?"":(S.total||""),turn:""}];
+  if(!K.sides.length)K.sides=[{len:S.pts.length?"":(K.massGiven?S.total||"":""),turn:""}];
   const gate=S.product==="Tor"||S.product==="Gartentor";
+  const totalVal=K.massGiven?S.total:"";
+  const heightVal=K.massGiven?S.height:"";
   return `<div class="kw kform">
-  ${gate?`<label class="f">Gewünschte Breite des Tors<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(S.total)}"><span>cm</span></span></label><p class="hint" style="margin:0">Einfach das Maß eintragen, das Sie sich wünschen - die Pfosten rechnen wir automatisch mit ein.</p>`:
+  ${gate?`<label class="f">Gewünschte Breite des Tors<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(totalVal)}" placeholder="z. B. 300"><span>cm</span></span></label><p class="hint" style="margin:0">Einfach das Maß eintragen, das Sie sich wünschen - die Pfosten rechnen wir automatisch mit ein.</p>`:
   `<p class="hint" style="margin:0">Messen Sie jede gerade Seite einzeln, inklusive Pfosten. Bei einer Ecke fügen Sie eine neue Seite hinzu.</p>
-  ${K.sides.map((s,i)=>`<div class="side"><b>Seite ${segName(i)}</b>${i?`<select data-sturn="${i}"><option value="gerade" ${s.turn==="gerade"?"selected":""}>gerade weiter</option><option value="links" ${s.turn==="links"?"selected":""}>Ecke nach links</option><option value="rechts" ${s.turn==="rechts"?"selected":""}>Ecke nach rechts</option></select>`:""}<span class="unit"><input type="number" inputmode="decimal" data-slen="${i}" value="${esc(s.len)}" placeholder="Länge"><span>cm</span></span>${i?`<button type="button" class="xs" data-sdel="${i}" aria-label="Seite entfernen">✕</button>`:""}</div>`).join("")}
+  ${K.sides.map((s,i)=>`<div class="side"><b>Seite ${segName(i)}</b>${i?`<select data-sturn="${i}"><option value="gerade" ${s.turn==="gerade"?"selected":""}>gerade weiter</option><option value="links" ${s.turn==="links"?"selected":""}>Ecke nach links</option><option value="rechts" ${s.turn==="rechts"?"selected":""}>Ecke nach rechts</option></select>`:""}<span class="unit"><input type="number" inputmode="decimal" data-slen="${i}" value="${esc(K.massGiven?s.len:"")}" placeholder="z. B. 800"><span>cm</span></span>${i?`<button type="button" class="xs" data-sdel="${i}" aria-label="Seite entfernen">✕</button>`:""}</div>`).join("")}
   <button type="button" data-sadd="1">+ Weitere Seite (Ecke)</button>`}
-  <label class="f">Gewünschte Höhe<span class="unit"><input type="number" inputmode="decimal" id="kHeight" value="${esc(S.height)}"><span>cm</span></span></label>
+  <label class="f">Gewünschte Höhe<span class="unit"><input type="number" inputmode="decimal" id="kHeight" value="${esc(heightVal)}" placeholder="z. B. 100"><span>cm</span></span></label>
   <p class="hint" style="margin:0">Unsicher? Ungefähre Werte reichen erst einmal. Wir prüfen alles vor der Bestellung.</p>
+  <p class="warn" id="kmErr" hidden>Bitte tragen Sie Ihre gewünschten Maße ein (nicht leer lassen).</p>
   <button type="button" class="primary kok" data-kdone="masse">Maße übernehmen</button></div>`;
  }
  if(act==="vorschau")return `<div class="kw"><p style="margin:0">Fotografieren Sie die Stelle oder nutzen Sie die Live-Kamera. Ich zeige Ihnen im Bild, was Sie messen sollen, und danach sehen Sie Ihren neuen Zaun direkt in Ihrem Foto.</p><div class="row"><button type="button" class="primary" data-kstudio="1">Foto-Vorschau öffnen</button><button type="button" data-kmanual="1">Lieber Maße direkt eingeben</button></div></div>`;
@@ -1394,7 +1397,7 @@ function widget(act,live,m){
 }
 function summaryHtml(){
  if(typeof isRep==="function"&&isRep())return `<div class="kw ksum"><dl class="spec"><dt>Art</dt><dd>${isFrei()?"Individuelle Anfrage":"Reparatur / Instandhaltung"}</dd><dt>${isFrei()?"Vorhaben":"Schaden"}</dt><dd>${esc(K.rep.summary||"siehe Gespräch")}</dd>${Object.entries(K.rep.masse||{}).filter(([,v])=>v!=="").map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}<dt>Fotos</dt><dd>${(K.rep.fotos||[]).length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}</dd></dl>${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Anfrage absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
- return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
+ return `<div class="kw ksum"><dl class="spec">${specRows().filter(([k])=>!["Fertigung","Lichte Weite"].includes(k)).map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}${S.notes?`<dt>Hinweise</dt><dd>${esc(S.notes)}</dd>`:""}<dt>Fotos</dt><dd>${K.fotos.length}</dd><dt>Parken</dt><dd>${esc(K.park||"–")}</dd><dt>Strom</dt><dd>${esc(K.strom||"–")}</dd><dt>Kontakt</dt><dd>${esc([S.cFirst,S.cLast].filter(Boolean).join(" ")||"fehlt")}${S.cZip?", "+esc(S.cZip+" "+S.cCity):""}</dd></dl>
  ${S.cLast&&(S.cPhone||S.cMail)?`<button type="button" class="primary big" id="kSend">Projekt absenden</button>`:`<p class="warn">Bitte zuerst Ihre Kontaktdaten eintragen.</p><button type="button" class="primary" data-kshow="kontakt">Kontaktdaten eintragen</button>`}</div>`;
 }
 function renderChat(){
@@ -1521,8 +1524,19 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.dataset.sdel){K.sides.splice(+b.dataset.sdel,1);applySides();drawPreview();render();return}
  if(b.dataset.kdone==="masse"){
   const gate=S.product==="Tor"||S.product==="Gartentor";
-  if(gate){const v=+$("#kTotal").value;if(v>0)S.total=v}
-  const h=+$("#kHeight").value;if(h>0)S.height=h;
+  const totalRaw=gate?$("#kTotal").value.trim():"";
+  const hRaw=$("#kHeight").value.trim();
+  const sideVals=gate?[]:Array.from(document.querySelectorAll("[data-slen]")).map(el=>+el.value).filter(v=>v>0);
+  const totalOk=gate?(+totalRaw>0):sideVals.length>0;
+  const heightOk=+hRaw>0;
+  const errEl=$("#kmErr");
+  if(!totalOk||!heightOk){
+   if(errEl)errEl.hidden=false;
+   return;
+  }
+  if(errEl)errEl.hidden=true;
+  if(gate)S.total=+totalRaw;
+  S.height=+hRaw;
   K.massGiven=true;
   /* applySides() ist nur fuer mehrseitige Strecken (Zaun & Co.) gedacht und
      wuerde bei Toren das gerade eingegebene S.total mit dem veralteten
