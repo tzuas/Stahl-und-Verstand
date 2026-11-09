@@ -231,6 +231,11 @@ body.noscroll{overflow:hidden}
 <script>
 const ALL=["Zaun","Geländer","Tor","Gartentor","Französischer Balkon"];
 const ZTG=["Zaun","Tor","Gartentor"];
+/* Modelle mit Zierspitzen (sp:1) eignen sich praktisch nicht fuer Geländer,
+   da sich dort kein durchgehender Handlauf sauber auf die Spitzen setzen
+   laesst - ELEO listet sie zwar trotzdem als "Geländer"-faehig, aber auf
+   Wunsch (Erfahrungswert aus der Montage) bieten wir sie hier dafuer nicht an. */
+const ALL_OHNE_GEL=ALL.filter(p=>p!=="Geländer");
 const PRODUCTS=[
  {id:"Zaun",name:"Zaun",d:"Zaunfelder zwischen Pfosten",max:360},
  {id:"Tor",name:"Tor",d:"Zweiflügeliges Einfahrtstor",max:400},
@@ -241,11 +246,11 @@ const PRODUCTS=[
 ];
 const BOTH=["16 mm Hohlrohr","12 mm Massiv"], VK=["12 × 12 mm Vierkant massiv"];
 const MODELS=[
- {n:"Lucca",sp:1,st:BOTH,f:4,av:ALL,deco:"c",t:"Kurze Zwischenstäbe und C-Dekore"},
+ {n:"Lucca",sp:1,st:BOTH,f:4,av:ALL_OHNE_GEL,deco:"c",t:"Kurze Zwischenstäbe und C-Dekore"},
  {n:"Padua",sp:0,st:VK,f:4,av:ALL,deco:"plain",t:"Schlicht, zwei Traversen, Vierkantstäbe"},
- {n:"Belluno",sp:1,st:["12 mm Massiv"],f:4,av:ALL,deco:"circle",t:"Kreisdekore zwischen den Traversen"},
+ {n:"Belluno",sp:1,st:["12 mm Massiv"],f:4,av:ALL_OHNE_GEL,deco:"circle",t:"Kreisdekore zwischen den Traversen"},
  {n:"Lugano",sp:1,st:BOTH,f:4,av:ZTG,deco:"c",t:"Klassisch-romantisch mit C-Dekoren"},
- {n:"Ancona",sp:1,st:BOTH,f:4,av:ALL,deco:"plain",t:"Klassiker mit schlichtem Grunddesign"},
+ {n:"Ancona",sp:1,st:BOTH,f:4,av:ALL_OHNE_GEL,deco:"plain",t:"Klassiker mit schlichtem Grunddesign"},
  {n:"Perugia",sp:0,st:VK,f:4,av:ALL,deco:"short",t:"Klare Linien, kurze Zwischenstäbe"},
  {n:"Aquila",sp:1,st:["16 mm Hohlrohr"],f:4,av:ZTG,deco:"orn",t:"Ornamente an den Stäben",noZink:1},
  {n:"Modena",sp:0,st:["12 × 12 mm Vierkant + 25 × 6 mm Flachstahl"],f:4,av:ALL,deco:"modena",t:"Modern, Flachstahl-Trennelemente"},
@@ -256,7 +261,7 @@ const MODELS=[
  {n:"Molveno",sp:0,st:["25 × 6 mm Massiv"],f:1,av:["Geländer","Französischer Balkon"],deco:"molveno",t:"Aussparung oben für Blumenkästen"},
  {n:"Avelino",sp:1,st:BOTH,f:4,av:ZTG,deco:"orn",t:"Filigrane Dekore an den Stäben"},
  {n:"Lana",sp:1,st:BOTH,f:4,av:ZTG,deco:"lana",t:"Lange und kurze Stäbe, C-Dekore"},
- {n:"Bologna",sp:1,st:BOTH,f:4,av:ALL,deco:"volute",t:"Voluten zwischen den oberen Traversen"},
+ {n:"Bologna",sp:1,st:BOTH,f:4,av:ALL_OHNE_GEL,deco:"volute",t:"Voluten zwischen den oberen Traversen"},
  {n:"Balerna",sp:1,st:BOTH,f:4,av:ZTG,deco:"s",t:"Geschwungene S-Dekore"},
  {n:"Portofino",sp:0,st:VK,f:4,av:ALL,deco:"rhomb",t:"Geometrische Rauten in den Stäben"},
  {n:"Pescara",sp:0,st:VK,f:1,av:ALL,deco:"x",t:"Drei Traversen mit X-Dekoren"},
