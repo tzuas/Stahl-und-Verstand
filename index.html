@@ -320,6 +320,13 @@ function fixState(){
  if(S.product==="Tor"&&(S.total<200||S.total>600))S.total=350;
  if(S.product==="Tor"&&S.height<100)S.height=120;
  if(!Array.isArray(S.wishes))S.wishes=[];
+ /* Montageart sofort passend zum Produkt setzen, nicht erst wenn der
+    Masse-Schritt (mountHtml()) einmal gerendert wurde - sonst zeigt die
+    Zusammenfassung bei einem frisch gewählten Französischen Balkon
+    faelschlich "Aufgesetzt"/"Stirnseitig" (Geländer-Begriffe für eine
+    Balkonplatte, die es beim Fenster gar nicht gibt). */
+ if(S.product==="Französischer Balkon"){if(!["In der Laibung","Vor der Fassade"].includes(S.mount))S.mount="In der Laibung"}
+ else if(S.product==="Geländer"){if(!["Aufgesetzt","Stirnseitig"].includes(S.mount))S.mount="Aufgesetzt"}
 }
 function modelLabel(){const m=model();return isScreen()?(S.screenVar==="teil"&&m.p?m.p:m.n):m.n}
 function coatLabel(){return (S.coat==="Sonderfarbe RAL"||S.coat==="Individuelle RAL-Farbe")?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
@@ -693,7 +700,28 @@ function drawSketch(){
  g.push(vdim(x0-22,y0,y0-H,cm(H0)));
  if(+S.slope)g.push(`<text x="${x0+W}" y="${y0-H-14}" text-anchor="end" class="sub">Gefälle ${esc(S.slope)} ${esc(S.slopeUnit)} über die Strecke</text>`);
  if(S.product==="Geländer")g.push(mountDetail());
+ if(S.product==="Französischer Balkon")g.push(fbMountDetail());
  $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style>`+g.join("")+hausnummerMarker(true);
+}
+/* Grundriss-Schnitt für den Französischen Balkon: zeigt, anders als
+   mountDetail() (Platte/Boden bei Geländer), die Lage des Gitters relativ
+   zur Fensterlaibung - "in der Laibung" (zurückgesetzt, Glas dahinter) oder
+   "vor der Fassade" (auf Konsolen vor die Wand montiert). */
+function fbMountDetail(){
+ const x=680,y=12,inL=S.mount==="In der Laibung",g=[`<rect x="${x}" y="${y}" width="128" height="118" class="inset"/><text x="${x+8}" y="${y+16}" class="dimS" style="fill:var(--muted)">GRUNDRISS</text>`];
+ const sx=x+14,sy=y+44,ww=100,wd=inL?40:22;
+ g.push(`<rect x="${sx}" y="${sy}" width="${ww}" height="${wd}" class="slabS"/>`);
+ if(inL){
+  g.push(`<rect x="${sx+14}" y="${sy+wd-6}" width="${ww-28}" height="4" class="fillD"/>`);
+  g.push(`<line x1="${sx+10}" y1="${sy+12}" x2="${sx+ww-10}" y2="${sy+12}" class="anchor"/>`);
+ }else{
+  g.push(`<rect x="${sx+14}" y="${sy+wd-6}" width="${ww-28}" height="4" class="fillD"/>`);
+  g.push(`<line x1="${sx+6}" y1="${sy-6}" x2="${sx+ww-6}" y2="${sy-6}" class="anchor"/>`);
+  g.push(`<line x1="${sx+14}" y1="${sy-6}" x2="${sx+14}" y2="${sy}" class="fillD"/><line x1="${sx+ww-14}" y1="${sy-6}" x2="${sx+ww-14}" y2="${sy}" class="fillD"/>`);
+ }
+ g.push(`<text x="${sx+ww/2}" y="${sy+wd+14}" text-anchor="middle" class="dimS">${inL?"In der Laibung":"Vor der Fassade"}</text>`);
+ g.push(`<text x="${sx+ww/2}" y="${sy+wd+26}" text-anchor="middle" class="dimS">${inL?"Glas dahinter":"auf Konsolen"}</text>`);
+ return g.join("");
 }
 function mountDetail(){
  const x=680,y=12,st=S.mount==="Stirnseitig",g=[`<rect x="${x}" y="${y}" width="128" height="118" class="inset"/><text x="${x+8}" y="${y+16}" class="dimS" style="fill:var(--muted)">SCHNITT · ${st?"STIRNSEITIG":"AUFGESETZT"}</text>`];
@@ -1732,10 +1760,38 @@ function initView(){
  const resize=()=>{const w=host.clientWidth,h=Math.round(w*.5);if(!w)return;renderer.setSize(w,h,false);canvas.style.width=w+"px";canvas.style.height=h+"px";cam.aspect=w/h;cam.updateProjectionMatrix()};
  new ResizeObserver(resize).observe(host);resize();
  const loop=()=>{if(!host.hidden){controls.update();renderer.render(scene,cam)}requestAnimationFrame(loop)};loop();
- R={renderer,scene,cam,controls,mesh:null,patMesh:null,fitted:""};return R;
+ R={renderer,scene,cam,controls,mesh:null,patMesh:null,winGroup:null,fitted:""};return R;
 }
 let current=null;
 function buildMesh(patOut){const mesh=new THREE.Mesh(buildGeometry(patOut),material());mesh.castShadow=true;mesh.name="Anlage";return mesh}
+/* 3D-Hintergrund für den Französischen Balkon: ohne das stünde das Gitter
+   in der 3D-Vorschau frei im Garten und wäre von einem normalen Geländer
+   nicht zu unterscheiden - dabei ist ein Französischer Balkon immer die
+   Absturzsicherung VOR einem bodentiefen Fenster (die 2D-Ansicht zeigt das
+   schon, siehe scene()). Eigene, einfache Low-Poly-Darstellung (Wand,
+   Glas, Sprosse, Fensterbank) - keine Fotos übernommen; als Gestaltungs-
+   vorbild diente nur, wie ELEO-Modelle wie "Belluno" laut Katalog real vor
+   Fenstern/Balkontüren montiert werden (in der Laibung zurückgesetzt bzw.
+   auf Konsolen vor der Fassade), nicht deren Bildmaterial selbst.
+   Spiegelt dieselbe Einrück-Logik wie die 2D-Ansicht (inL/ex in scene()). */
+function buildWindowScenery(w,H){
+ const inL=S.mount==="In der Laibung",exW=inL?.07:-w*.08,ww=Math.max(.3,w+2*exW);
+ const wallZ=inL?.05:-.07,wallDepth=.18,glassZ=inL?wallZ-wallDepth:wallZ-.06;
+ const top=H*1.85,bot=-H*.18,wallTop=top+.3,wallBot=bot-.1;
+ const g=new THREE.Group();
+ const wallMat=new THREE.MeshStandardMaterial({color:"#cdbfa8",roughness:.92});
+ const wall=new THREE.Mesh(new THREE.BoxGeometry(ww+1.6,wallTop-wallBot,wallDepth),wallMat);
+ wall.position.set(0,(wallTop+wallBot)/2,wallZ-wallDepth/2);wall.receiveShadow=true;g.add(wall);
+ const glassMat=new THREE.MeshStandardMaterial({color:"#cfe0e6",roughness:.12,metalness:.1,transparent:true,opacity:.55});
+ const glass=new THREE.Mesh(new THREE.BoxGeometry(Math.max(.3,ww-.1),top-bot-.06,.02),glassMat);
+ glass.position.set(0,(top+bot)/2,glassZ);g.add(glass);
+ const frameMat=new THREE.MeshStandardMaterial({color:"#eef1f3",roughness:.5});
+ const mull=new THREE.Mesh(new THREE.BoxGeometry(.05,top-bot,.04),frameMat);
+ mull.position.set(0,(top+bot)/2,glassZ+.02);g.add(mull);
+ const sill=new THREE.Mesh(new THREE.BoxGeometry(ww+.3,.04,wallDepth+(inL?.1:-.02)),wallMat);
+ sill.position.set(0,bot,wallZ-wallDepth/2+(inL?0:.03));sill.receiveShadow=true;g.add(sill);
+ return g;
+}
 /* Baut, falls Sichtschutz mit Dekormotiv gewählt ist, zusätzlich eine
    transparente "Muster"-Mesh vor dem Panel (siehe patternPlane()/patternTexture()
    oben) - eine zweite Mesh, weil sie ein eigenes, durchsichtiges Material
@@ -1747,15 +1803,21 @@ function buildPatternMesh(patArr){
  const mat=new THREE.MeshStandardMaterial({map:tex,transparent:true,alphaTest:.12,roughness:.85,metalness:.08,side:THREE.DoubleSide,color:0xffffff});
  const mesh=new THREE.Mesh(geo,mat);mesh.name="Muster";return mesh;
 }
+function disposeGroup(g){g.traverse(o=>{if(o.geometry)o.geometry.dispose();if(o.material)o.material.dispose()})}
 function update(){
  const v=document.getElementById("v3d");if(!v||v.hidden)return;
  const r=initView();
  if(r.mesh){r.scene.remove(r.mesh);r.mesh.geometry.dispose()}
  if(r.patMesh){r.scene.remove(r.patMesh);r.patMesh.geometry.dispose();r.patMesh.material.dispose();r.patMesh=null}
+ if(r.winGroup){r.scene.remove(r.winGroup);disposeGroup(r.winGroup);r.winGroup=null}
  const patArr=[];
  r.mesh=buildMesh(patArr);r.scene.add(r.mesh);
  r.patMesh=buildPatternMesh(patArr);if(r.patMesh)r.scene.add(r.patMesh);
  const b=new THREE.Box3().setFromObject(r.mesh),size=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
+ if(S.product==="Französischer Balkon"){
+  r.winGroup=buildWindowScenery(size.x,Math.max(.4,(+S.height||100)/100));
+  r.winGroup.position.set(c.x,0,c.z);r.scene.add(r.winGroup);
+ }
  const key=S.product+L_key();
  if(r.fitted!==key){const dist=Math.max(size.x,size.z,size.y*2)*1.1+1.5;r.cam.position.set(c.x+dist*.35,size.y*1.4+dist*.25,c.z+dist);r.controls.target.set(c.x,size.y*.45,c.z);r.fitted=key}
  schedule();
