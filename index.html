@@ -607,14 +607,20 @@ function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
  }
  return out.join("");
 }
+/* Dekormotiv-Rohform, ohne Wrapper - wird für die 2D-SVG-<pattern> UND für
+   die 3D-Textur (Sichtschutz-Muster auf dem Panel) verwendet, damit beide
+   Ansichten exakt dasselbe Motiv zeigen (siehe patternTexture() weiter unten). */
+function patBody(p){
+ if(p==="geo")return `<path d="M0 24 L24 0 M0 12 L12 0 M12 24 L24 12"/>`;
+ if(p==="wave")return `<path d="M0 6 q6 -6 12 0 t12 0 M0 18 q6 -6 12 0 t12 0"/>`;
+ if(p==="leaf"||p==="leaf2"||p==="palm")return `<ellipse cx="12" cy="12" rx="${p==="palm"?3:4}" ry="10" transform="rotate(${p==="leaf2"?25:-30} 12 12)"/><line x1="4" y1="20" x2="20" y2="4"/>`;
+ if(p==="rhomb")return `<path d="M12 2 L22 12 L12 22 L2 12z M12 7 L17 12 L12 17 L7 12z"/>`;
+ if(p==="flower")return `<circle cx="12" cy="12" r="2.5"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="12" cy="6.5" rx="2" ry="3.6" transform="rotate(${a} 12 12)"/>`).join("")}`;
+ return"";
+}
 function patternDef(m,id,sc=1){
- const p=m.pat;let b="";const z=24*sc;
- if(p==="geo")b=`<path d="M0 24 L24 0 M0 12 L12 0 M12 24 L24 12"/>`;
- if(p==="wave")b=`<path d="M0 6 q6 -6 12 0 t12 0 M0 18 q6 -6 12 0 t12 0"/>`;
- if(p==="leaf"||p==="leaf2"||p==="palm")b=`<ellipse cx="12" cy="12" rx="${p==="palm"?3:4}" ry="10" transform="rotate(${p==="leaf2"?25:-30} 12 12)"/><line x1="4" y1="20" x2="20" y2="4"/>`;
- if(p==="rhomb")b=`<path d="M12 2 L22 12 L12 22 L2 12z M12 7 L17 12 L12 17 L7 12z"/>`;
- if(p==="flower")b=`<circle cx="12" cy="12" r="2.5"/>${[0,60,120,180,240,300].map(a=>`<ellipse cx="12" cy="6.5" rx="2" ry="3.6" transform="rotate(${a} 12 12)"/>`).join("")}`;
- return `<pattern id="${id}" width="${z}" height="${z}" patternUnits="userSpaceOnUse"><g class="pat" transform="scale(${sc})">${b}</g></pattern>`;
+ const z=24*sc;
+ return `<pattern id="${id}" width="${z}" height="${z}" patternUnits="userSpaceOnUse"><g class="pat" transform="scale(${sc})">${patBody(m.pat)}</g></pattern>`;
 }
 /* Anlage als SVG-Gruppe (ohne Bemaßung) */
 function fieldXs(L,s,x0){const pw=Math.max(3,L.post*s);let x=x0;const posts=[],starts=[];for(let i=0;i<L.n;i++){posts.push(x);x+=pw;starts.push(x);x+=L.fields[i]*s}posts.push(x);return{posts,starts,pw}}
@@ -1637,11 +1643,37 @@ function offFactory(form,H,span0,spanW){
 }
 function screenPanel(out,w,H){const g=new THREE.BoxGeometry(w,H-.06,.004);g.translate(w/2,(H-.06)/2+.04,0);out.push(g);
  beam(out,0,.04,w,.04,.03,.03);beam(out,0,H-.02,w,H-.02,.03,.03);beam(out,0,.04,0,H-.02,.03,.03);beam(out,w,.04,w,H-.02,.03,.03)}
+/* 3D-Darstellung des gewählten Sichtschutz-Dekormotivs: eine transparente,
+   mit dem echten Modellmuster (patBody) texturierte Zusatzfläche vor dem
+   blickdichten Panel - sonst wäre die 3D-Ansicht immer nur ein glatter
+   Kasten und würde (anders als die 2D-Zeichnung) nicht zeigen, welches
+   Modell der Kunde gewählt hat. Spiegelt die 2D-Logik aus fence(): bei
+   "teilflächig" sitzt das Muster nur im oberen Drittel, sonst vollflächig. */
+const patTexCache={};
+function patternTexture(pat,color){
+ const key=pat+"|"+color;
+ if(patTexCache[key])return patTexCache[key];
+ const body=patBody(pat);
+ const svg=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><g style="stroke:${color};stroke-width:1.9;fill:none;stroke-linecap:round;stroke-linejoin:round">${body}</g></svg>`;
+ const tex=new THREE.TextureLoader().load("data:image/svg+xml;utf8,"+encodeURIComponent(svg),()=>{try{update()}catch(e){}});
+ tex.wrapS=tex.wrapT=THREE.RepeatWrapping;if("colorSpace" in tex)tex.colorSpace=THREE.SRGBColorSpace;
+ patTexCache[key]=tex;return tex;
+}
+function patternPlane(w,H,m,screenVar,tileSize){
+ if(!m.pat||m.pat==="none")return null;
+ const margin=.012,top=H-.02,bot=.04,full=top-bot;
+ const pTop=top-margin,pBot=(screenVar==="teil"&&m.p?top-full*.3:bot)+margin,ph=pTop-pBot,pw=Math.max(.02,w-2*margin);
+ if(ph<=.01)return null;
+ const g=new THREE.PlaneGeometry(pw,ph);g.translate(w/2,(pTop+pBot)/2,.0035);
+ const uv=g.attributes.uv,ts=tileSize||.09;
+ for(let i=0;i<uv.count;i++)uv.setXY(i,uv.getX(i)*pw/ts,uv.getY(i)*ph/ts);
+ uv.needsUpdate=true;return g;
+}
 
 function place(list,mat4,dst){list.forEach(g=>{g.applyMatrix4(mat4);dst.push(g)})}
 function frameMatrix(x,z,theta){return new THREE.Matrix4().makeTranslation(x,0,z).multiply(new THREE.Matrix4().makeRotationY(-theta))}
 
-function buildGeometry(){
+function buildGeometry(patOut){
  const L=layout(),m=model(),H=Math.max(.4,(+S.height||100)/100),all=[];
  const rail=isRail(),front=rail&&(S.mount==="Stirnseitig"||S.mount==="Vor der Fassade"),slab=rail?Math.max(.08,(+S.slab||18)/100):0;
  const P=L.post/100,postH=H+(S.product==="Tor"?.12:.04),postBot=front?-slab*.9:0;
@@ -1660,9 +1692,16 @@ function buildGeometry(){
   if(L.planned){ang=L.segs.map((_,i)=>{const a=S.pts[i],b=S.pts[i+1];return Math.atan2(b[1]-a[1],b[0]-a[0])})}
   let cx=0,cz=0;
   L.segs.forEach((g,i)=>{
-   const loc=[],per=g.per/100,step=per+P;
+   const loc=[],patLoc=[],per=g.per/100,step=per+P;
    for(let k=(i===0?0:1);k<=g.n;k++)if(showPosts)post(loc,k*step);
-   for(let k=0;k<g.n;k++){const f=[];if(isScreen())screenPanel(f,per,H);else run(f,m,per,H,offFactory(S.form,H,0,per));place(f,new THREE.Matrix4().makeTranslation(k*step+P,0,0),loc)}
+   for(let k=0;k<g.n;k++){
+    const f=[],tr=new THREE.Matrix4().makeTranslation(k*step+P,0,0);
+    if(isScreen()){screenPanel(f,per,H);
+     if(patOut){const pg=patternPlane(per,H,m,S.screenVar);if(pg)place([pg],tr,patLoc)}
+    }else run(f,m,per,H,offFactory(S.form,H,0,per));
+    place(f,tr,loc);
+   }
+   if(patOut&&patLoc.length)place(patLoc,frameMatrix(cx,cz,ang[i]),patOut);
    place(loc,frameMatrix(cx,cz,ang[i]),all);
    const len=g.n*step;cx+=Math.cos(ang[i])*len;cz+=Math.sin(ang[i])*len;
   });
@@ -1670,7 +1709,9 @@ function buildGeometry(){
  const geo=mergeGeometries(all,false);if(!geo)throw new Error("merge failed");
  all.forEach(g=>g.dispose());
  geo.computeBoundingBox();const b=geo.boundingBox;
- geo.translate(-(b.min.x+b.max.x)/2,0,-(b.min.z+b.max.z)/2);
+ const cox=-(b.min.x+b.max.x)/2,coz=-(b.min.z+b.max.z)/2;
+ geo.translate(cox,0,coz);
+ if(patOut&&patOut.length){const off=new THREE.Matrix4().makeTranslation(cox,0,coz);patOut.forEach(g=>g.applyMatrix4(off))}
  return geo;
 }
 
@@ -1691,15 +1732,29 @@ function initView(){
  const resize=()=>{const w=host.clientWidth,h=Math.round(w*.5);if(!w)return;renderer.setSize(w,h,false);canvas.style.width=w+"px";canvas.style.height=h+"px";cam.aspect=w/h;cam.updateProjectionMatrix()};
  new ResizeObserver(resize).observe(host);resize();
  const loop=()=>{if(!host.hidden){controls.update();renderer.render(scene,cam)}requestAnimationFrame(loop)};loop();
- R={renderer,scene,cam,controls,mesh:null,fitted:""};return R;
+ R={renderer,scene,cam,controls,mesh:null,patMesh:null,fitted:""};return R;
 }
 let current=null;
-function buildMesh(){const mesh=new THREE.Mesh(buildGeometry(),material());mesh.castShadow=true;mesh.name="Anlage";return mesh}
+function buildMesh(patOut){const mesh=new THREE.Mesh(buildGeometry(patOut),material());mesh.castShadow=true;mesh.name="Anlage";return mesh}
+/* Baut, falls Sichtschutz mit Dekormotiv gewählt ist, zusätzlich eine
+   transparente "Muster"-Mesh vor dem Panel (siehe patternPlane()/patternTexture()
+   oben) - eine zweite Mesh, weil sie ein eigenes, durchsichtiges Material
+   braucht und nicht mit der blickdichten Hauptgeometrie verschmolzen werden kann. */
+function buildPatternMesh(patArr){
+ if(!patArr.length)return null;
+ const geo=mergeGeometries(patArr,false);patArr.forEach(g=>g.dispose());if(!geo)return null;
+ const tex=patternTexture(model().pat,finish().c);
+ const mat=new THREE.MeshStandardMaterial({map:tex,transparent:true,alphaTest:.12,roughness:.85,metalness:.08,side:THREE.DoubleSide,color:0xffffff});
+ const mesh=new THREE.Mesh(geo,mat);mesh.name="Muster";return mesh;
+}
 function update(){
  const v=document.getElementById("v3d");if(!v||v.hidden)return;
  const r=initView();
  if(r.mesh){r.scene.remove(r.mesh);r.mesh.geometry.dispose()}
- r.mesh=buildMesh();r.scene.add(r.mesh);
+ if(r.patMesh){r.scene.remove(r.patMesh);r.patMesh.geometry.dispose();r.patMesh.material.dispose();r.patMesh=null}
+ const patArr=[];
+ r.mesh=buildMesh(patArr);r.scene.add(r.mesh);
+ r.patMesh=buildPatternMesh(patArr);if(r.patMesh)r.scene.add(r.patMesh);
  const b=new THREE.Box3().setFromObject(r.mesh),size=b.getSize(new THREE.Vector3()),c=b.getCenter(new THREE.Vector3());
  const key=S.product+L_key();
  if(r.fitted!==key){const dist=Math.max(size.x,size.z,size.y*2)*1.1+1.5;r.cam.position.set(c.x+dist*.35,size.y*1.4+dist*.25,c.z+dist);r.controls.target.set(c.x,size.y*.45,c.z);r.fitted=key}
