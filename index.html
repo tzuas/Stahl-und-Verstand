@@ -97,6 +97,7 @@ pre.out{font:12.5px/1.55 var(--f-mono);background:var(--sheet);border:1px solid 
 .cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 14px}
 .zip{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
 .mt .tile{padding:8px 8px 12px}.thumb{width:100%;height:auto;border-radius:4px;display:block}
+.manu{align-self:flex-end;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--grid);border:1px solid var(--line);border-radius:3px;padding:1px 6px;margin-top:2px}
 .tile svg.thumb{height:auto}
 .tl{list-style:none;margin:12px 0 8px;padding:0;display:flex;flex-direction:column;gap:0}
 .tl li{display:flex;flex-direction:column;padding:6px 0 12px 22px;border-left:2px solid var(--line);margin-left:6px;position:relative}
@@ -257,8 +258,21 @@ const MODELS=[
  {n:"Portofino",sp:0,st:VK,f:4,av:ALL,deco:"rhomb",t:"Geometrische Rauten in den Stäben"},
  {n:"Pescara",sp:0,st:VK,f:1,av:ALL,deco:"x",t:"Drei Traversen mit X-Dekoren"},
  {n:"Roma",sp:0,st:VK,f:4,av:ZTG,deco:"plain",t:"Traversen aus Hespeneisen"},
- {n:"Ravenna",sp:1,st:BOTH,f:4,av:ZTG,deco:"plain",t:"Hespeneisen-Traversen, Zierspitzen"}
+ {n:"Ravenna",sp:1,st:BOTH,f:4,av:ZTG,deco:"plain",t:"Hespeneisen-Traversen, Zierspitzen"},
+ /* Inox Weber (Geländersysteme Weber e.K., inox-weber.de) - zweiter Hersteller
+    neben ELEO, für Geländer und Französischer Balkon. Modell-Namen sind die
+    tatsächlichen Füllungsarten aus deren eigenem Konfigurator (Edelstahl_Gelaender/),
+    technische Eckdaten (Material V2A/V4A, max. 12 cm Stababstand, Montage
+    aufgesetzt/vorgesetzt) von dort übernommen - Gestaltung/Zeichnung eigenständig,
+    keine Fotos oder Konfigurator-Grafiken kopiert. Siehe manu-Feld + <em class="manu">
+    in der Modellkachel (renderPanel()) sowie die Routing-Tabelle MANU_INFO unten. */
+ {n:"Stab (Edelstahl)",sp:0,st:["12 mm Rund V2A","10 mm Rund V2A","14 mm Rund V4A"],f:1,av:["Geländer","Französischer Balkon"],deco:"frame",t:"Senkrechte Rundstäbe, max. 12 cm Abstand",manu:"Inox Weber"},
+ {n:"Reling (Edelstahl)",sp:0,st:["42,4 mm Rohr V2A","33,7 mm Rohr V2A"],f:1,av:["Geländer","Französischer Balkon"],deco:"horiz",t:"Waagerechte Rundrohre, randlos",manu:"Inox Weber"},
+ {n:"Seilfüllung (Edelstahl)",sp:0,st:["Seil Ø 6 mm V2A"],f:1,av:["Geländer","Französischer Balkon"],deco:"seil",t:"Waagerechte Edelstahlseile, max. 12 cm Abstand",manu:"Inox Weber"},
+ {n:"Glasfüllung (Edelstahl)",sp:0,st:["ESG/VSG 8-10 mm"],f:1,av:["Geländer","Französischer Balkon"],deco:"glas",t:"Rahmenlose Glasfüllung in U-Klemmschiene",manu:"Inox Weber"},
+ {n:"Lochblech (Edelstahl)",sp:0,st:["Lochblech 2 mm V2A"],f:1,av:["Geländer","Französischer Balkon"],deco:"lochblech",t:"Durchbrochenes Edelstahl-Lochblech",manu:"Inox Weber"}
 ];
+MODELS.forEach(m=>{if(!m.manu)m.manu="ELEO"});
 const SCREENS=[
  {n:"Adda",p:"Amato",pat:"geo",t:"Geometrisches Muster"},
  {n:"Arno",p:"Agri",pat:"wave",t:"Dynamische Wellen"},
@@ -269,6 +283,7 @@ const SCREENS=[
  {n:"Tanaro",p:"Taro",pat:"palm",t:"Abstrakte Palmenblätter"},
  {n:"Pesa",p:null,pat:"none",t:"Blickdicht ohne Muster"}
 ];
+SCREENS.forEach(m=>{if(!m.manu)m.manu="ELEO"});
 const FORMS=["Gerade","Bogen","Geschwungen","U-Form"];
 const TIPS=["Kreuzlilie","Kugellilie","Kugelstab","Lanze","Lilie","Lotus","Pinie","Stab","Ohne Spitze"];
 const COATS=["Unbeschichtet (Edelrost)","Feuerverzinkt","Anthrazit DB 703","Sonderfarbe RAL"];
@@ -277,6 +292,16 @@ const RAL={"9005":["Tiefschwarz","#111214"],"7016":["Anthrazitgrau","#383e42"],"
 const WISHES=["Briefkasten-Durchwurf","Hausnummer / Initialen","Engerer Stababstand (Hund, Kinder)","Torantrieb vorbereiten","Wunschmotiv (Sichtschutz)","Bodenfreiheit nach Wunsch"];
 const STEPS=["Produkt","Modell","Ausführung","Wünsche","Maße","Foto","Kunde","Anfrage"];
 const MAIL="kundenservice@eleo-zaun.de";
+/* Zweiter Hersteller neben ELEO (siehe MODELS: manu:"Inox Weber") - Geländer/
+   Französischer Balkon aus Edelstahl, Geländersysteme Weber e.K.,
+   inox-weber.de. Die Anfrage (Empfänger-Mail, Zahlungshinweis, Telefon)
+   richtet sich automatisch nach dem/den Hersteller(n) der gewählten
+   Position(en) - siehe requestManus()/manuInfo() weiter unten. */
+const MANU_INFO={
+ "ELEO":{mail:MAIL,tel:"+49 (0) 9565 / 50 917 0",zahlung:"50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu."},
+ "Inox Weber":{mail:"post@inox-weber.de",tel:"+49 9947 90292-0",zahlung:"Zahlung laut Inox Weber: PayPal, Kreditkarte, Rechnung oder Vorkasse, direkt über deren eigenen Online-Konfigurator. Diese Anfrage dient als Vorab-Information/Rückfrage, nicht als verbindliche ELEO-Bestellung."}
+};
+function manuInfo(n){return MANU_INFO[n]||MANU_INFO.ELEO}
 /* Zeiten laut ELEO-Website / Katalog (Stand Okt. 2026, unverbindlich, saisonabhängig) */
 const TIMES={offer:[1,2],std:[8,10],exp:[6,7]};
 
@@ -403,14 +428,14 @@ function renderSteps(){
  $("#steps").innerHTML=STEPS.map((s,i)=>`<button type="button" data-step="${i}" ${i===S.step?'aria-current="step"':""} class="${i<S.step?"done":""}"><b>${i+1}</b>${s}</button>`).join("");
 }
 function timeline(){
- const p=plan();
+ const p=plan(),manus=requestManus(),manu=manus[0]||"ELEO",otherManu=manu!=="ELEO";
  return `<ol class="tl">
-  <li><b>Anfrage an ELEO</b><span>heute</span></li>
+  <li><b>Anfrage an ${esc(manu)}</b><span>heute</span></li>
   <li><b>Angebot mit technischer Zeichnung</b><span>${TIMES.offer[0]}–${TIMES.offer[1]} Werktage · bis ${p.offer}</span></li>
   <li><b>Fertigung nach Maß</b><span>${p.w[0]}–${p.w[1]} Wochen${S.express&&p.lt.exp?" (Expressfertigung, +10 %)":""} nach Zahlungseingang und Freigabe der Zeichnung${p.lt.why.length?" · längere Fertigung wegen "+[...new Set(p.lt.why)].join(", "):""}${S.express&&!p.lt.exp?" · Express ist für Sichtschutz nicht möglich":""}</span></li>
   <li><b>Lieferung per Spedition</b><span>voraussichtlich ${p.from} – ${p.to} · ${p.kw}</span></li>
  </ol>
- <p class="hint">Zeiten laut ELEO-Website, unverbindlich und saisonabhängig. Die verbindliche Fertigungszeit steht im Angebot. Die Spedition ruft vorher zur Terminabsprache an.</p>`;
+ <p class="hint">${otherManu?`Zeiten als grobe Schätzung auf ELEO-Basis - ${esc(manu)} nennt auf der eigenen Seite eine Lieferzeit ab 3 Wochen, die verbindliche Zeit kommt im Angebot von ${esc(manu)} selbst.`:"Zeiten laut ELEO-Website, unverbindlich und saisonabhängig. Die verbindliche Fertigungszeit steht im Angebot."} Die Spedition ruft vorher zur Terminabsprache an.</p>`;
 }
 function renderPanel(){
  const P=$("#panel");let h="";const st=S.step;
@@ -423,7 +448,7 @@ function renderPanel(){
  }else if(st===1){
   const ms=modelsFor(S.product);
   h=`<h2>Modell wählen</h2><p class="lede">${ms.length} Modelle als <b>${esc(prod().name)}</b>, gezeigt in ${esc(coatLabel())}.</p>
-  <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span></button>`).join("")}</div>`;
+  <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span>${m.manu?`<em class="manu">${esc(m.manu)}</em>`:""}</button>`).join("")}</div>`;
  }else if(st===2){
   const m=model();
   if(isFenster()){
@@ -486,18 +511,23 @@ function renderPanel(){
   <div class="grid2">${sel("install","Montage",["Selbstmontage","Montagepartner gewünscht"])}${sel("measure","Aufmaß",["Kunde misst selbst","Vor Ort aufgenommen (Händler)","Virtuelles Aufmaß gewünscht","Aufmaßservice gewünscht"])}</div>
   <div style="margin-top:12px">${area("notes","Bemerkungen / bauliche Situation","z. B. Sockelmauer 30 cm, Pfosten auf Mauerkrone schrauben")}</div>`;
  }else{
+  const manus=requestManus(),mixed=manus.length>1,manu=manus[0]||"ELEO",mi=manuInfo(manu);
   h=`<h2>Anfrage & Zeitplan</h2><p class="lede">So geht es nach der Anfrage weiter.</p>
   <fieldset><legend>Bearbeitungszeit</legend>${check("express","Expressfertigung gewünscht (gegen Aufpreis)")}${timeline()}</fieldset>
-  <fieldset><legend>Zahlung laut ELEO</legend><p class="hint" style="margin:0">50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu.</p></fieldset>
+  <fieldset><legend>Zahlung laut ${esc(manu)}</legend><p class="hint" style="margin:0">${esc(mi.zahlung)}</p></fieldset>
   ${positionsHtml()}
   ${typeof priceHtml==="function"?priceHtml():""}
-  <fieldset class="sendbox"><legend>An ELEO senden</legend>
+  ${mixed?`<fieldset class="sendbox"><legend>Mehrere Hersteller in dieser Anfrage</legend>
+   <p class="hint" style="margin-top:0">Diese Positionen verteilen sich auf mehrere Hersteller (${manus.map(esc).join(", ")}). Eine einzelne Mail würde beim falschen Hersteller landen - bitte je Hersteller eine eigene Anfrage speichern/senden (Positionen vorübergehend entfernen, die nicht zu „${esc(manu)}" gehören, oder nacheinander einzeln abschicken).</p>
+   <div class="row"><button type="button" id="btnSave">Beratung speichern</button></div>
+   <p id="copyMsg" class="toast" role="status"></p></fieldset>`:
+  `<fieldset class="sendbox"><legend>An ${esc(manu)} senden</legend>
    <p class="hint" style="margin-top:0">1. Bilder vorbereiten, 2. senden. Die Mail-App öffnet sich mit dem Anfrage-Text und allen Bildern im Anhang. Die Empfängeradresse ist dann in der Zwischenablage, im Feld „An“ einfach einfügen.</p>
-   <div class="row"><button type="button" id="btnPrep">1. Bilder vorbereiten</button><button type="button" class="primary" id="btnShare" disabled>2. Mit Bildern an ELEO senden</button><button type="button" id="btnSave">Beratung speichern</button></div>
-   <p id="copyMsg" class="toast" role="status"></p><div id="pngWrap" class="pngs"></div></fieldset>
+   <div class="row"><button type="button" id="btnPrep">1. Bilder vorbereiten</button><button type="button" class="primary" id="btnShare" disabled>2. Mit Bildern an ${esc(manu)} senden</button><button type="button" id="btnSave">Beratung speichern</button></div>
+   <p id="copyMsg" class="toast" role="status"></p><div id="pngWrap" class="pngs"></div></fieldset>`}
   <fieldset><legend>Anfrage-Text</legend><pre class="out" id="out"></pre></fieldset>
-  <div class="row"><button type="button" id="btnCopy">Text kopieren</button><a class="btn" id="mailLink" href="#">Nur Text per Mail (ohne Bilder)</a></div>
-  <p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${MAIL}</span> · Tel. +49 (0) 9565 / 50 917 0</p>`;
+  <div class="row"><button type="button" id="btnCopy">Text kopieren</button>${mixed?"":`<a class="btn" id="mailLink" href="#">Nur Text per Mail (ohne Bilder)</a>`}</div>
+  ${mixed?`<p class="hint" style="margin-top:10px">Kein einzelner Empfänger - siehe Hinweis oben.</p>`:`<p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${esc(mi.mail)}</span> · Tel. ${esc(mi.tel)}${manu!=="ELEO"?` · <strong>${esc(manu)}</strong>, nicht ELEO`:""}</p>`}`;
  }
  h+=`<div class="nav">${st>0?`<button type="button" data-go="-1">Zurück</button>`:"<span></span>"}${st<STEPS.length-1?`<button type="button" class="primary" data-go="1">Weiter: ${STEPS[st+1]}</button>`:""}</div>`;
  P.innerHTML=h;
@@ -582,7 +612,7 @@ function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
  const spikes=m.sp&&o.tip!=="Ohne Spitze"&&!empty;
  const railDrop=spikes?14*s:0;
  const line=(off,n=24)=>{let a=[];for(let i=0;i<=n;i++){const xx=x+w*i/n;a.push(`${xx.toFixed(1)},${(top(xx)+railDrop+off).toFixed(1)}`)}return `<polyline points="${a.join(" ")}" class="rail"/>`};
- const box=["frame","salerno","horiz"].includes(d);
+ const box=["frame","salerno","horiz","glas","lochblech"].includes(d);
  if(empty){out.push(line(0),`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,`<line x1="${x}" y1="${top(x)+railDrop}" x2="${x}" y2="${botRail}" class="rail"/>`,`<line x1="${x+w}" y1="${top(x+w)+railDrop}" x2="${x+w}" y2="${botRail}" class="rail"/>`);return out.join("")}
  if(box)out.push(`<rect x="${x}" y="${top(x)}" width="${w}" height="${base-top(x)}" class="thick"/>`);
  else{
@@ -594,6 +624,17 @@ function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
  const gap=(d==="modena"||d==="molveno"||m.st[0].startsWith("25"))?11:(m.st[0].startsWith("40")?13:12);
  const n=Math.max(2,Math.round(w/(gap*s)));
  if(d==="horiz"){for(let yy=top(x)+10*s;yy<base-4*s;yy+=10*s)out.push(`<line x1="${x}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ /* Inox Weber-Füllungsarten (siehe MODELS unten): Seilzug, rahmenlose
+    Glasfüllung, durchbrochenes Lochblech - eigenständig zur Vorlage
+    gezeichnet, nicht aus deren Konfigurator kopiert. */
+ if(d==="seil"){for(let yy=top(x)+8*s;yy<base-4*s;yy+=7*s)out.push(`<line x1="${x}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar" style="stroke-width:1"/>`);return out.join("")}
+ if(d==="glas"){out.push(`<rect x="${x+2}" y="${top(x)+2}" width="${w-4}" height="${base-top(x)-2}" fill="#bcd7e0" opacity=".35"/>`,`<rect x="${x}" y="${base-9*s}" width="${w}" height="${9*s}" class="fillD"/>`);return out.join("")}
+ if(d==="lochblech"){
+  out.push(`<rect x="${x}" y="${top(x)}" width="${w}" height="${base-top(x)}" class="fillD" opacity=".9"/>`);
+  const step=Math.max(6,10*s),by=top(x),bh=base-top(x);
+  for(let yy=by+step*.6;yy<by+bh-2;yy+=step)for(let xx=x+step*.6;xx<x+w-2;xx+=step)out.push(`<circle cx="${xx.toFixed(1)}" cy="${yy.toFixed(1)}" r="${(step*.28).toFixed(1)}" fill="#fff" opacity=".55"/>`);
+  return out.join("")
+ }
  if(d==="salerno"){const mid=x+w*.45;for(let i=1;i<6;i++){const xx=x+(mid-x)*i/6;out.push(`<line x1="${xx}" y1="${top(x)}" x2="${xx}" y2="${base}" class="bar"/>`)}out.push(`<line x1="${mid}" y1="${top(x)}" x2="${mid}" y2="${base}" class="thick"/>`);for(let yy=top(x)+12*s;yy<base-4*s;yy+=12*s)out.push(`<line x1="${mid}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
  for(let i=1;i<n;i++){
   const xx=x+w*i/n;let ty=box?top(x):top(xx);
@@ -855,6 +896,13 @@ function specRows(){
  return r;
 }
 function renderSpec(){$("#spec").innerHTML=specRows().map(([k,v])=>`<dt>${esc(k)}</dt><dd>${esc(v)}</dd>`).join("")}
+/* Welche(r) Hersteller sind in dieser Anfrage (alle Positionen) vertreten?
+   Fenster (fensterversand.com) läuft ohnehin als separate manuelle
+   Bestellung außerhalb dieses Mail-Flows und wird hier nicht gezählt. */
+function requestManus(){
+ const pos=allPositions();
+ return [...new Set(pos.map(o=>withPos(o,()=>isFenster()?null:(model().manu||"ELEO"))).filter(Boolean))];
+}
 function requestText(){
  const d=new Date().toLocaleDateString("de-DE"),p=plan(),pos=allPositions(),multi=pos.length>1;
  const block=(o,i)=>withPos(o,()=>`${multi?`POSITION ${i+1}: ${S.product} ${modelLabel()}`:"PRODUKT"}\n`+specRows().filter(([k])=>k!=="Fertigung").map(([k,v])=>`  ${(k+":").padEnd(15)} ${v}`).join("\n"));
@@ -898,9 +946,10 @@ ${FIRMA.strasse}, ${FIRMA.ort}
 ${FIRMA.mail}
 Aufgenommen am ${d}`;
 }
+function currentMail(){const manus=requestManus();return manuInfo(manus[0]||"ELEO").mail}
 function updateOut(){const o=$("#out");if(!o)return;const t=requestText();o.textContent=t;
  const subj=t.split("\n")[0].replace("Betreff: ",""),body=t.split("\n").slice(2).join("\n");
- const a=$("#mailLink");if(a)a.href=`mailto:${MAIL}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body.slice(0,1800))}`}
+ const a=$("#mailLink");if(a)a.href=`mailto:${currentMail()}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(body.slice(0,1800))}`}
 
 function svgToImg(el,light,cb){
  let src=new XMLSerializer().serializeToString(el).replace(/var\((--[a-z]+)\)/g,(m,k)=>light[k]||"#22313b");
@@ -1368,7 +1417,7 @@ function montageData(){
 function dataToFile(data,name){const [h,b]=data.split(","),type=h.match(/:(.*?);/)[1],bin=atob(b),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return new File([u],name,{type})}
 let shareList=[];
 async function prepFiles(btn){
- try{navigator.clipboard&&navigator.clipboard.writeText(MAIL).catch(()=>{})}catch(e){}
+ try{navigator.clipboard&&navigator.clipboard.writeText(currentMail()).catch(()=>{})}catch(e){}
  btn.disabled=true;btn.textContent="Bilder werden erstellt …";
  const keep=posSnap(),view=S.view,pos=allPositions(),multi=pos.length>1,out=[];
  try{
@@ -1391,7 +1440,7 @@ async function prepFiles(btn){
 async function shareFiles(){
  if(!shareList.length){note("Bitte zuerst „1. Bilder vorbereiten“ tippen.");return}
  const t=requestText(),subj=t.split("\n")[0].replace("Betreff: ",""),body=t.split("\n").slice(2).join("\n");
- try{await navigator.share({title:subj,text:t,files:shareList.map(f=>dataToFile(f.data,f.name))});note("Geteilt. Prüfe in der Mail-App, dass bei „An“ "+MAIL+" steht.")}
+ try{await navigator.share({title:subj,text:t,files:shareList.map(f=>dataToFile(f.data,f.name))});note("Geteilt. Prüfe in der Mail-App, dass bei „An“ "+currentMail()+" steht.")}
  catch(e){if(e&&e.name==="AbortError")return;note("Teilen hat nicht geklappt ("+(e&&e.name||"Fehler")+"). Tippe nochmal auf „1. Bilder vorbereiten“ und dann sofort auf „2.“.")}
 }
 /* ---------- KI erkennt Bestand auf Foto / Live-Bild ---------- */
@@ -1640,7 +1689,7 @@ function run(out,m,w,H,offFn){
  const d=m.deco,spikes=m.sp&&S.tip!=="Ohne Spitze"&&!empty,drop=spikes?.10:.02;
  const top=x=>H+offFn(x);
  const round=/Hohlrohr|12 mm Massiv/.test(S.bar||""),br=/16 mm/.test(S.bar||"")?.016:/25 × 6/.test(S.bar||"")?.025:/40 × 40/.test(S.bar||"")?.03:.013;
- const box=["frame","salerno","horiz"].includes(d);
+ const box=["frame","salerno","horiz","glas","lochblech"].includes(d);
  const rail=(off)=>{const N=14;for(let i=0;i<N;i++){const a=w*i/N,b=w*(i+1)/N;beam(out,a,top(a)-drop-off,b,top(b)-drop-off,.035,.02)}};
  if(box){beam(out,0,.05,w,.05,.04,.04);beam(out,0,top(0),w,top(w),.04,.04);beam(out,0,.05,0,top(0),.04,.04);beam(out,w,.05,w,top(w),.04,.04)}
  else{beam(out,0,.10,w,.10,.035,.02);rail(0)}
@@ -1649,6 +1698,15 @@ function run(out,m,w,H,offFn){
  if(!box&&d==="molveno")rail(.07);
  if(!box&&!noDeco&&d==="x")rail(.4);
  if(d==="horiz"){for(let y=.15;y<top(0)-.04;y+=.10)beam(out,0,y,w,y,.03,.03);return}
+ /* Inox Weber-Füllungsarten, 3D - vereinfachte, eigenständige Darstellung
+    (siehe gleichnamige 2D-Zweige in drawRailing()). Glas/Lochblech werden
+    hier als Teil der blickdichten Hauptgeometrie gebaut, ohne eigene
+    transparente Textur wie beim Sichtschutz-Muster (patternPlane()) -
+    bewusste Vereinfachung, in der 3D-Vorschau also nur als helle Fläche
+    statt echtem Glas/echten Löchern sichtbar. */
+ if(d==="seil"){for(let y=.12;y<top(0)-.04;y+=.055)beam(out,0,y,w,y,.012,.012);return}
+ if(d==="glas"){const g=new THREE.BoxGeometry(w,top(0)-.14,.012);g.translate(w/2,(top(0)-.14)/2+.1,0);out.push(g);beam(out,0,.07,w,.07,.05,.03);return}
+ if(d==="lochblech"){const g=new THREE.BoxGeometry(w,top(0)-.12,.01);g.translate(w/2,(top(0)-.12)/2+.08,0);out.push(g);return}
  if(d==="salerno"){const mid=w*.45;for(let i=1;i<6;i++)bar(out,mid*i/6,.05,top(0),false,.025);bar(out,mid,.05,top(0),false,.04);for(let y=.15;y<top(0)-.04;y+=.12)beam(out,mid,y,w,y,.025,.025);return}
  const gap=br>=.025?.11:.12,n=Math.max(2,Math.round(w/gap));
  for(let i=1;i<n;i++){
