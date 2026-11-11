@@ -242,7 +242,22 @@ const PRODUCTS=[
  {id:"Gartentor",name:"Gartentor",d:"Einflügelige Tür im Zaun",max:150},
  {id:"Geländer",name:"Geländer",d:"Balkon-, Terrassen- oder Treppengeländer",max:200},
  {id:"Französischer Balkon",name:"Franz. Balkon",d:"Absturzsicherung vor bodentiefem Fenster",max:200},
- {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200}
+ {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200},
+ {id:"Fenster",name:"Fenster",d:"Fenster zum Einbau oder Austausch (Bezug über Partnerbetrieb)",max:240}
+];
+/* Fenster beziehen wir manuell über fensterversand.com, kein eigener Zaun-
+   Katalog. Modell-/Profilnamen sind die echten Produktlinien des Lieferanten
+   (IDEAL 4000, ENERGETO 8000, TwinSet 8000 laut deren Produktdatenblättern,
+   Stand 11/2026), technische Eckdaten (Kammern, Uf-Wert) ebenfalls von dort -
+   Texte und Zeichnung sind aber eigene, keine kopierten Fotos/Katalogtexte. */
+const WINDOW_COLORS=["Weiß","Anthrazit","Golden Oak Dekor","Individuelle RAL-Farbe"];
+const WINDOW_MODELS=[
+ {n:"IDEAL 4000",material:"Kunststoff",av:["Fenster"],t:"Einstiegsklasse, 5-Kammer-Profil, Uf 1,3 W/(m²K)"},
+ {n:"ENERGETO 8000",material:"Kunststoff",av:["Fenster"],t:"Premium-Kunststofffenster, 6-Kammer-Profil, Uf 0,95 W/(m²K)"},
+ {n:"TwinSet 8000",material:"Kunststoff-Alu",av:["Fenster"],t:"PVC-Kern mit Aluminium-Vorsatzschale, 6-Kammer-Profil, Uf 1,0 W/(m²K)"},
+ {n:"Holzfenster",material:"Holz",av:["Fenster"],t:"Fichte oder Eiche, Lasur oder RAL-Farbton"},
+ {n:"Holz-Alu Fenster",material:"Holz-Alu",av:["Fenster"],t:"Holz innen, wetterfeste Aluminium-Schale außen"},
+ {n:"Aluminiumfenster",material:"Aluminium",av:["Fenster"],t:"Schlanke Profile, hohe Formstabilität, viele RAL-Farben"}
 ];
 const BOTH=["16 mm Hohlrohr","12 mm Massiv"], VK=["12 × 12 mm Vierkant massiv"];
 const MODELS=[
@@ -305,14 +320,18 @@ if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
 function save(){store("sv-draft",S)}
 
 const isScreen=()=>S.product==="Sichtschutz";
+const isFenster=()=>S.product==="Fenster";
 const prod=()=>PRODUCTS.find(p=>p.id===S.product);
-const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
-function modelsFor(p){return p==="Sichtschutz"?SCREENS:MODELS.filter(m=>m.av.includes(p))}
+const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:isFenster()?WINDOW_MODELS.find(m=>m.n===S.model)||WINDOW_MODELS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
+function modelsFor(p){if(p==="Sichtschutz")return SCREENS;if(p==="Fenster")return WINDOW_MODELS;return MODELS.filter(m=>m.av.includes(p))}
 function fixState(){
  const ms=modelsFor(S.product);
  if(ms.length&&!ms.find(m=>m.n===S.model))S.model=ms[0].n;
  const m=model();
- if(!isScreen()){
+ if(isFenster()){
+  if(!WINDOW_COLORS.includes(S.coat))S.coat="Weiß";
+ }else if(!isScreen()){
+  if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
   if(m.f===1)S.form="Gerade";
   if(!m.sp)S.tip="Ohne Spitze"; else if(S.tip==="Ohne Spitze")S.tip="Lanze";
   if(!m.st.includes(S.bar))S.bar=m.st[0];
@@ -327,13 +346,13 @@ function fixState(){
  if(!Array.isArray(S.wishes))S.wishes=[];
 }
 function modelLabel(){const m=model();return isScreen()?(S.screenVar==="teil"&&m.p?m.p:m.n):m.n}
-function coatLabel(){return S.coat==="Sonderfarbe RAL"?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
+function coatLabel(){return (S.coat==="Sonderfarbe RAL"||S.coat==="Individuelle RAL-Farbe")?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
 /* Farbe der Anlage für die Ansicht */
 function finish(){
  if(isScreen()&&S.screenMat==="Cortenstahl")return{c:"#9c4f24",hi:"#d0773d",rust:1,name:"Cortenstahl"};
  if(S.coat.startsWith("Unbeschichtet"))return{c:"#6e4029",hi:"#b06a3c",rust:1};
  if(S.coat==="Feuerverzinkt")return{c:"#8e979c",hi:"#d7dde0",zink:1};
- if(S.coat==="Sonderfarbe RAL"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
+ if(S.coat==="Sonderfarbe RAL"||S.coat==="Individuelle RAL-Farbe"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
  return{c:"#3d4043",hi:"#73787d"};
 }
 function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.round(v+(255-v)*a);return"#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
@@ -574,7 +593,11 @@ function slabSvg(x0,W,y0,h){
  const st=S.mount==="Stirnseitig",r=st?x0+W+4:x0+W+40;
  return `<polygon points="${x0-40},${y0} ${r},${y0} ${r+30},${y0-14} ${x0-10},${y0-14}" fill="#c9c3b9"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="${h}" fill="#bdb7ad"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="2" fill="#e2ddd5"/><polygon points="${r},${y0} ${r+30},${y0-14} ${r+30},${y0-14+h} ${r},${y0+h}" fill="#a9a399"/><rect x="${x0-40}" y="${y0+h}" width="${r-x0+70}" height="14" fill="#000" opacity=".13" filter="url(#blur)"/>`;
 }
+function windowThumb(m){
+ return `<svg class="thumb" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#e7edf0"/><rect x="38" y="14" width="84" height="72" rx="2" fill="#dfe8ec" stroke="#3d4043" stroke-width="3"/><line x1="80" y1="14" x2="80" y2="86" stroke="#3d4043" stroke-width="3"/><line x1="38" y1="50" x2="122" y2="50" stroke="#3d4043" stroke-width="3"/></svg>`;
+}
 function modelThumb(m){
+ if(isFenster())return windowThumb(m);
  const f=finish(),screen=isScreen(),o={product:"Zaun",form:m.f>1?S.form:"Gerade",tip:m.sp?(S.tip==="Ohne Spitze"?"Lanze":S.tip):"Ohne Spitze",fill:"Wie Modell",screen,screenVar:"voll",posts:"Zum Einbetonieren"};
  const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
  const id="th-"+m.n,sc="#"+id;
@@ -583,6 +606,15 @@ function modelThumb(m){
 
 /* ---------- Spezifikation & Anfrage ---------- */
 function specRows(){
+ if(isFenster()){
+  const m=model(),r=[];
+  r.push(["Produkt","Fenster"],["Profil/Modell",m.n],["Material",m.material],[m.t.includes("Kammer")?"Technik":"Hinweis",m.t]);
+  r.push(["Breite",cm(+S.total)],["Höhe",cm(+S.height)],["Farbe",coatLabel()]);
+  if(S.wishes.length)r.push(["Wünsche",S.wishes.join(", ")]);
+  if(S.wishText)r.push(["Freitext",S.wishText]);
+  r.push(["Fertigung",S.express?"Express gewünscht":"Standard"]);
+  return r;
+ }
  const L=layout(),r=[];
  r.push(["Produkt",S.product],["Modell",modelLabel()]);
  if(isScreen()){r.push(["Muster",S.screenVar==="teil"?"teilflächig (nur oben)":"vollflächig"],["Material",S.screenMat+", 1,5 mm"],["Einsatz",S.screenUse],["Rückwand",S.backwall])}
@@ -629,17 +661,42 @@ function applySides(){
 }
 
 /* ---------- Vorschau ---------- */
+/* Fenster haben keine Zaun-Geometrie (keine Pfosten/Felder) - statt der
+   Zaun-Zeichenmaschine (fence()) gibt es hier eine eigene, einfache
+   Skizze: Rahmen mit Breite/Höhe, keine erfundenen Fotos/Modellbilder. */
+function drawWindowPreview(){
+ const m=model(),w=Math.max(30,+S.total||120),h=Math.max(30,+S.height||120);
+ const vbW=820,vbH=400,aw=vbW-160,ah=vbH-150,sc=Math.min(aw/w,ah/h);
+ const W=w*sc,H=h*sc,x0=(vbW-W)/2,y0=vbH-70-H;
+ const fc=S.coat==="Weiß"?"#e9e5da":S.coat==="Anthrazit"?"#383e42":S.coat==="Golden Oak Dekor"?"#8a5a2b":(RAL[S.ral]?RAL[S.ral][1]:"#5b6066");
+ const head=`<rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
+ <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc("Fenster "+m.n)}</text>
+ <circle cx="34" cy="48" r="6" fill="${fc}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(m.material+" · "+coatLabel())}</text>`;
+ const frame=`<rect x="${x0-10}" y="${y0-10}" width="${W+20}" height="${H+20}" rx="3" fill="${fc}"/>
+ <rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="#cfe0e6" stroke="${fc}" stroke-width="${Math.max(4,sc*4)}"/>
+ <line x1="${x0+W/2}" y1="${y0}" x2="${x0+W/2}" y2="${y0+H}" stroke="${fc}" stroke-width="${Math.max(3,sc*3)}"/>
+ <line x1="${x0}" y1="${y0+H*.42}" x2="${x0+W}" y2="${y0+H*.42}" stroke="${fc}" stroke-width="${Math.max(3,sc*3)}"/>`;
+ $("#look").innerHTML=`<style>${css("#look","#3d4043","#73787d")}</style><rect width="${vbW}" height="${vbH}" fill="#eef3f4"/>${head}${frame}`;
+ const dims=`${dim(x0,x0+W,y0+H+30,cm(w))}${vdim(x0-26,y0,y0+H,cm(h))}`;
+ $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style><text x="20" y="26" class="ttl">${esc("Fenster "+m.n)}</text><text x="20" y="44" class="sub">${esc(m.material+" · "+coatLabel())}</text>${frame}${dims}`;
+}
 function drawPreview(){
  /* Vorschau bleibt leer, bis der Kunde wirklich ein Modell gewählt hat (K.modelChosen) -
     sonst stünde beim bloßen Antippen eines Produkts sofort ein Beispielmodell (Standard
     aus fixState()) da, obwohl der Kunde noch nichts selbst zusammengebaut hat. */
  const pv=document.querySelector(".pv");if(pv)pv.hidden=K.mode!=="katalog"||!K.modelChosen;
  fixState();
- try{drawLook()}catch(e){console.warn(e)}
- try{drawSketch()}catch(e){console.warn(e)}
+ if(isFenster()){
+  try{drawWindowPreview()}catch(e){console.warn(e)}
+ }else{
+  try{drawLook()}catch(e){console.warn(e)}
+  try{drawSketch()}catch(e){console.warn(e)}
+ }
  $("#look").toggleAttribute("hidden",S.view!=="look");$("#sketch").toggleAttribute("hidden",S.view!=="tech");
  document.querySelectorAll("[data-pv]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.pv===S.view));
- $("#pvLine").textContent=[S.product,modelLabel(),coatLabel(),K.massGiven&&layout().total?Math.round(layout().total)/100+" m":"",K.massGiven&&S.height?(+S.height/100).toLocaleString("de-DE")+" m hoch":""].filter(Boolean).join(" · ");
+ $("#pvLine").textContent=isFenster()?
+  [S.product,modelLabel(),coatLabel(),K.massGiven?cm(+S.total)+" × "+cm(+S.height):""].filter(Boolean).join(" · "):
+  [S.product,modelLabel(),coatLabel(),K.massGiven&&layout().total?Math.round(layout().total)/100+" m":"",K.massGiven&&S.height?(+S.height/100).toLocaleString("de-DE")+" m hoch":""].filter(Boolean).join(" · ");
 }
 
 /* ---------- KI ---------- */
@@ -663,7 +720,7 @@ DEINE HALTUNG: Du bist zugleich Aufmaß-Helfer UND erfahrener Verkaufsexperte. D
 Diese Technik ist nie wichtiger als Ehrlichkeit: keine falschen Preise, keine erfundene Knappheit, kein Druck, keine Manipulation. Ein Kunde, der sich gut beraten fühlt, schickt die Anfrage lieber ab als einer, der sich gedrängt fühlt.
 
 PFLICHTWEG bis zu den Kontaktdaten – halte dich STRENG an diese Reihenfolge und überspringe NUR, was laut AKTUELLER STAND schon bekannt ist. Häng an diesen Kernweg noch KEINE der optionalen Zusatzfragen aus Abschnitt "DANACH" weiter unten an, auch nicht beiläufig:
-1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion "produkt" zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz sowie „Reparatur“ und „Etwas anderes“). Der Kunde kann auch frei schreiben.
+1. Begrüße kurz und frag offen, was der Kunde vorhat (aktion “produkt” zeigt Kacheln: Zaun, Tor, Gartentor, Geländer, Franz. Balkon, Sichtschutz, Fenster sowie „Reparatur” und „Etwas anderes”). Der Kunde kann auch frei schreiben. Fenster beziehen wir über einen Partnerbetrieb (nicht ELEO) - Profile IDEAL 4000/ENERGETO 8000/TwinSet 8000 (Kunststoff bzw. Kunststoff-Alu) sowie Holz-, Holz-Alu- und Aluminiumfenster.
 1b. Wählt der Kunde "Geländer": frage in der nächsten Nachricht kurz, ob ein Stahl-Geländer aus dem ELEO-Katalog (Pulverbeschichtung/verzinkt, Modelle siehe unten) gewünscht ist, oder ein Glas-Geländer bzw. ein Edelstahl-Geländer als Sonderanfertigung. Bei Glas oder Edelstahl setze "modus":"frei" – ab dort führt die Sonderanfertigungs-Beratung (siehe GELÄNDER-SONDERANFERTIGUNG unten) gezielt durch Form, Material, Montage, Boden und ggf. Glas.
 2. Stil/Modell auswählen (aktion "modell"); bei Bedarf beraten: modern = Sarno, Sanremo, Salerno, Monza, Padua; klassisch = Lucca, Belluno, Bologna, Ancona; verspielt = Lugano, Balerna, Avelino. Nenn kurz einen Nutzen der Empfehlung (Stil, Pflegeaufwand, Langlebigkeit), nicht nur den Namen.
 3. Farbe (aktion "farbe"): Anthrazit DB 703 ist der Klassiker; Sonderfarben nach RAL; feuerverzinkt; Edelrost-Optik. Bei Anthrazit/RAL kurz erwähnen, dass das die langlebige Duplex-Beschichtung ist (verzinkt + pulverbeschichtet).
@@ -681,7 +738,9 @@ Wenn Fotos kommen, beschreibe kurz, was du erkennst, und frag nach, was für das
 PRODUKTE: ${PRODUCTS.map(p=>p.id).join(", ")}
 MODELLE:\n${ms}
 SICHTSCHUTZ:\n${sc}
+FENSTER-PROFILE:\n${WINDOW_MODELS.map(m=>`${m.n}: ${m.t}`).join("\n")}
 BESCHICHTUNGEN: ${COATS.join(", ")} (bei Sonderfarbe RAL-Nummer in "ral").
+FENSTERFARBEN: ${WINDOW_COLORS.join(", ")} (bei Individuelle RAL-Farbe RAL-Nummer in "ral").
 FORMEN: ${FORMS.join(", ")}. SPITZEN: ${TIPS.join(", ")}. FÜLLUNG: ${FILLS.join(", ")}.
 ZUSATZLEISTUNGEN, die du anbieten darfst (ohne Preis): Montage durch den Betrieb, Express-Fertigung, Torantrieb (bei Toren), Sonderwünsche wie Briefkasten-Durchwurf, Hausnummer/Initialen, engerer Stababstand für Hund/Kinder, Wunschmotiv bei Sichtschutz.
 LIEFERZEIT laut Hersteller: Fertigung meist 8–10 Wochen (Express 6–7 Wochen, +10 % Aufpreis); Modelle Roma und Ravenna 16–20 Wochen (Express 8–10); Sichtschutz 12–16 Wochen, dort keine Expressfertigung, unverbindlich.
@@ -722,7 +781,7 @@ function applyChanges(ch){
    continue}
   if(k==="height"||k==="total"){v=+v;if(!(v>0))continue;K.massGiven=true}
   if(k==="product"&&!PRODUCTS.some(p=>p.id===v))continue;
-  if(k==="coat"&&!COATS.includes(v))continue;
+  if(k==="coat"&&!COATS.includes(v)&&!WINDOW_COLORS.includes(v))continue;
   if(k==="ral")v=String(v).replace(/\D/g,"").slice(0,4);
   if(k==="express"){S.express=v===true||v==="true"||/^ja$/i.test(String(v));continue}
   if(k==="install"){S.install=/betrieb|uns montiert|durch sie/i.test(String(v))?"Durch den Betrieb":"Selbstmontage";K.installAsked=true;continue}
@@ -1364,17 +1423,23 @@ function widget(act,live,m){
  if(!live)return"";
  if(typeof isRep==="function"&&isRep()){const r=repWidget(act,m||{});if(r)return r}
  if(act==="produkt")return `<div class="kw tiles">${PRODUCTS.map((p,i)=>`<button type="button" class="tile" style="--i:${i}" data-kprod="${p.id}" aria-pressed="${K.mode==="katalog"&&S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong></button>`).join("")}<button type="button" class="tile reptile" style="--i:${PRODUCTS.length}" data-krep="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M30 38 L62 10 M56 8 l10 -2 l-2 10 M44 30 l8 8 M70 26 a10 10 0 1 0 14 14"/></svg><strong>Reparatur</strong><span>Schaden, Instandhaltung, Ersatzteil</span></button><button type="button" class="tile reptile" style="--i:${PRODUCTS.length+1}" data-kfrei="1"><svg viewBox="0 0 120 48" stroke="currentColor" fill="none" stroke-width="2" aria-hidden="true"><path d="M20 44 h16 v-8 h16 v-8 h16 v-8 h16 v-8 h16"/><path d="M20 44 V36 M100 12 v32"/></svg><strong>Etwas anderes</strong><span>Treppe, Vordach, Gitter, Sonderanfertigung …</span></button></div>`;
- if(act==="modell"){const matOpts=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS;
+ if(act==="modell"){const matOpts=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:isFenster()?WINDOW_COLORS:COATS;
   return `<div class="kw tiles mt">${modelsFor(S.product).map((m,i)=>`<button type="button" class="tile" style="--i:${i}" data-kmodel="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}</strong><span>${m.t}</span></button>`).join("")}</div><p class="hint" style="margin:0">Als Material/Ausführung stehen zur Wahl: ${matOpts.join(", ")}. Die Farbe wählen Sie gleich im nächsten Schritt.</p>`}
- if(act==="farbe"){const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
+ if(act==="farbe"){
+  if(isFenster()){
+   return `<div class="kw">${winColorSwatches(WINDOW_COLORS)}${S.coat==="Individuelle RAL-Farbe"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]],i)=>`<button type="button" class="ralb" style="--i:${i}" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`;
+  }
+  const cs=isScreen()?["Unbeschichtet (Edelrost)","Anthrazit DB 703"]:COATS.filter(c=>!(model().noZink&&c==="Feuerverzinkt"));
   return `<div class="kw">${coatSwatches(cs)}${S.coat==="Sonderfarbe RAL"?`<div class="ral">${Object.entries(RAL).map(([k,[n,c]],i)=>`<button type="button" class="ralb" style="--i:${i}" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>`:""}<button type="button" class="primary kok" data-kdone="farbe">Diese Farbe nehmen</button></div>`}
  if(act==="masse"){
   if(!K.sides.length)K.sides=[{len:S.pts.length?"":(K.massGiven?S.total||"":""),turn:""}];
-  const gate=S.product==="Tor"||S.product==="Gartentor";
+  const gate=S.product==="Tor"||S.product==="Gartentor"||isFenster();
   const totalVal=K.massGiven?S.total:"";
   const heightVal=K.massGiven?S.height:"";
+  const breiteLabel=isFenster()?"Gewünschte Breite des Fensters":"Gewünschte Breite des Tors";
+  const breiteHint=isFenster()?"Übliche Fenstergrößen liegen etwa zwischen 50 × 50 cm und 240 × 240 cm. Ungefähre Werte reichen - vor der Bestellung vermessen wir ohnehin vor Ort oder anhand Ihrer Angaben genau nach.":"Einfach das Maß eintragen, das Sie sich wünschen - die Pfosten rechnen wir automatisch mit ein.";
   return `<div class="kw kform">
-  ${gate?`<label class="f">Gewünschte Breite des Tors<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(totalVal)}" placeholder="z. B. 300"><span>cm</span></span></label><p class="hint" style="margin:0">Einfach das Maß eintragen, das Sie sich wünschen - die Pfosten rechnen wir automatisch mit ein.</p>`:
+  ${gate?`<label class="f">${breiteLabel}<span class="unit"><input type="number" inputmode="decimal" id="kTotal" value="${esc(totalVal)}" placeholder="z. B. 300"><span>cm</span></span></label><p class="hint" style="margin:0">${breiteHint}</p>`:
   `<p class="hint" style="margin:0">Messen Sie jede gerade Seite einzeln, inklusive Pfosten. Bei einer Ecke fügen Sie eine neue Seite hinzu.</p>
   ${K.sides.map((s,i)=>`<div class="side"><b>Seite ${segName(i)}</b>${i?`<select data-sturn="${i}"><option value="gerade" ${s.turn==="gerade"?"selected":""}>gerade weiter</option><option value="links" ${s.turn==="links"?"selected":""}>Ecke nach links</option><option value="rechts" ${s.turn==="rechts"?"selected":""}>Ecke nach rechts</option></select>`:""}<span class="unit"><input type="number" inputmode="decimal" data-slen="${i}" value="${esc(K.massGiven?s.len:"")}" placeholder="z. B. 800"><span>cm</span></span>${i?`<button type="button" class="xs" data-sdel="${i}" aria-label="Seite entfernen">✕</button>`:""}</div>`).join("")}
   <button type="button" data-sadd="1">+ Weitere Seite (Ecke)</button>`}
@@ -1429,6 +1494,10 @@ function coatSwatches(opts){
  return `<div class="sw">${opts.map((o,i)=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
   return `<button type="button" class="swb" style="--i:${i}" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Sonderfarbe RAL"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
 }
+function winColorSwatches(opts){
+ return `<div class="sw">${opts.map((o,i)=>{const c=o==="Weiß"?"linear-gradient(135deg,#f5f3ee,#ffffff 60%,#e7e3da)":o==="Anthrazit"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":o==="Golden Oak Dekor"?"linear-gradient(135deg,#8a5a2b,#c68a4a 60%,#6b4420)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
+  return `<button type="button" class="swb" style="--i:${i}" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Individuelle RAL-Farbe"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
+}
 function miniIcon(id){
  const b='stroke="currentColor" fill="none" stroke-width="2"',bars=(x0,x1,y0,y1,st=10)=>{let s="";for(let x=x0;x<=x1;x+=st)s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;return s};let g="";
  if(id==="Zaun")g=`<rect x="4" y="8" width="5" height="36"/><rect x="111" y="8" width="5" height="36"/>${bars(18,104,10,42)}<line x1="9" y1="18" x2="111" y2="18"/><line x1="9" y1="38" x2="111" y2="38"/>`;
@@ -1437,6 +1506,7 @@ function miniIcon(id){
  if(id==="Geländer")g=`<line x1="4" y1="44" x2="116" y2="44"/><line x1="4" y1="10" x2="116" y2="10" stroke-width="4"/>${bars(8,112,10,44,9)}`;
  if(id==="Französischer Balkon")g=`<rect x="28" y="2" width="64" height="44" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;
  if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
+ if(id==="Fenster")g=`<rect x="24" y="5" width="72" height="38" rx="2"/><line x1="60" y1="5" x2="60" y2="43"/><line x1="24" y1="24" x2="96" y2="24"/>`;
  return `<svg viewBox="0 0 120 48" ${b} aria-hidden="true">${g}</svg>`;
 }
 
@@ -1528,7 +1598,7 @@ document.addEventListener("click",async e=>{const b=e.target.closest("button");i
  if(b.dataset.sadd){K.sides.push({len:"",turn:"rechts"});render();return}
  if(b.dataset.sdel){K.sides.splice(+b.dataset.sdel,1);applySides();drawPreview();render();return}
  if(b.dataset.kdone==="masse"){
-  const gate=S.product==="Tor"||S.product==="Gartentor";
+  const gate=S.product==="Tor"||S.product==="Gartentor"||isFenster();
   const totalRaw=gate?$("#kTotal").value.trim():"";
   const hRaw=$("#kHeight").value.trim();
   const sideVals=gate?[]:Array.from(document.querySelectorAll("[data-slen]")).map(el=>+el.value).filter(v=>v>0);

@@ -218,7 +218,22 @@ const PRODUCTS=[
  {id:"Gartentor",name:"Gartentor",d:"Einflügelige Tür im Zaun",max:150},
  {id:"Geländer",name:"Geländer",d:"Balkon-, Terrassen- oder Treppengeländer",max:200},
  {id:"Französischer Balkon",name:"Franz. Balkon",d:"Absturzsicherung vor bodentiefem Fenster",max:200},
- {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200}
+ {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200},
+ {id:"Fenster",name:"Fenster",d:"Fenster zum Einbau oder Austausch (Bezug über Partnerbetrieb)",max:240}
+];
+/* Fenster beziehen wir manuell über fensterversand.com, kein eigener Zaun-
+   Katalog. Modell-/Profilnamen sind die echten Produktlinien des Lieferanten
+   (IDEAL 4000, ENERGETO 8000, TwinSet 8000 laut deren Produktdatenblättern,
+   Stand 11/2026), technische Eckdaten (Kammern, Uf-Wert) ebenfalls von dort -
+   Texte und Zeichnung sind aber eigene, keine kopierten Fotos/Katalogtexte. */
+const WINDOW_COLORS=["Weiß","Anthrazit","Golden Oak Dekor","Individuelle RAL-Farbe"];
+const WINDOW_MODELS=[
+ {n:"IDEAL 4000",material:"Kunststoff",av:["Fenster"],t:"Einstiegsklasse, 5-Kammer-Profil, Uf 1,3 W/(m²K)"},
+ {n:"ENERGETO 8000",material:"Kunststoff",av:["Fenster"],t:"Premium-Kunststofffenster, 6-Kammer-Profil, Uf 0,95 W/(m²K)"},
+ {n:"TwinSet 8000",material:"Kunststoff-Alu",av:["Fenster"],t:"PVC-Kern mit Aluminium-Vorsatzschale, 6-Kammer-Profil, Uf 1,0 W/(m²K)"},
+ {n:"Holzfenster",material:"Holz",av:["Fenster"],t:"Fichte oder Eiche, Lasur oder RAL-Farbton"},
+ {n:"Holz-Alu Fenster",material:"Holz-Alu",av:["Fenster"],t:"Holz innen, wetterfeste Aluminium-Schale außen"},
+ {n:"Aluminiumfenster",material:"Aluminium",av:["Fenster"],t:"Schlanke Profile, hohe Formstabilität, viele RAL-Farben"}
 ];
 const BOTH=["16 mm Hohlrohr","12 mm Massiv"], VK=["12 × 12 mm Vierkant massiv"];
 const MODELS=[
@@ -281,14 +296,18 @@ if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
 function save(){store("sv-draft",S)}
 
 const isScreen=()=>S.product==="Sichtschutz";
+const isFenster=()=>S.product==="Fenster";
 const prod=()=>PRODUCTS.find(p=>p.id===S.product);
-const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
-function modelsFor(p){return p==="Sichtschutz"?SCREENS:MODELS.filter(m=>m.av.includes(p))}
+const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:isFenster()?WINDOW_MODELS.find(m=>m.n===S.model)||WINDOW_MODELS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
+function modelsFor(p){if(p==="Sichtschutz")return SCREENS;if(p==="Fenster")return WINDOW_MODELS;return MODELS.filter(m=>m.av.includes(p))}
 function fixState(){
  const ms=modelsFor(S.product);
  if(!ms.find(m=>m.n===S.model))S.model=ms[0].n;
  const m=model();
- if(!isScreen()){
+ if(isFenster()){
+  if(!WINDOW_COLORS.includes(S.coat))S.coat="Weiß";
+ }else if(!isScreen()){
+  if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
   if(m.f===1)S.form="Gerade";
   if(!m.sp)S.tip="Ohne Spitze"; else if(S.tip==="Ohne Spitze")S.tip="Lanze";
   if(!m.st.includes(S.bar))S.bar=m.st[0];
@@ -303,13 +322,13 @@ function fixState(){
  if(!Array.isArray(S.wishes))S.wishes=[];
 }
 function modelLabel(){const m=model();return isScreen()?(S.screenVar==="teil"&&m.p?m.p:m.n):m.n}
-function coatLabel(){return S.coat==="Sonderfarbe RAL"?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
+function coatLabel(){return (S.coat==="Sonderfarbe RAL"||S.coat==="Individuelle RAL-Farbe")?`RAL ${S.ral||"?"}${RAL[S.ral]?" "+RAL[S.ral][0]:""}`:S.coat}
 /* Farbe der Anlage für die Ansicht */
 function finish(){
  if(isScreen()&&S.screenMat==="Cortenstahl")return{c:"#9c4f24",hi:"#d0773d",rust:1,name:"Cortenstahl"};
  if(S.coat.startsWith("Unbeschichtet"))return{c:"#6e4029",hi:"#b06a3c",rust:1};
  if(S.coat==="Feuerverzinkt")return{c:"#8e979c",hi:"#d7dde0",zink:1};
- if(S.coat==="Sonderfarbe RAL"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
+ if(S.coat==="Sonderfarbe RAL"||S.coat==="Individuelle RAL-Farbe"){const r=RAL[S.ral];return{c:r?r[1]:"#5b6066",hi:r?shade(r[1],.35):"#8a9096",guess:!r}}
  return{c:"#3d4043",hi:"#73787d"};
 }
 function shade(hex,a){const n=parseInt(hex.slice(1),16);let r=n>>16,g=n>>8&255,b=n&255;const f=v=>Math.round(v+(255-v)*a);return"#"+[f(r),f(g),f(b)].map(v=>v.toString(16).padStart(2,"0")).join("")}
@@ -365,6 +384,10 @@ function coatSwatches(opts){
  return `<div class="sw">${opts.map(o=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
   return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o}</button>`}).join("")}</div>`;
 }
+function winColorSwatches(opts){
+ return `<div class="sw">${opts.map(o=>{const c=o==="Weiß"?"linear-gradient(135deg,#f5f3ee,#ffffff 60%,#e7e3da)":o==="Anthrazit"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":o==="Golden Oak Dekor"?"linear-gradient(135deg,#8a5a2b,#c68a4a 60%,#6b4420)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
+  return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o==="Individuelle RAL-Farbe"?"Wunschfarbe (RAL)":o}</button>`}).join("")}</div>`;
+}
 function ralPicker(){
  return `<div class="ral">${Object.entries(RAL).map(([k,[n,c]])=>`<button type="button" class="ralb" data-k="ral" data-v="${k}" aria-pressed="${S.ral===k}" title="RAL ${k} ${n}"><i style="background:${c}"></i><span>${k}<small>${n}</small></span></button>`).join("")}</div>
  <div style="margin-top:10px;max-width:260px">${txt("ral","Anderer RAL-Ton","text","z. B. 7039")}</div>${finish().guess?'<p class="hint">Diesen Farbton kennt die Vorschau nicht genau. Er wird grau angedeutet, ELEO fertigt den echten RAL-Ton.</p>':""}`;
@@ -396,7 +419,11 @@ function renderPanel(){
   <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span></button>`).join("")}</div>`;
  }else if(st===2){
   const m=model();
-  if(isScreen()){
+  if(isFenster()){
+   h=`<h2>Ausführung ${esc(m.n)}</h2><p class="lede">${esc(m.material)} · ${esc(m.t)}.</p>
+   <fieldset><legend>Farbe</legend>${winColorSwatches(WINDOW_COLORS)}
+   ${S.coat==="Individuelle RAL-Farbe"?ralPicker():""}</fieldset>`;
+  }else if(isScreen()){
    h=`<h2>Ausführung ${esc(modelLabel())}</h2><p class="lede">Sichtschutz-Paneele aus 1,5 mm Blech.</p>
    ${m.p?`<fieldset><legend>Muster</legend>${chipsVar(m)}</fieldset>`:""}
    <fieldset><legend>Material</legend>${chips("screenMat",["Metall","Cortenstahl"])}<p class="hint">Cortenstahl nur für Sichtschutzzäune. Er bildet eine orange-braune Rostschicht.</p></fieldset>
@@ -417,6 +444,10 @@ function renderPanel(){
   ${isScreen()?"":`<fieldset><legend>Füllung</legend>${chips("fill",FILLS)}<p class="hint">„Ohne Füllung“ bedeutet nur Rahmen, Traversen und Pfosten, etwa für eine eigene Holz- oder WPC-Füllung.</p></fieldset>`}
   <fieldset><legend>Zusätzliche Wünsche</legend><div class="cks">${WISHES.filter(w=>isScreen()?!w.startsWith("Engerer"):!w.startsWith("Wunschmotiv")).map(w=>`<label class="ck"><input type="checkbox" data-wish="${esc(w)}" ${S.wishes.includes(w)?"checked":""}> ${w}</label>`).join("")}</div></fieldset>
   ${area("wishText","Persönliche Wünsche, frei formuliert","z. B. Initialen „M&K“ mittig im Tor, Briefkasten links neben dem Schloss, Motiv Olivenzweig")}`;
+ }else if(st===4&&isFenster()){
+  h=`<h2>Maße aufnehmen</h2><p class="lede">Breite und Höhe des gewünschten Fensters.</p>
+  <div class="grid2">${num("total","Breite")}${num("height","Höhe")}</div>
+  <div class="note" id="mnote">${measureNote()}</div>`;
  }else if(st===4){
   const L=layout(),p=prod(),gate=L.gate,over=!gate&&L.per>p.max;
   h=`<h2>Maße aufnehmen</h2><p class="lede">${gate?"Lichte Weite = Abstand zwischen den beiden Torpfosten.":"Gesamtstrecke inklusive Pfosten. Die Felder teilt das Tool automatisch auf."}</p>
@@ -465,7 +496,9 @@ function renderPanel(){
  if(st===4){renderPlan();renderSegList()}
  if(st===5)setTimeout(()=>{renderPhotoStep();if(typeof renderPlanBox==="function")renderPlanBox()},0);
 }
-function measureNote(){const L=layout();if(L.segs.length>1)return `${L.segs.map((g,i)=>`Seite ${segName(i)}: ${g.n} × ${cm(g.per)}`).join(" · ")} · ${L.corners.length} Eckpfosten. Montageabstände zieht ELEO im Angebot ab.`;return `${L.gate?`Lichte Weite: <b>${cm(L.clear)}</b>${S.product==="Tor"?` · je Flügel ca. <b>${cm(L.per)}</b>`:""}`:`${L.n} Felder · lichte Weite je Feld ca. <b>${cm(L.per)}</b> · Pfosten 5 × 5 cm`}. Montageabstände zieht ELEO im Angebot ab.`}
+function measureNote(){
+ if(isFenster())return `Breite ${cm(+S.total)} × Höhe ${cm(+S.height)}. Übliche Fenstergrößen liegen etwa zwischen 50 × 50 cm und 240 × 240 cm - genaue Maße vor der Bestellung nochmal vor Ort prüfen.`;
+ const L=layout();if(L.segs.length>1)return `${L.segs.map((g,i)=>`Seite ${segName(i)}: ${g.n} × ${cm(g.per)}`).join(" · ")} · ${L.corners.length} Eckpfosten. Montageabstände zieht ELEO im Angebot ab.`;return `${L.gate?`Lichte Weite: <b>${cm(L.clear)}</b>${S.product==="Tor"?` · je Flügel ca. <b>${cm(L.per)}</b>`:""}`:`${L.n} Felder · lichte Weite je Feld ca. <b>${cm(L.per)}</b> · Pfosten 5 × 5 cm`}. Montageabstände zieht ELEO im Angebot ab.`}
 function chipsVar(m){return `<div class="chips"><button type="button" class="chip" data-k="screenVar" data-v="voll" aria-pressed="${S.screenVar==="voll"}">Vollflächig (${m.n})</button><button type="button" class="chip" data-k="screenVar" data-v="teil" aria-pressed="${S.screenVar==="teil"}">Nur oben (${m.p})</button></div>`}
 function miniIcon(id){
  const b='stroke="currentColor" fill="none" stroke-width="2"';
@@ -477,6 +510,7 @@ function miniIcon(id){
  if(id==="Geländer")g=`<line x1="4" y1="44" x2="116" y2="44"/><line x1="4" y1="10" x2="116" y2="10" stroke-width="4"/>${bars(8,112,10,44,9)}`;
  if(id==="Französischer Balkon")g=`<rect x="28" y="2" width="64" height="44" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;
  if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
+ if(id==="Fenster")g=`<rect x="24" y="5" width="72" height="38" rx="2"/><line x1="60" y1="5" x2="60" y2="43"/><line x1="24" y1="24" x2="96" y2="24"/>`;
  return `<svg viewBox="0 0 120 48" ${b} aria-hidden="true">${g}</svg>`;
 }
 
@@ -689,6 +723,25 @@ function scene(kind,y0,H,x0,W){
  return g.join("");
 }
 function viewLayout(){const L=layout();if(L.gate||L.n<=3)return L;const fields=L.fields.slice(0,3),corners=L.corners.filter(c=>c<3);return Object.assign({},L,{n:3,fields,corners,per:Math.max(...fields),width:fields.reduce((a,b)=>a+b,0)+4*L.post,crop:true})}
+/* Fenster haben keine Zaun-Geometrie (keine Pfosten/Felder) - statt der
+   Zaun-Zeichenmaschine (fence()) gibt es hier eine eigene, einfache
+   Skizze: Rahmen mit Breite/Höhe, keine erfundenen Fotos/Modellbilder. */
+function drawWindowPreview(){
+ const m=model(),w=Math.max(30,+S.total||120),h=Math.max(30,+S.height||120);
+ const vbW=820,vbH=400,aw=vbW-160,ah=vbH-150,sc=Math.min(aw/w,ah/h);
+ const W=w*sc,H=h*sc,x0=(vbW-W)/2,y0=vbH-70-H;
+ const fc=S.coat==="Weiß"?"#e9e5da":S.coat==="Anthrazit"?"#383e42":S.coat==="Golden Oak Dekor"?"#8a5a2b":(RAL[S.ral]?RAL[S.ral][1]:"#5b6066");
+ const head=`<rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
+ <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc("Fenster "+m.n)}</text>
+ <circle cx="34" cy="48" r="6" fill="${fc}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(m.material+" · "+coatLabel())}</text>`;
+ const frame=`<rect x="${x0-10}" y="${y0-10}" width="${W+20}" height="${H+20}" rx="3" fill="${fc}"/>
+ <rect x="${x0}" y="${y0}" width="${W}" height="${H}" fill="#cfe0e6" stroke="${fc}" stroke-width="${Math.max(4,sc*4)}"/>
+ <line x1="${x0+W/2}" y1="${y0}" x2="${x0+W/2}" y2="${y0+H}" stroke="${fc}" stroke-width="${Math.max(3,sc*3)}"/>
+ <line x1="${x0}" y1="${y0+H*.42}" x2="${x0+W}" y2="${y0+H*.42}" stroke="${fc}" stroke-width="${Math.max(3,sc*3)}"/>`;
+ $("#look").innerHTML=`<style>${css("#look","#3d4043","#73787d")}</style><rect width="${vbW}" height="${vbH}" fill="#eef3f4"/>${head}${frame}`;
+ const dims=`${dim(x0,x0+W,y0+H+30,cm(w))}${vdim(x0-26,y0,y0+H,cm(h))}`;
+ $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style><text x="20" y="26" class="ttl">${esc("Fenster "+m.n)}</text><text x="20" y="44" class="sub">${esc(m.material+" · "+coatLabel())}</text>${frame}${dims}`;
+}
 function drawLook(){
  const L=viewLayout(),H0=Math.max(40,+S.height||100),m=model(),o=opts(),f=finish();
  const rail=isRail(),s=fit(L,H0,700,rail?250:300),W=L.width*s,H=H0*s,x0=(820-W)/2,y0=rail?300:330,slabPx=Math.max(18,(+S.slab||18)*s);o.mount=rail?S.mount:"";o.slabPx=slabPx;
@@ -715,7 +768,11 @@ function slabSvg(x0,W,y0,h){
  const st=S.mount==="Stirnseitig",r=st?x0+W+4:x0+W+40;
  return `<polygon points="${x0-40},${y0} ${r},${y0} ${r+30},${y0-14} ${x0-10},${y0-14}" fill="#c9c3b9"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="${h}" fill="#bdb7ad"/><rect x="${x0-40}" y="${y0}" width="${r-x0+40}" height="2" fill="#e2ddd5"/><polygon points="${r},${y0} ${r+30},${y0-14} ${r+30},${y0-14+h} ${r},${y0+h}" fill="#a9a399"/><rect x="${x0-40}" y="${y0+h}" width="${r-x0+70}" height="14" fill="#000" opacity=".13" filter="url(#blur)"/>`;
 }
+function windowThumb(m){
+ return `<svg class="thumb" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#e7edf0"/><rect x="38" y="14" width="84" height="72" rx="2" fill="#dfe8ec" stroke="#3d4043" stroke-width="3"/><line x1="80" y1="14" x2="80" y2="86" stroke="#3d4043" stroke-width="3"/><line x1="38" y1="50" x2="122" y2="50" stroke="#3d4043" stroke-width="3"/></svg>`;
+}
 function modelThumb(m){
+ if(isFenster())return windowThumb(m);
  const f=finish(),screen=isScreen(),o={product:"Zaun",form:m.f>1?S.form:"Gerade",tip:m.sp?(S.tip==="Ohne Spitze"?"Lanze":S.tip):"Ohne Spitze",fill:"Wie Modell",screen,screenVar:"voll",posts:"Zum Einbetonieren"};
  const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
  const id="th-"+m.n,sc="#"+id;
@@ -724,6 +781,15 @@ function modelThumb(m){
 
 /* ---------- Spezifikation & Anfrage ---------- */
 function specRows(){
+ if(isFenster()){
+  const m=model(),r=[];
+  r.push(["Produkt","Fenster"],["Profil/Modell",m.n],["Material",m.material],[m.t.includes("Kammer")?"Technik":"Hinweis",m.t]);
+  r.push(["Breite",cm(+S.total)],["Höhe",cm(+S.height)],["Farbe",coatLabel()]);
+  if(S.wishes.length)r.push(["Wünsche",S.wishes.join(", ")]);
+  if(S.wishText)r.push(["Freitext",S.wishText]);
+  r.push(["Fertigung",S.express?"Express gewünscht":"Standard"]);
+  return r;
+ }
  const L=layout(),r=[];
  r.push(["Produkt",S.product],["Modell",modelLabel()]);
  if(isScreen()){r.push(["Muster",S.screenVar==="teil"?"teilflächig (nur oben)":"vollflächig"],["Material",S.screenMat+", 1,5 mm"],["Einsatz",S.screenUse],["Rückwand",S.backwall])}
@@ -800,7 +866,7 @@ function svgToImg(el,light,cb){
 function makePng(){
  const w=$("#pngWrap");w.innerHTML='<p class="hint">Bilder lange gedrückt halten (Tablet) oder Rechtsklick, dann „Bild sichern“ und an die Mail anhängen.</p>';
  const light={"--draw":"#22313b","--dim":"#c8262a","--grid":"#dfe5e9","--muted":"#5d6972"};
- drawLook();drawSketch();
+ if(isFenster())drawWindowPreview();else{drawLook();drawSketch()}
  [["#look","Farbige Ansicht"],["#sketch","Bemaßte Skizze"]].forEach(([sel,cap])=>svgToImg($(sel),light,img=>{
   const fig=document.createElement("figure");fig.className="png";
   if(img){img.alt=cap;fig.appendChild(img)}else fig.innerHTML='<p class="warn">Bild ließ sich nicht erzeugen. Bitte Screenshot machen.</p>';
@@ -809,7 +875,9 @@ function makePng(){
 
 /* ---------- Ablauf ---------- */
 function setView(v){S.view=v;$("#look").toggleAttribute("hidden",v!=="look");$("#sketch").toggleAttribute("hidden",v!=="tech");$("#v3d").toggleAttribute("hidden",v!=="3d");if(v==="3d"&&window.SV3D)SV3D.update();document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v))}
-function refresh(full){if(full&&S.step!==5&&typeof stopLive==="function")stopLive();fixState();if(!Array.isArray(S.pts))S.pts=[];if(!Array.isArray(S.lens))S.lens=[];if(full){renderSteps();renderPanel()}else{const n=$("#mnote");if(n)n.innerHTML=measureNote()}drawLook();drawSketch();setView(S.view);renderSpec();updateOut();save();if(window.SV3D){SV3D.invalidate();if(S.view!=="3d"&&(S.step===5))SV3D.prepare()}}
+function refresh(full){if(full&&S.step!==5&&typeof stopLive==="function")stopLive();fixState();if(!Array.isArray(S.pts))S.pts=[];if(!Array.isArray(S.lens))S.lens=[];if(full){renderSteps();renderPanel()}else{const n=$("#mnote");if(n)n.innerHTML=measureNote()}
+ if(isFenster()){try{drawWindowPreview()}catch(e){console.warn(e)}}else{drawLook();drawSketch()}
+ setView(S.view);renderSpec();updateOut();save();if(window.SV3D){SV3D.invalidate();if(S.view!=="3d"&&(S.step===5))SV3D.prepare()}}
 document.addEventListener("click",e=>{
  const b=e.target.closest("button,a");if(!b)return;
  if(b.dataset.view){setView(b.dataset.view);save();return}
@@ -1240,7 +1308,7 @@ async function prepFiles(btn){
  const keep=posSnap(),view=S.view,pos=allPositions(),multi=pos.length>1,out=[];
  try{
   for(let i=0;i<pos.length;i++){
-   posLoad(pos[i]);fixState();drawLook();drawSketch();
+   posLoad(pos[i]);fixState();if(isFenster())drawWindowPreview();else{drawLook();drawSketch()}
    const n=multi?"-pos"+(i+1):"";
    const look=await svgPngP($("#look")),sk=await svgPngP($("#sketch"));
    if(look)out.push({name:"ansicht"+n+".png",data:look,cap:(multi?"Position "+(i+1)+": ":"")+"Ansicht"});
