@@ -96,7 +96,8 @@ pre.out{font:12.5px/1.55 var(--f-mono);background:var(--sheet);border:1px solid 
 .ck{display:flex;align-items:center;gap:10px;font-weight:500;min-height:40px}.ck input{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
 .cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 14px}
 .zip{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
-.tiles.mt{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.tiles.mt,.tiles.prod{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
+.prod .tile{padding:8px 8px 12px}
 .mt .tile{padding:8px 8px 12px}.thumb{width:100%;height:auto;border-radius:4px;display:block}
 .manu{align-self:flex-end;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--grid);border:1px solid var(--line);border-radius:3px;padding:1px 6px;margin-top:2px}
 .tile svg.thumb{height:auto}
@@ -249,6 +250,12 @@ const MODELS=[
  {n:"Perugia",sp:0,st:VK,f:4,av:ALL,deco:"short",t:"Klare Linien, kurze Zwischenstäbe"},
  {n:"Aquila",sp:1,st:["16 mm Hohlrohr"],f:4,av:ZTG,deco:"orn",t:"Ornamente an den Stäben",noZink:1},
  {n:"Modena",sp:0,st:["12 × 12 mm Vierkant + 25 × 6 mm Flachstahl"],f:4,av:ALL,deco:"modena",t:"Modern, Flachstahl-Trennelemente"},
+ /* Scala (laut ELEO-Katalog "eleo-katalog-alle-marken-032024.pdf"): modulares
+    Flachstahl-System (Modulraster ca. 120 × 90 × 50 mm, Rahmen 120 × 50 × 8 mm,
+    Stäbe 50 × 10 mm Flachstahl massiv), laut Katalog auch als Treppengeländer
+    oder Raumteiler einsetzbar, keine Spitzen, nur eine Form. Eigene Zeichnung
+    (Gitterraster), keine Konfigurator-Grafik übernommen. */
+ {n:"Scala",sp:0,st:["50 × 10 mm Flachstahl massiv"],f:1,av:["Zaun","Geländer","Französischer Balkon"],deco:"scala",t:"Modulares Flachstahl-Gitter, auch als Treppengeländer oder Raumteiler"},
  {n:"Salerno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"salerno",t:"Senkrechte und waagerechte Profile"},
  {n:"Sarno",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:["Zaun","Tor","Gartentor","Geländer","Französischer Balkon"],deco:"frame",t:"Reduziertes Rahmendesign"},
  {n:"Sanremo",sp:0,st:["40 × 40 / 25 × 25 mm Hohlprofil"],f:1,av:ZTG,deco:"horiz",t:"Waagerechte Profile, moderne Baustile"},
@@ -662,7 +669,7 @@ function renderPanel(){
   const list=load("sv-list",[]);
   const np=(S.positions||[]).length;
   h=`${np?`<div class="posnote">Angebot mit mehreren Positionen: ${np} schon gespeichert. Du legst jetzt <b>Position ${np+1}</b> an. Kundendaten bleiben erhalten.</div>`:""}<h2>Was soll entstehen?</h2><p class="lede">Tippen Sie auf die Art der Anlage. Die Ansicht rechts zeigt sie sofort in Farbe.</p>
-  <div class="tiles">${PRODUCTS.map(p=>`<button type="button" class="tile" data-prod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong><span>${p.d}</span></button>`).join("")}</div>
+  <div class="tiles prod">${PRODUCTS.map(p=>`<button type="button" class="tile" data-prod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong><span>${p.d}</span></button>`).join("")}</div>
   <fieldset style="margin-top:24px"><legend>Gespeicherte Beratungen</legend>${list.length?`<ul class="saved">${list.map(e=>`<li><span><b>${esc(e.name||"Ohne Namen")}</b> · ${esc(e.product)} ${esc(e.model)}<small>${esc(e.date)}</small></span><span class="row"><button type="button" data-open="${e.id}">Öffnen</button><button type="button" data-del="${e.id}">Löschen</button></span></li>`).join("")}</ul>`:'<p class="hint">Noch keine. Im letzten Schritt speichern Sie eine Beratung mit dem Kundennamen.</p>'}</fieldset>`;
  }else if(st===1){
   const ms=modelsFor(S.product);
@@ -760,18 +767,21 @@ function measureNote(){
  if(isFenster())return `Breite ${cm(+S.total)} × Höhe ${cm(+S.height)}. Übliche Fenstergrößen liegen etwa zwischen 50 × 50 cm und 240 × 240 cm - genaue Maße vor der Bestellung nochmal vor Ort prüfen.`;
  const L=layout();if(L.segs.length>1)return `${L.segs.map((g,i)=>`Seite ${segName(i)}: ${g.n} × ${cm(g.per)}`).join(" · ")} · ${L.corners.length} Eckpfosten. Montageabstände zieht ELEO im Angebot ab.`;return `${L.gate?`Lichte Weite: <b>${cm(L.clear)}</b>${S.product==="Tor"?` · je Flügel ca. <b>${cm(L.per)}</b>`:""}`:`${L.n} Felder · lichte Weite je Feld ca. <b>${cm(L.per)}</b> · Pfosten 5 × 5 cm`}. Montageabstände zieht ELEO im Angebot ab.`}
 function chipsVar(m){return `<div class="chips"><button type="button" class="chip" data-k="screenVar" data-v="voll" aria-pressed="${S.screenVar==="voll"}">Vollflächig (${m.n})</button><button type="button" class="chip" data-k="screenVar" data-v="teil" aria-pressed="${S.screenVar==="teil"}">Nur oben (${m.p})</button></div>`}
+/* Größere Vorschaukarte für die Produktauswahl (Schritt 0) - gleiche
+   Hintergrund-Optik (Himmel/Boden) wie die Modell-Vorschau (modelThumb),
+   mit den vorhandenen eigenen Linien-Icons statt fremder Fotos. */
 function miniIcon(id){
- const b='stroke="currentColor" fill="none" stroke-width="2"';
+ const b='stroke="#3d4043" fill="none" stroke-width="2"';
  const bars=(x0,x1,y0,y1,st=10)=>{let s="";for(let x=x0;x<=x1;x+=st)s+=`<line x1="${x}" y1="${y0}" x2="${x}" y2="${y1}"/>`;return s};
- let g="";
+ let g="",ground=true;
  if(id==="Zaun")g=`<rect x="4" y="8" width="5" height="36"/><rect x="111" y="8" width="5" height="36"/>${bars(18,104,10,42)}<line x1="9" y1="18" x2="111" y2="18"/><line x1="9" y1="38" x2="111" y2="38"/>`;
  if(id==="Tor")g=`<rect x="4" y="4" width="6" height="40"/><rect x="110" y="4" width="6" height="40"/><path d="M12 14 Q36 4 59 10 M61 10 Q84 4 108 14"/>${bars(18,52,12,42,8)}${bars(68,104,12,42,8)}<line x1="12" y1="40" x2="108" y2="40"/>`;
  if(id==="Gartentor")g=`<rect x="30" y="6" width="6" height="38"/><rect x="84" y="6" width="6" height="38"/><path d="M38 14 Q60 4 82 14"/>${bars(44,78,12,42,8)}<line x1="38" y1="40" x2="82" y2="40"/>`;
  if(id==="Geländer")g=`<line x1="4" y1="44" x2="116" y2="44"/><line x1="4" y1="10" x2="116" y2="10" stroke-width="4"/>${bars(8,112,10,44,9)}`;
- if(id==="Französischer Balkon")g=`<rect x="28" y="2" width="64" height="44" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;
+ if(id==="Französischer Balkon"){ground=false;g=`<rect x="28" y="2" width="64" height="44" fill="#cfe0e6" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;}
  if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
- if(id==="Fenster")g=`<rect x="24" y="5" width="72" height="38" rx="2"/><line x1="60" y1="5" x2="60" y2="43"/><line x1="24" y1="24" x2="96" y2="24"/>`;
- return `<svg viewBox="0 0 120 48" ${b} aria-hidden="true">${g}</svg>`;
+ if(id==="Fenster"){ground=false;g=`<rect x="24" y="5" width="72" height="38" rx="2" fill="#dfe8ec"/><line x1="60" y1="5" x2="60" y2="43"/><line x1="24" y1="24" x2="96" y2="24"/>`;}
+ return `<svg class="thumb" viewBox="0 0 120 48" aria-hidden="true"><rect width="120" height="48" fill="#e7edf0"/>${ground?'<rect y="40" width="120" height="8" fill="#7ea35f"/>':""}<g ${b}>${g}</g></svg>`;
 }
 
 const isRail=()=>S.product==="Geländer"||S.product==="Französischer Balkon";
@@ -840,7 +850,7 @@ function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
  const spikes=m.sp&&o.tip!=="Ohne Spitze"&&!empty;
  const railDrop=spikes?14*s:0;
  const line=(off,n=24)=>{let a=[];for(let i=0;i<=n;i++){const xx=x+w*i/n;a.push(`${xx.toFixed(1)},${(top(xx)+railDrop+off).toFixed(1)}`)}return `<polyline points="${a.join(" ")}" class="rail"/>`};
- const box=["frame","salerno","horiz","glas","lochblech"].includes(d);
+ const box=["frame","salerno","horiz","glas","lochblech","scala"].includes(d);
  if(empty){out.push(line(0),`<line x1="${x}" y1="${botRail}" x2="${x+w}" y2="${botRail}" class="rail"/>`,`<line x1="${x}" y1="${top(x)+railDrop}" x2="${x}" y2="${botRail}" class="rail"/>`,`<line x1="${x+w}" y1="${top(x+w)+railDrop}" x2="${x+w}" y2="${botRail}" class="rail"/>`);return out.join("")}
  if(box)out.push(`<rect x="${x}" y="${top(x)}" width="${w}" height="${base-top(x)}" class="thick"/>`);
  else{
@@ -864,6 +874,15 @@ function drawRailing(m,o,x,w,H,y0,s,spanX,spanW){
   return out.join("")
  }
  if(d==="salerno"){const mid=x+w*.45;for(let i=1;i<6;i++){const xx=x+(mid-x)*i/6;out.push(`<line x1="${xx}" y1="${top(x)}" x2="${xx}" y2="${base}" class="bar"/>`)}out.push(`<line x1="${mid}" y1="${top(x)}" x2="${mid}" y2="${base}" class="thick"/>`);for(let yy=top(x)+12*s;yy<base-4*s;yy+=12*s)out.push(`<line x1="${mid}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`);return out.join("")}
+ /* Scala (siehe MODELS oben): Modulraster aus senkrechten und waagerechten
+    Flachstahl-Trennern, eigenständig zur Vorlage gezeichnet. */
+ if(d==="scala"){
+  const cols=Math.max(2,Math.round(w/(22*s)));
+  for(let i=1;i<cols;i++){const xx=x+w*i/cols;out.push(`<line x1="${xx}" y1="${top(x)}" x2="${xx}" y2="${base}" class="bar"/>`)}
+  const rows=Math.max(1,Math.round((base-top(x))/(18*s)));
+  for(let j=1;j<rows;j++){const yy=top(x)+(base-top(x))*j/rows;out.push(`<line x1="${x}" y1="${yy}" x2="${x+w}" y2="${yy}" class="bar"/>`)}
+  return out.join("")
+ }
  for(let i=1;i<n;i++){
   const xx=x+w*i/n;let ty=box?top(x):top(xx);
   if(!noDeco&&d==="lana"&&i%2===0)ty+=10*s;
@@ -1941,7 +1960,7 @@ function run(out,m,w,H,offFn){
  const d=m.deco,spikes=m.sp&&S.tip!=="Ohne Spitze"&&!empty,drop=spikes?.10:.02;
  const top=x=>H+offFn(x);
  const round=/Hohlrohr|12 mm Massiv/.test(S.bar||""),br=/16 mm/.test(S.bar||"")?.016:/25 × 6/.test(S.bar||"")?.025:/40 × 40/.test(S.bar||"")?.03:.013;
- const box=["frame","salerno","horiz","glas","lochblech"].includes(d);
+ const box=["frame","salerno","horiz","glas","lochblech","scala"].includes(d);
  const rail=(off)=>{const N=14;for(let i=0;i<N;i++){const a=w*i/N,b=w*(i+1)/N;beam(out,a,top(a)-drop-off,b,top(b)-drop-off,.035,.02)}};
  if(box){beam(out,0,.05,w,.05,.04,.04);beam(out,0,top(0),w,top(w),.04,.04);beam(out,0,.05,0,top(0),.04,.04);beam(out,w,.05,w,top(w),.04,.04)}
  else{beam(out,0,.10,w,.10,.035,.02);rail(0)}
@@ -1960,6 +1979,15 @@ function run(out,m,w,H,offFn){
  if(d==="glas"){const g=new THREE.BoxGeometry(w,top(0)-.14,.012);g.translate(w/2,(top(0)-.14)/2+.1,0);out.push(g);beam(out,0,.07,w,.07,.05,.03);return}
  if(d==="lochblech"){const g=new THREE.BoxGeometry(w,top(0)-.12,.01);g.translate(w/2,(top(0)-.12)/2+.08,0);out.push(g);return}
  if(d==="salerno"){const mid=w*.45;for(let i=1;i<6;i++)bar(out,mid*i/6,.05,top(0),false,.025);bar(out,mid,.05,top(0),false,.04);for(let y=.15;y<top(0)-.04;y+=.12)beam(out,mid,y,w,y,.025,.025);return}
+ /* Scala (siehe MODELS oben): Modulraster aus senkrechten und waagerechten
+    Flachstahl-Trennern, eigenständig zur Vorlage gezeichnet. */
+ if(d==="scala"){
+  const cols=Math.max(2,Math.round(w/.22));
+  for(let i=1;i<cols;i++)bar(out,w*i/cols,.05,top(0),false,.02);
+  const rows=Math.max(1,Math.round((top(0)-.05)/.18));
+  for(let j=1;j<rows;j++){const y=.05+(top(0)-.05)*j/rows;beam(out,0,y,w,y,.02,.02)}
+  return;
+ }
  const gap=br>=.025?.11:.12,n=Math.max(2,Math.round(w/gap));
  for(let i=1;i<n;i++){
   const x=w*i/n,ty=box?top(0):(!noDeco&&d==="lana"&&i%2===0?top(x)-.1:top(x));
