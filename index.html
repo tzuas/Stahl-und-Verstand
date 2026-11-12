@@ -2017,13 +2017,42 @@ function buildGeometry(patOut){
  const P=L.post/100,postH=H+(S.product==="Tor"?.12:.04),postBot=front?-slab*.9:0;
  const post=(out,x)=>{const g=new THREE.BoxGeometry(P,postH-postBot,P);g.translate(x+P/2,(postH+postBot)/2,0);out.push(g);
   const c=new THREE.BoxGeometry(P*1.3,.012,P*1.3);c.translate(x+P/2,postH+.006,0);out.push(c);
-  if(rail&&!front){const f=new THREE.BoxGeometry(P*2.2,.01,P*2.2);f.translate(x+P/2,.005,0);out.push(f)}};
+  if(rail&&!front){const f=new THREE.BoxGeometry(P*2.2,.01,P*2.2);f.translate(x+P/2,.005,0);out.push(f)}
+  /* "Zum Aufschrauben" (siehe Auswahl bei Pfosten im Maße-Schritt):
+     sichtbare Aufschraubplatte + 4 Schraubenköpfe statt einfach nur Pfosten
+     im Boden - macht die schon vorhandene Auswahl auch im 3D/AR-Modell
+     sichtbar, bisher gab es dort keinen Unterschied zu "Einbetonieren". */
+  else if(!rail&&S.posts==="Zum Aufschrauben"){
+   const f=new THREE.BoxGeometry(P*2,.014,P*2);f.translate(x+P/2,.007,0);out.push(f);
+   [[-1,-1],[1,-1],[-1,1],[1,1]].forEach(([sx,sz])=>{const b=new THREE.CylinderGeometry(.006,.006,.02,8);b.translate(x+P/2+sx*P*.6,.016,sz*P*.6);out.push(b)});
+  }};
  const showPosts=rail||S.posts!=="Keine Pfosten";
+ /* Toranschlag-Beschläge (Bänder/Scharniere + Griff/Schloss), 3D:
+    bisher wurde der Torflügel nur als durchgehende Stabfläche ohne jede
+    Beschlag-Geometrie gezeichnet - die schon vorhandenen Auswahlfelder
+    "Bänder sitzen" (S.hinge) und "Schloss" (S.lock) hatten keine sichtbare
+    Auswirkung im 3D/AR-Modell. Scharniere kommen jetzt auf die gewählte
+    Bandseite, Griff/Schließzylinder auf die gegenüberliegende Seite
+    (sichtbar nur, wenn ein Schloss gewählt ist). */
+ const hinges=(out,x,H)=>{[.2,.8].forEach(f=>{const g=new THREE.CylinderGeometry(.012,.012,.05,10);g.rotateX(Math.PI/2);g.translate(x,H*f,.025);out.push(g)})};
+ const handleLock=(out,x,H)=>{
+  const y=Math.min(H*.55,.95);
+  const plate=new THREE.BoxGeometry(.03,.1,.012);plate.translate(x,y,.022);out.push(plate);
+  const knob=new THREE.CylinderGeometry(.015,.015,.05,10);knob.rotateX(Math.PI/2);knob.translate(x,y,.045);out.push(knob);
+  const cyl=new THREE.CylinderGeometry(.013,.013,.018,10);cyl.rotateX(Math.PI/2);cyl.translate(x,y+.09,.03);out.push(cyl);
+ };
  if(L.gate){
   const loc=[],total=L.total/100,clear=L.clear/100,span0=P,off=offFactory(S.form,H,0,clear);
   if(showPosts){post(loc,0);post(loc,total-P)}
   const leaves=S.product==="Tor"?[[P+.02,(clear-.06)/2],[P+.04+(clear-.06)/2,(clear-.06)/2]]:[[P+.02,clear-.04]];
-  leaves.forEach(([x0,w])=>{const l=[],o2=x=>off(x+x0-span0);run(l,m,w,H,o2);beam(l,0,.05,0,H+o2(0),.04,.04);beam(l,w,.05,w,H+o2(w),.04,.04);place(l,new THREE.Matrix4().makeTranslation(x0,0,0),loc)});
+  const singleLeaf=leaves.length===1;
+  leaves.forEach(([x0,w],li)=>{
+   const l=[],o2=x=>off(x+x0-span0);run(l,m,w,H,o2);beam(l,0,.05,0,H+o2(0),.04,.04);beam(l,w,.05,w,H+o2(w),.04,.04);
+   const hingeOnLeft=singleLeaf?S.hinge==="links":li===0;
+   hinges(l,hingeOnLeft?0:w,H);
+   if(S.lock!=="Ohne Schloss")handleLock(l,hingeOnLeft?w:0,H);
+   place(l,new THREE.Matrix4().makeTranslation(x0,0,0),loc);
+  });
   place(loc,new THREE.Matrix4(),all);
  }else{
   let ang=L.segs.map(()=>0);
