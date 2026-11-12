@@ -96,9 +96,12 @@ pre.out{font:12.5px/1.55 var(--f-mono);background:var(--sheet);border:1px solid 
 .ck{display:flex;align-items:center;gap:10px;font-weight:500;min-height:40px}.ck input{width:22px;height:22px;min-height:0;accent-color:var(--accent)}
 .cks{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:2px 14px}
 .zip{grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr)}
+.tiles.mt{grid-template-columns:repeat(auto-fill,minmax(190px,1fr))}
 .mt .tile{padding:8px 8px 12px}.thumb{width:100%;height:auto;border-radius:4px;display:block}
 .manu{align-self:flex-end;font-size:10px;letter-spacing:.04em;text-transform:uppercase;color:var(--muted);background:var(--grid);border:1px solid var(--line);border-radius:3px;padding:1px 6px;margin-top:2px}
 .tile svg.thumb{height:auto}
+.badges{display:flex;flex-wrap:wrap;gap:4px;margin-top:2px}
+.badge{font-size:10.5px;color:var(--muted);background:var(--grid);border:1px solid var(--line);border-radius:3px;padding:1px 7px}
 .tl{list-style:none;margin:12px 0 8px;padding:0;display:flex;flex-direction:column;gap:0}
 .tl li{display:flex;flex-direction:column;padding:6px 0 12px 22px;border-left:2px solid var(--line);margin-left:6px;position:relative}
 .tl li::before{content:"";position:absolute;left:-7px;top:9px;width:12px;height:12px;border-radius:50%;background:var(--panel);border:2px solid var(--accent)}
@@ -664,7 +667,7 @@ function renderPanel(){
  }else if(st===1){
   const ms=modelsFor(S.product);
   h=`<h2>Modell wählen</h2><p class="lede">${ms.length} Modelle als <b>${esc(prod().name)}</b>, gezeigt in ${esc(coatLabel())}.</p>
-  <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span>${m.manu?`<em class="manu">${esc(m.manu)}</em>`:""}</button>`).join("")}</div>`;
+  <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}${modelBadges(m).length?`<div class="badges">${modelBadges(m).map(b=>`<em class="badge">${esc(b)}</em>`).join("")}</div>`:""}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span>${m.manu?`<em class="manu">${esc(m.manu)}</em>`:""}</button>`).join("")}</div>`;
  }else if(st===2){
   const m=model();
   if(isFenster()){
@@ -1091,6 +1094,23 @@ function modelThumb(m){
  const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
  const id="th-"+m.n,sc="#"+id;
  return `<svg id="${id}" class="thumb" viewBox="0 0 160 100" aria-hidden="true"><style>${css(sc,f.c,f.hi)}</style><defs>${screen?patternDef(m,"p"+id,.55):""}</defs><rect width="160" height="100" fill="#e7edf0"/><rect y="${y0}" width="160" height="8" fill="#7ea35f"/><g class="fx">${fence(m,o,L,s,x0,y0,H,"p"+id)}</g></svg>`;
+}
+/* Kurze, sachliche Merkmal-Badges unter dem Vorschaubild der Modellkachel -
+   ausschließlich aus vorhandenen Modelldaten abgeleitet (keine erfundenen
+   Marketing-Claims), damit Kunden Modelle leichter visuell unterscheiden
+   können (Wunsch: Darstellung wie im ELEO-Online-Konfigurator, aber mit den
+   eigenen, live anpassbaren Vorschauzeichnungen statt fremder Fotos). */
+function modelBadges(m){
+ const b=[];
+ if(isFenster()){
+  if(m.material)b.push(m.material);
+ }else if(isScreen()){
+  b.push(m.pat==="none"?"Ohne Muster":"Mit Muster");
+ }else{
+  if(m.sp)b.push("Spitze frei wählbar");
+  if(m.f>1)b.push("Form wählbar");
+ }
+ return b;
 }
 
 /* ---------- Spezifikation & Anfrage ---------- */
