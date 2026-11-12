@@ -224,7 +224,8 @@ const PRODUCTS=[
  {id:"Geländer",name:"Geländer",d:"Balkon-, Terrassen- oder Treppengeländer",max:200},
  {id:"Französischer Balkon",name:"Franz. Balkon",d:"Absturzsicherung vor bodentiefem Fenster",max:200},
  {id:"Sichtschutz",name:"Sichtschutz",d:"Blickdichte oder gelaserte Paneele",max:200},
- {id:"Fenster",name:"Fenster",d:"Fenster zum Einbau oder Austausch (Bezug über Partnerbetrieb)",max:240}
+ {id:"Fenster",name:"Fenster",d:"Fenster zum Einbau oder Austausch (Bezug über Partnerbetrieb)",max:240},
+ {id:"Pavillon",name:"Pavillon",d:"Rund, eckig, Pergola oder Rosenbogen - Festgrößen (Bezug über ELEO Pavillon)",max:0}
 ];
 /* Fenster beziehen wir manuell über fensterversand.com, kein eigener Zaun-
    Katalog. Modell-/Profilnamen sind die echten Produktlinien des Lieferanten
@@ -294,12 +295,62 @@ const SCREENS=[
  {n:"Pesa",p:null,pat:"none",t:"Blickdicht ohne Muster"}
 ];
 SCREENS.forEach(m=>{if(!m.manu)m.manu="ELEO"});
+/* Pavillon (eleo-pavillon.de) - eigenes, strukturell anderes Produkt der
+   gleichen Firmengruppe: Festgrößen-Katalogware (kein Maß-Schritt, kein
+   3D/AR), eigener Ansprechpartner/Zahlungsweg (siehe MANU_INFO["ELEO
+   Pavillon"]). Namen, Maße und Personenzahl stammen von den jeweiligen
+   Katalogseiten (Stand 11/2026, per WebFetch geprüft), Preise bewusst NICHT
+   übernommen (zeitlich befristete "BLACK WEEKS"-Preise) - Preise nennt ELEO
+   Pavillon im eigenen Angebot, wie bei jedem anderen Produkt in diesem Tool.
+   Zeichnungen sind eigene, schematische Skizzen (siehe pavilionThumb()/
+   drawPavillonPreview()), keine Konfigurator-Grafiken oder Fotos übernommen. */
+const PAV_TYPES=["Rund","Eckig","Pergola","Rosenbogen"];
+const PAVILIONS={
+ Rund:[
+  {n:"Siena",sizes:[{size:"ø 210 cm",pers:"2-4"}],deco:"rund",t:"Runder Pavillon, kompakte Größe für Terrasse oder kleinen Garten"},
+  {n:"Milano",sizes:[{size:"ø 290 cm",pers:"4-6"}],deco:"rund",t:"Runder Pavillon, mittlere Größe"},
+  {n:"Florenz",sizes:[{size:"ø ca. 350-370 cm",pers:"6-8"}],deco:"rund",t:"Runder Pavillon, großzügige Größe"},
+  {n:"Verona",sizes:[{size:"oval 4 × 2,85 m",pers:"6-8"}],deco:"rund",t:"Ovaler Pavillon"},
+  {n:"Toskana",sizes:[{size:"ø 550 cm",pers:"8-10"}],deco:"rund",t:"Runder Pavillon, größte Rund-Variante"}
+ ],
+ Eckig:[
+  {n:"Meran",sizes:[{size:"2 × 2 m",pers:"2-4"}],deco:"eckig",t:"Eckiger Pavillon, kompakte Größe"},
+  {n:"Bolzano",sizes:[{size:"2 × 2 m",pers:"2-4"}],deco:"eckig",t:"Eckiger Pavillon, kompakte Größe"},
+  {n:"Genua",sizes:[{size:"3 × 3 m",pers:"6-8"}],deco:"eckig",t:"Eckiger Pavillon, mittlere Größe"},
+  {n:"Trento",sizes:[{size:"3 × 3 m",pers:"6-8"}],deco:"eckig",t:"Eckiger Pavillon, mittlere Größe"},
+  {n:"Torino",sizes:[{size:"4 × 4 m",pers:"8-10"}],deco:"eckig",t:"Eckiger Pavillon, großzügige Größe"},
+  {n:"Palermo",sizes:[{size:"4 × 4 m",pers:"8-10"}],deco:"eckig",t:"Eckiger Pavillon, großzügige Größe"}
+ ],
+ Pergola:[
+  {n:"Elba",sizes:[{size:"3 × 2 m",pers:"2-4"}],deco:"pergola",t:"Offene Pergola, S-Design"},
+  {n:"Ischia",sizes:[{size:"3 × 2 m",pers:"2-4"}],deco:"pergola",t:"Offene Pergola, X-Design"},
+  {n:"Sardegna",sizes:[{size:"4 × 3 m",pers:"6-8"}],deco:"pergola",t:"Offene Pergola, großzügige Größe"},
+  {n:"Sicilia",sizes:[{size:"4 × 3 m",pers:"6-8"}],deco:"pergola",t:"Offene Pergola, großzügige Größe"}
+ ],
+ Rosenbogen:[
+  {n:"Cremona",sizes:[{size:"Durchgang 110 cm, Höhe 230 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen"},
+  {n:"Matera",sizes:[{size:"Durchgang 110 cm, Höhe 235 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen"},
+  {n:"Calabria",sizes:[{size:"Durchgang 110 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen, auch mit Tür, Sitzbank, Rückwand oder Rückwand+Bank erhältlich"},
+  {n:"Sorrento",sizes:[{size:"Durchgang 110, 160 oder 180 cm wählbar"}],deco:"rosenbogen",t:"Freistehender Rosenbogen mit Messingkugel"},
+  {n:"Cesena",sizes:[{size:"Durchgang 115 cm, Höhe 220 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen"},
+  {n:"Cosenza",sizes:[{size:"Durchgang 110 cm, Höhe 235 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen"},
+  {n:"Savona",sizes:[{size:"Durchgang 110, 160 oder 180 cm wählbar"}],deco:"rosenbogen",t:"Freistehender Rosenbogen mit Messingkugel"},
+  {n:"Caserta",sizes:[{size:"Durchgang 115 cm, Höhe 240 cm"}],deco:"rosenbogen",t:"Freistehender Rosenbogen"},
+  {n:"Cremona (Wandrosenbogen)",sizes:[{size:"Breite 140 cm"}],deco:"rosenbogen",t:"Wandrosenbogen, direkt an der Hauswand"},
+  {n:"Savona (Wandrosenbogen)",sizes:[{size:"Breite 117 cm"}],deco:"rosenbogen",t:"Wandrosenbogen mit Messingkugel"},
+  {n:"Sorrento (Wandrosenbogen)",sizes:[{size:"Breite 117 cm"}],deco:"rosenbogen",t:"Wandrosenbogen"}
+ ]
+};
+Object.values(PAVILIONS).forEach(arr=>arr.forEach(m=>{m.manu="ELEO Pavillon"}));
 const FORMS=["Gerade","Bogen","Geschwungen","U-Form"];
 const TIPS=["Kreuzlilie","Kugellilie","Kugelstab","Lanze","Lilie","Lotus","Pinie","Stab","Ohne Spitze"];
 const COATS=["Unbeschichtet (Edelrost)","Feuerverzinkt","Anthrazit DB 703","Sonderfarbe RAL"];
 const FILLS=["Wie Modell","Ohne Dekore (nur Stäbe)","Ohne Füllung (nur Rahmen)"];
 const RAL={"9005":["Tiefschwarz","#111214"],"7016":["Anthrazitgrau","#383e42"],"6005":["Moosgrün","#114232"],"6009":["Tannengrün","#27352a"],"8017":["Schokoladenbraun","#45322e"],"9001":["Cremeweiß","#e9e0d2"],"9010":["Reinweiß","#f1ece1"],"7035":["Lichtgrau","#c5c7c4"],"7030":["Steingrau","#8b8c7a"],"9006":["Weißaluminium","#a1a1a0"],"9007":["Graualuminium","#878581"],"3004":["Purpurrot","#6b1c23"],"5011":["Stahlblau","#1a2b3c"],"1013":["Perlweiß","#e3d9c6"]};
 const WISHES=["Briefkasten-Durchwurf","Hausnummer / Initialen","Engerer Stababstand (Hund, Kinder)","Torantrieb vorbereiten","Wunschmotiv (Sichtschutz)","Bodenfreiheit nach Wunsch"];
+/* Zubehör laut eleo-pavillon.de (Sonnensegel/Vorhänge für Pavillons, in
+   ecru, anthrazit, dunkelgrün, hellgrau, weinrot laut Katalog). */
+const PAV_ACC=["Sonnensegel/Dach-Bespannung","Seitenvorhänge","Rankgitter-Seitenteile","Bodenverankerung (statt Einbetonieren)"];
 const STEPS=["Produkt","Modell","Ausführung","Wünsche","Maße","Foto","Kunde","Anfrage"];
 const MAIL="kundenservice@eleo-zaun.de";
 /* Zweiter Hersteller neben ELEO (siehe MODELS: manu:"Inox Weber") - Geländer/
@@ -309,13 +360,15 @@ const MAIL="kundenservice@eleo-zaun.de";
    Position(en) - siehe requestManus()/manuInfo() weiter unten. */
 const MANU_INFO={
  "ELEO":{mail:MAIL,tel:"+49 (0) 9565 / 50 917 0",zahlung:"50 % Anzahlung nach Auftragsbestätigung, Rest bei Lieferung an den Spediteur. Bei Vorkasse 2 % Skonto. Lieferkosten kommen hinzu."},
- "Inox Weber":{mail:"post@inox-weber.de",tel:"+49 9947 90292-0",zahlung:"Zahlung laut Inox Weber: PayPal, Kreditkarte, Rechnung oder Vorkasse, direkt über deren eigenen Online-Konfigurator. Diese Anfrage dient als Vorab-Information/Rückfrage, nicht als verbindliche ELEO-Bestellung."}
+ "Inox Weber":{mail:"post@inox-weber.de",tel:"+49 9947 90292-0",zahlung:"Zahlung laut Inox Weber: PayPal, Kreditkarte, Rechnung oder Vorkasse, direkt über deren eigenen Online-Konfigurator. Diese Anfrage dient als Vorab-Information/Rückfrage, nicht als verbindliche ELEO-Bestellung."},
+ "ELEO Pavillon":{mail:"kundenbetreuung@eleo-pavillon.de",tel:"+49 (0) 9565 / 50 917 0",zahlung:"Zahlung laut ELEO Pavillon: Vorkasse, PayPal, Klarna, Kreditkarte oder Apple/Google Pay - Festpreis-Katalogware, kein Anzahlungsmodell wie bei ELEO Zaun. Diese Anfrage dient als Vorab-Information/Rückfrage, nicht als verbindliche Bestellung."}
 };
 function manuInfo(n){return MANU_INFO[n]||MANU_INFO.ELEO}
 /* Zeiten laut ELEO-Website / Katalog (Stand Okt. 2026, unverbindlich, saisonabhängig) */
 const TIMES={offer:[1,2],std:[8,10],exp:[6,7]};
 
 const DEF=()=>({mplan:null,positions:[],shipTo:"Montageort (Endkunde)",step:0,product:"Zaun",model:"Lucca",form:"Gerade",tip:"Lanze",bar:"",coat:"Anthrazit DB 703",ral:"7016",
+ pavType:"Rund",pavSize:"",
  fill:"Wie Modell",wishes:[],wishText:"",express:false,
  screenVar:"voll",screenMat:"Metall",backwall:"ohne Design",screenUse:"Zaun",handrail:"",
  total:1000,height:100,fields:0,posts:"Zum Einbetonieren",slope:"",slopeUnit:"cm",
@@ -391,15 +444,20 @@ function stateExportUrl(){
 
 const isScreen=()=>S.product==="Sichtschutz";
 const isFenster=()=>S.product==="Fenster";
+const isPavillon=()=>S.product==="Pavillon";
 const prod=()=>PRODUCTS.find(p=>p.id===S.product);
-const model=()=>isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:isFenster()?WINDOW_MODELS.find(m=>m.n===S.model)||WINDOW_MODELS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
-function modelsFor(p){if(p==="Sichtschutz")return SCREENS;if(p==="Fenster")return WINDOW_MODELS;return MODELS.filter(m=>m.av.includes(p))}
+const pavList=()=>PAVILIONS[S.pavType]||PAVILIONS.Rund;
+const model=()=>isPavillon()?(pavList().find(m=>m.n===S.model)||pavList()[0]):isScreen()?SCREENS.find(m=>m.n===S.model)||SCREENS[0]:isFenster()?WINDOW_MODELS.find(m=>m.n===S.model)||WINDOW_MODELS[0]:MODELS.find(m=>m.n===S.model)||MODELS[0];
+function modelsFor(p){if(p==="Sichtschutz")return SCREENS;if(p==="Fenster")return WINDOW_MODELS;if(p==="Pavillon")return pavList();return MODELS.filter(m=>m.av.includes(p))}
 function fixState(){
  const ms=modelsFor(S.product);
  if(!ms.find(m=>m.n===S.model))S.model=ms[0].n;
  const m=model();
  if(isFenster()){
   if(!WINDOW_COLORS.includes(S.coat))S.coat="Weiß";
+ }else if(isPavillon()){
+  if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
+  if(!m.sizes.find(s=>s.size===S.pavSize))S.pavSize=m.sizes[0].size;
  }else if(!isScreen()){
   if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
   if(m.f===1)S.form="Gerade";
@@ -466,12 +524,12 @@ function plan(){
 
 /* ---------- Positionen (mehrere Produkte in einer Anfrage) ---------- */
 const FIRMA={name:"Stahl & Verstand",strasse:"Friedrichstraße 41",ort:"73770 Denkendorf",mail:"info@stahlundverstand.de"};
-const PKEYS=["product","model","form","tip","bar","coat","ral","fill","wishes","wishText","screenVar","screenMat","backwall","screenUse","handrail","total","height","fields","posts","slope","slopeUnit","hinge","swing","lock","mount","slab","pts","lens","photo","place","activePart","mplan"];
+const PKEYS=["product","model","form","tip","bar","coat","ral","fill","wishes","wishText","screenVar","screenMat","backwall","screenUse","handrail","total","height","fields","posts","slope","slopeUnit","hinge","swing","lock","mount","slab","pts","lens","photo","place","activePart","mplan","pavType","pavSize"];
 function posSnap(){const o={};PKEYS.forEach(k=>o[k]=S[k]===undefined?null:JSON.parse(JSON.stringify(S[k])));return o}
 function posLoad(o){const d=DEF();PKEYS.forEach(k=>S[k]=o&&o[k]!==undefined&&o[k]!==null?JSON.parse(JSON.stringify(o[k])):d[k])}
 function withPos(o,fn){const keep=posSnap();posLoad(o);fixState();try{return fn()}finally{posLoad(keep);fixState()}}
 function allPositions(){return [...(Array.isArray(S.positions)?S.positions:[]),posSnap()]}
-function posLabel(o){return withPos(o,()=>`${S.product==="Französischer Balkon"?"Franz. Balkon":S.product} ${modelLabel()}, ${cm(layout().total)}`)}
+function posLabel(o){return withPos(o,()=>isPavillon()?`Pavillon ${modelLabel()}, ${S.pavSize||""}`:`${S.product==="Französischer Balkon"?"Franz. Balkon":S.product} ${modelLabel()}, ${cm(layout().total)}`)}
 const $=s=>document.querySelector(s);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
 function chips(key,opts,dis=[]){return `<div class="chips">${opts.map(o=>`<button type="button" class="chip" data-k="${key}" data-v="${esc(o)}" aria-pressed="${S[key]===o}" ${dis.includes(o)?"disabled":""}>${esc(o)}</button>`).join("")}</div>`}
@@ -654,6 +712,15 @@ function renderSteps(){
  $("#steps").innerHTML=STEPS.map((s,i)=>`<button type="button" data-step="${i}" ${i===S.step?'aria-current="step"':""} class="${i<S.step?"done":""}"><b>${i+1}</b>${s}</button>`).join("");
 }
 function timeline(){
+ if(isPavillon()){
+  const manus=requestManus(),manu=manus[0]||"ELEO Pavillon";
+  return `<ol class="tl">
+   <li><b>Anfrage an ${esc(manu)}</b><span>heute</span></li>
+   <li><b>Antwort/Verfügbarkeit</b><span>in der Regel innerhalb weniger Werktage</span></li>
+   <li><b>Lieferung</b><span>Festgrößen-Katalogware - Lieferzeit und Versandkosten nennt ${esc(manu)} im eigenen Angebot (laut eigener Website ab ca. 3 Wochen)</span></li>
+  </ol>
+  <p class="hint">Keine Maßanfertigung, keine Freigabe einer Zeichnung nötig - Pavillon ist Festgrößen-Katalogware von ${esc(manu)}, mit eigenem Zahlungsweg (siehe oben), nicht Teil der ELEO-Zaun-Fertigung.</p>`;
+ }
  const p=plan(),manus=requestManus(),manu=manus[0]||"ELEO",otherManu=manu!=="ELEO";
  return `<ol class="tl">
   <li><b>Anfrage an ${esc(manu)}</b><span>heute</span></li>
@@ -674,10 +741,16 @@ function renderPanel(){
  }else if(st===1){
   const ms=modelsFor(S.product);
   h=`<h2>Modell wählen</h2><p class="lede">${ms.length} Modelle als <b>${esc(prod().name)}</b>, gezeigt in ${esc(coatLabel())}.</p>
+  ${isPavillon()?`<fieldset><legend>Typ</legend>${chips("pavType",PAV_TYPES)}</fieldset>`:""}
   <div class="tiles mt">${ms.map(m=>`<button type="button" class="tile" data-model="${m.n}" aria-pressed="${S.model===m.n}">${modelThumb(m)}${modelBadges(m).length?`<div class="badges">${modelBadges(m).map(b=>`<em class="badge">${esc(b)}</em>`).join("")}</div>`:""}<strong>${m.n}${m.p?" | "+m.p:""}</strong><span>${m.t}</span>${m.manu?`<em class="manu">${esc(m.manu)}</em>`:""}</button>`).join("")}</div>`;
  }else if(st===2){
   const m=model();
-  if(isFenster()){
+  if(isPavillon()){
+   h=`<h2>Ausführung ${esc(m.n)}</h2><p class="lede">${esc(m.t)}.</p>
+   ${m.sizes.length>1?`<fieldset><legend>Größe</legend><div class="chips">${m.sizes.map(s=>`<button type="button" class="chip" data-k="pavSize" data-v="${esc(s.size)}" aria-pressed="${S.pavSize===s.size}">${esc(s.size)}${s.pers?` · ${s.pers} Pers.`:""}</button>`).join("")}</div></fieldset>`:`<p class="hint">Größe: ${esc(m.sizes[0].size)}${m.sizes[0].pers?` · ${m.sizes[0].pers} Personen`:""}.</p>`}
+   <fieldset><legend>Farbe / Beschichtung</legend>${coatSwatches(COATS)}${S.coat==="Sonderfarbe RAL"?ralPicker():""}</fieldset>
+   <p class="hint">Maße sind Katalog-Festgrößen, es gibt hier keinen eigenen Maß-Schritt. Lieferzeit und Preis nennt ELEO Pavillon im Angebot.</p>`;
+  }else if(isFenster()){
    h=`<h2>Ausführung ${esc(m.n)}</h2><p class="lede">${esc(m.material)} · ${esc(m.t)}.</p>
    <fieldset><legend>Farbe</legend>${winColorSwatches(WINDOW_COLORS)}
    ${S.coat==="Individuelle RAL-Farbe"?ralPicker():""}</fieldset>`;
@@ -698,12 +771,12 @@ function renderPanel(){
    ${["Geländer","Französischer Balkon"].includes(S.product)?`<fieldset><legend>Handlauf</legend>${txt("handrail","Wunsch Handlauf","text","z. B. Flachstahl 40 × 8 mm")}</fieldset>`:""}`;
   }
  }else if(st===3){
-  h=`<h2>Wünsche des Kunden</h2><p class="lede">Alles, was vom Standardmodell abweicht. ELEO fertigt nach Maß und prüft jeden Wunsch im Angebot.</p>
-  ${isScreen()?"":`<fieldset><legend>Füllung</legend>${chips("fill",FILLS)}<p class="hint">„Ohne Füllung“ bedeutet nur Rahmen, Traversen und Pfosten, etwa für eine eigene Holz- oder WPC-Füllung.</p></fieldset>`}
-  <fieldset><legend>Zusätzliche Wünsche</legend><div class="cks">${WISHES.filter(w=>isScreen()?!w.startsWith("Engerer"):!w.startsWith("Wunschmotiv")).map(w=>`<label class="ck"><input type="checkbox" data-wish="${esc(w)}" ${S.wishes.includes(w)?"checked":""}> ${w}</label>`).join("")}</div>
+  h=`<h2>Wünsche des Kunden</h2><p class="lede">${isPavillon()?"Zubehör und Sonderwünsche zum gewählten Pavillon.":"Alles, was vom Standardmodell abweicht. ELEO fertigt nach Maß und prüft jeden Wunsch im Angebot."}</p>
+  ${isScreen()||isPavillon()?"":`<fieldset><legend>Füllung</legend>${chips("fill",FILLS)}<p class="hint">„Ohne Füllung“ bedeutet nur Rahmen, Traversen und Pfosten, etwa für eine eigene Holz- oder WPC-Füllung.</p></fieldset>`}
+  ${isPavillon()?`<fieldset><legend>Zubehör</legend><div class="cks">${PAV_ACC.map(w=>`<label class="ck"><input type="checkbox" data-wish="${esc(w)}" ${S.wishes.includes(w)?"checked":""}> ${w}</label>`).join("")}</div></fieldset>`:`<fieldset><legend>Zusätzliche Wünsche</legend><div class="cks">${WISHES.filter(w=>isScreen()?!w.startsWith("Engerer"):!w.startsWith("Wunschmotiv")).map(w=>`<label class="ck"><input type="checkbox" data-wish="${esc(w)}" ${S.wishes.includes(w)?"checked":""}> ${w}</label>`).join("")}</div>
   ${S.wishes.includes("Hausnummer / Initialen")?`<p class="note" id="hnmNote">${S.wishPos?"Position markiert - wechseln Sie zum Reiter „Ansicht“, um sie zu verschieben (einfach neu antippen).":"Wechseln Sie oben zum Reiter „Ansicht“ und tippen Sie dort an die Stelle, an der Hausnummer oder Initialen sitzen sollen - die Markierung erscheint sofort in der Zeichnung für ELEO."}${S.wishPos?` <button type="button" data-hnmreset>Position entfernen</button>`:""}</p>`:""}
-  </fieldset>
-  ${area("wishText","Persönliche Wünsche, frei formuliert","z. B. Initialen „M&K“ mittig im Tor, Briefkasten links neben dem Schloss, Motiv Olivenzweig")}`;
+  </fieldset>`}
+  ${area("wishText","Persönliche Wünsche, frei formuliert",isPavillon()?"z. B. Aufstellort, Verankerung im Boden, Farbe abweichend von Katalog":"z. B. Initialen „M&K“ mittig im Tor, Briefkasten links neben dem Schloss, Motiv Olivenzweig")}`;
  }else if(st===4&&isFenster()){
   h=`<h2>Maße aufnehmen</h2><p class="lede">Breite und Höhe des gewünschten Fensters.</p>
   ${laserButtonHtml()}
@@ -757,7 +830,7 @@ function renderPanel(){
   <div class="row"><button type="button" id="btnCopy">Text kopieren</button>${mixed?"":`<a class="btn" id="mailLink" href="#">Nur Text per Mail (ohne Bilder)</a>`}</div>
   ${mixed?`<p class="hint" style="margin-top:10px">Kein einzelner Empfänger - siehe Hinweis oben.</p>`:`<p class="hint" style="margin-top:10px">Empfänger: <span class="mailbox">${esc(mi.mail)}</span> · Tel. ${esc(mi.tel)}${manu!=="ELEO"?` · <strong>${esc(manu)}</strong>, nicht ELEO`:""}</p>`}`;
  }
- h+=`<div class="nav">${st>0?`<button type="button" data-go="-1">Zurück</button>`:"<span></span>"}${st<STEPS.length-1?`<button type="button" class="primary" data-go="1">Weiter: ${STEPS[st+1]}</button>`:""}</div>`;
+ h+=`<div class="nav">${st>0?`<button type="button" data-go="-1">Zurück</button>`:"<span></span>"}${st<STEPS.length-1?`<button type="button" class="primary" data-go="1">Weiter: ${isPavillon()&&st===3?STEPS[5]:STEPS[st+1]}</button>`:""}</div>`;
  P.innerHTML=h;
  if(st===7)updateOut();
  if(st===4){renderPlan();renderSegList()}
@@ -781,6 +854,7 @@ function miniIcon(id){
  if(id==="Französischer Balkon"){ground=false;g=`<rect x="28" y="2" width="64" height="44" fill="#cfe0e6" stroke-dasharray="3 3"/><line x1="24" y1="18" x2="96" y2="18" stroke-width="3"/>${bars(30,90,18,44,8)}<line x1="24" y1="42" x2="96" y2="42"/>`;}
  if(id==="Sichtschutz")g=`<rect x="20" y="4" width="36" height="40"/><rect x="64" y="4" width="36" height="40"/><path d="M24 12 l8 8 M34 10 l14 14 M24 26 l14 14 M68 12 l8 8 M78 10 l14 14 M68 26 l14 14"/>`;
  if(id==="Fenster"){ground=false;g=`<rect x="24" y="5" width="72" height="38" rx="2" fill="#dfe8ec"/><line x1="60" y1="5" x2="60" y2="43"/><line x1="24" y1="24" x2="96" y2="24"/>`;}
+ if(id==="Pavillon")g=`<polygon points="60,4 92,24 28,24" fill="none"/><line x1="26" y1="24" x2="94" y2="24" stroke-width="3"/><line x1="36" y1="28" x2="36" y2="44"/><line x1="84" y1="28" x2="84" y2="44"/>`;
  return `<svg class="thumb" viewBox="0 0 120 48" aria-hidden="true"><rect width="120" height="48" fill="#e7edf0"/>${ground?'<rect y="40" width="120" height="8" fill="#7ea35f"/>':""}<g ${b}>${g}</g></svg>`;
 }
 
@@ -1078,6 +1152,23 @@ function drawWindowPreview(){
  const dims=`${dim(x0,x0+W,y0+H+30,cm(w))}${vdim(x0-26,y0,y0+H,cm(h))}`;
  $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style><text x="20" y="26" class="ttl">${esc("Fenster "+m.n)}</text><text x="20" y="44" class="sub">${esc(m.material+" · "+coatLabel())}</text>${frame}${dims}`+hausnummerMarker(true);
 }
+/* Schematische Großansicht für Pavillons (Festgrößen-Katalogware, kein
+   Maß-Schritt) - gleicher Aufbau wie drawWindowPreview(), eigene,
+   originale Zeichnung je Typ, keine ELEO-Konfigurator-Grafik. */
+function drawPavillonPreview(){
+ const m=model(),f=finish(),fc=f.c,hi=f.hi,cx=410,gy=330,d=m.deco;
+ let g="";
+ if(d==="rund")g=`<polygon points="${cx},70 ${cx+170},190 ${cx-170},190" fill="${hi}" stroke="${fc}" stroke-width="3"/><rect x="${cx-180}" y="190" width="360" height="10" fill="${fc}"/>${[-150,-90,-30,30,90,150].map(dx=>`<line x1="${cx+dx}" y1="200" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="7"/>`).join("")}`;
+ else if(d==="eckig")g=`<polygon points="${cx-120},70 ${cx+120},70 ${cx+180},190 ${cx-180},190" fill="${hi}" stroke="${fc}" stroke-width="3"/><rect x="${cx-180}" y="190" width="360" height="10" fill="${fc}"/>${[-150,-90,-30,30,90,150].map(dx=>`<line x1="${cx+dx}" y1="200" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="7"/>`).join("")}`;
+ else if(d==="pergola")g=`<rect x="${cx-190}" y="150" width="380" height="14" fill="${fc}"/>${[-170,-120,-70,-20,30,80,130,170].map(dx=>`<line x1="${cx+dx}" y1="150" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="8"/>`).join("")}${[0,1,2,3,4,5,6,7,8,9].map(i=>`<line x1="${cx-190+i*38}" y1="150" x2="${cx-190+i*38+20}" y2="130" stroke="${fc}" stroke-width="4"/>`).join("")}`;
+ else g=`<path d="M${cx-150} ${gy} V150 Q${cx-150} 60 ${cx} 60 Q${cx+150} 60 ${cx+150} 150 V${gy}" fill="none" stroke="${fc}" stroke-width="16"/><path d="M${cx-150} ${gy} V150 Q${cx-150} 60 ${cx} 60 Q${cx+150} 60 ${cx+150} 150 V${gy}" fill="none" stroke="${hi}" stroke-width="7" opacity=".6"/>`;
+ const sizeTxt=S.pavSize?" · "+S.pavSize:"";
+ const head=`<rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
+ <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc("Pavillon "+m.n+sizeTxt)}</text>
+ <circle cx="34" cy="48" r="6" fill="${fc}" stroke="#fff" stroke-width="1.5"/><text x="46" y="52" style="font:12px 'IBM Plex Mono',monospace;fill:#3a444b">${esc(m.t+" · "+coatLabel())}</text>`;
+ $("#look").innerHTML=`<style>${css("#look",fc,hi)}</style><rect width="820" height="400" fill="#eef3f4"/><rect y="330" width="820" height="70" fill="#7ea35f"/>${head}${g}`+hausnummerMarker(false);
+ $("#sketch").innerHTML=`<style>${css("#sketch","var(--draw)","var(--draw)","")}${SK_EXTRA}</style><text x="20" y="26" class="ttl">${esc("Pavillon "+m.n+sizeTxt)}</text><text x="20" y="44" class="sub">${esc(m.t+" · "+coatLabel())}</text>${g}`+hausnummerMarker(true);
+}
 function drawLook(){
  const L=viewLayout(),H0=Math.max(40,+S.height||100),m=model(),o=opts(),f=finish();
  const rail=isRail(),s=fit(L,H0,700,rail?250:300),W=L.width*s,H=H0*s,x0=(820-W)/2,y0=rail?300:330,slabPx=Math.max(18,(+S.slab||18)*s);o.mount=rail?S.mount:"";o.slabPx=slabPx;
@@ -1107,7 +1198,19 @@ function slabSvg(x0,W,y0,h){
 function windowThumb(m){
  return `<svg class="thumb" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#e7edf0"/><rect x="38" y="14" width="84" height="72" rx="2" fill="#dfe8ec" stroke="#3d4043" stroke-width="3"/><line x1="80" y1="14" x2="80" y2="86" stroke="#3d4043" stroke-width="3"/><line x1="38" y1="50" x2="122" y2="50" stroke="#3d4043" stroke-width="3"/></svg>`;
 }
+/* Schematische Eigenzeichnung je Pavillon-Typ (Dach+Pfosten/Pergola-Balken/
+   Rosenbogen-Kurve) - keine ELEO-Konfigurator-Grafik oder Foto übernommen,
+   vgl. die Eigenständigkeits-Konvention bei modelThumb()/fence(). */
+function pavilionThumb(m){
+ const d=m.deco,c="#3d4043";let g="";
+ if(d==="rund")g=`<polygon points="80,18 128,54 32,54" fill="#8a8f93" stroke="${c}" stroke-width="2"/><rect x="34" y="54" width="92" height="4" fill="${c}"/>${[40,56,72,88,104,120].map(x=>`<line x1="${x}" y1="58" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}`;
+ else if(d==="eckig")g=`<polygon points="46,18 114,18 128,50 32,50" fill="#8a8f93" stroke="${c}" stroke-width="2"/><rect x="34" y="50" width="92" height="4" fill="${c}"/>${[40,56,72,88,104,120].map(x=>`<line x1="${x}" y1="54" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}`;
+ else if(d==="pergola")g=`<rect x="30" y="38" width="100" height="6" fill="${c}"/>${[36,52,68,84,100,116,124].map(x=>`<line x1="${x}" y1="38" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}${[0,1,2,3,4,5,6].map(i=>`<line x1="${28+i*14}" y1="32" x2="${42+i*14}" y2="42" stroke="${c}" stroke-width="2"/>`).join("")}`;
+ else g=`<path d="M34 86 V46 Q34 16 80 16 Q126 16 126 46 V86" fill="none" stroke="${c}" stroke-width="6"/><path d="M34 86 V54 Q34 30 80 30 Q126 30 126 54 V86" fill="none" stroke="${c}" stroke-width="3" opacity=".55"/>`;
+ return `<svg class="thumb" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#e7edf0"/><rect y="86" width="160" height="14" fill="#7ea35f"/>${g}</svg>`;
+}
 function modelThumb(m){
+ if(isPavillon())return pavilionThumb(m);
  if(isFenster())return windowThumb(m);
  const f=finish(),screen=isScreen(),o={product:"Zaun",form:m.f>1?S.form:"Gerade",tip:m.sp?(S.tip==="Ohne Spitze"?"Lanze":S.tip):"Ohne Spitze",fill:"Wie Modell",screen,screenVar:"voll",posts:"Zum Einbetonieren"};
  const L={n:1,post:5,total:screen?110:150,per:screen?100:140,fields:[screen?100:140],width:screen?110:150,corners:[],segs:[],gate:false},s=screen?.62:.62,H=(screen?110:95)*s,x0=(160-L.total*s)/2,y0=92;
@@ -1121,7 +1224,11 @@ function modelThumb(m){
    eigenen, live anpassbaren Vorschauzeichnungen statt fremder Fotos). */
 function modelBadges(m){
  const b=[];
- if(isFenster()){
+ if(isPavillon()){
+  if(m.sizes&&m.sizes.length>1)b.push(m.sizes.length+" Größen");
+  const maxPers=(m.sizes||[]).map(s=>s.pers).filter(Boolean).pop();
+  if(maxPers)b.push("bis "+maxPers.split("-").pop()+" Personen");
+ }else if(isFenster()){
   if(m.material)b.push(m.material);
  }else if(isScreen()){
   b.push(m.pat==="none"?"Ohne Muster":"Mit Muster");
@@ -1134,6 +1241,14 @@ function modelBadges(m){
 
 /* ---------- Spezifikation & Anfrage ---------- */
 function specRows(){
+ if(isPavillon()){
+  const m=model(),r=[];
+  r.push(["Produkt","Pavillon ("+S.pavType+")"],["Modell",m.n],["Größe",S.pavSize||m.sizes[0].size],["Beschreibung",m.t],["Farbe/Beschichtung",coatLabel()]);
+  if(S.wishes.length)r.push(["Zubehör",S.wishes.join(", ")]);
+  if(S.wishText)r.push(["Freitext",S.wishText]);
+  r.push(["Fertigung",S.express?"Express gewünscht":"Standard"]);
+  return r;
+ }
  if(isFenster()){
   const m=model(),r=[];
   r.push(["Produkt","Fenster"],["Profil/Modell",m.n],["Material",m.material],[m.t.includes("Kammer")?"Technik":"Hinweis",m.t]);
@@ -1201,7 +1316,7 @@ LIEFERUNG
 BEMERKUNGEN
   ${S.notes||"–"}
 
-Gewünschte Fertigung: ${S.express&&p.lt.exp?"Expressfertigung ("+p.lt.exp.join("–")+" Wochen)":"Standard ("+p.lt.std.join("–")+" Wochen)"}, Liefer-Wunschzeitraum ab ${p.from}.
+${pos.every(o=>withPos(o,()=>isPavillon()))?"Hinweis: Festgrößen-Katalogware (ELEO Pavillon), keine Maßfertigung - Lieferzeit und Versandkosten bitte im Angebot nennen.":`Gewünschte Fertigung: ${S.express&&p.lt.exp?"Expressfertigung ("+p.lt.exp.join("–")+" Wochen)":"Standard ("+p.lt.std.join("–")+" Wochen)"}, Liefer-Wunschzeitraum ab ${p.from}.`}
 Anlagen: ${anl.join(", ")}
 
 Mit freundlichen Grüßen
@@ -1227,7 +1342,7 @@ function svgToImg(el,light,cb){
 function makePng(){
  const w=$("#pngWrap");w.innerHTML='<p class="hint">Bilder lange gedrückt halten (Tablet) oder Rechtsklick, dann „Bild sichern“ und an die Mail anhängen.</p>';
  const light={"--draw":"#22313b","--dim":"#c8262a","--grid":"#dfe5e9","--muted":"#5d6972"};
- if(isFenster())drawWindowPreview();else{drawLook();drawSketch()}
+ if(isFenster())drawWindowPreview();else if(isPavillon())drawPavillonPreview();else{drawLook();drawSketch()}
  [["#look","Farbige Ansicht"],["#sketch","Bemaßte Skizze"]].forEach(([sel,cap])=>svgToImg($(sel),light,img=>{
   const fig=document.createElement("figure");fig.className="png";
   if(img){img.alt=cap;fig.appendChild(img)}else fig.innerHTML='<p class="warn">Bild ließ sich nicht erzeugen. Bitte Screenshot machen.</p>';
@@ -1237,7 +1352,7 @@ function makePng(){
 /* ---------- Ablauf ---------- */
 function setView(v){S.view=v;$("#look").toggleAttribute("hidden",v!=="look");$("#sketch").toggleAttribute("hidden",v!=="tech");$("#v3d").toggleAttribute("hidden",v!=="3d");if(v==="3d"&&window.SV3D)SV3D.update();document.querySelectorAll("[data-view]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.view===v))}
 function refresh(full){if(full&&S.step!==5&&typeof stopLive==="function")stopLive();fixState();if(!Array.isArray(S.pts))S.pts=[];if(!Array.isArray(S.lens))S.lens=[];if(full){renderSteps();renderPanel()}else{const n=$("#mnote");if(n)n.innerHTML=measureNote()}
- if(isFenster()){try{drawWindowPreview()}catch(e){console.warn(e)}}else{drawLook();drawSketch()}
+ if(isFenster()){try{drawWindowPreview()}catch(e){console.warn(e)}}else if(isPavillon()){try{drawPavillonPreview()}catch(e){console.warn(e)}}else{drawLook();drawSketch()}
  setView(S.view);renderSpec();updateOut();save();if(window.SV3D){SV3D.invalidate();if(S.view!=="3d"&&(S.step===5))SV3D.prepare()}}
 document.addEventListener("click",e=>{
  const b=e.target.closest("button,a");
@@ -1254,8 +1369,16 @@ document.addEventListener("click",e=>{
  if(b.dataset.prod){S.product=b.dataset.prod;S.fields=0;refresh(true);return}
  if(b.dataset.model){S.model=b.dataset.model;refresh(true);return}
  if(b.dataset.k&&b.dataset.v!==undefined){S[b.dataset.k]=b.dataset.v;refresh(true);return}
- if(b.dataset.go){S.step=Math.max(0,Math.min(STEPS.length-1,S.step+ +b.dataset.go));refresh(true);window.scrollTo({top:0,behavior:"smooth"});return}
- if(b.dataset.step){S.step=+b.dataset.step;refresh(true);return}
+ if(b.dataset.go){
+  let ns=Math.max(0,Math.min(STEPS.length-1,S.step+ +b.dataset.go));
+  if(isPavillon()&&ns===4)ns+=(+b.dataset.go<0?-1:1);
+  S.step=ns;refresh(true);window.scrollTo({top:0,behavior:"smooth"});return
+ }
+ if(b.dataset.step){
+  let ns=+b.dataset.step;
+  if(isPavillon()&&ns===4)ns=S.step<4?5:3;
+  S.step=ns;refresh(true);return
+ }
  if(b.dataset.open){const e2=load("sv-list",[]).find(x=>x.id===b.dataset.open);if(e2){S=Object.assign(DEF(),e2.state,{step:1});refresh(true)}return}
  if(b.dataset.del){if(b.dataset.armed){store("sv-list",load("sv-list",[]).filter(x=>x.id!==b.dataset.del));refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich?"}return}
  if(b.id==="btnNew"){if(b.dataset.armed){S=DEF();delete b.dataset.armed;b.textContent="Neue Beratung";refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich neu beginnen?";setTimeout(()=>{delete b.dataset.armed;b.textContent="Neue Beratung"},4000)}return}
@@ -1693,7 +1816,7 @@ async function prepFiles(btn){
  const keep=posSnap(),view=S.view,pos=allPositions(),multi=pos.length>1,out=[];
  try{
   for(let i=0;i<pos.length;i++){
-   posLoad(pos[i]);fixState();if(isFenster())drawWindowPreview();else{drawLook();drawSketch()}
+   posLoad(pos[i]);fixState();if(isFenster())drawWindowPreview();else if(isPavillon())drawPavillonPreview();else{drawLook();drawSketch()}
    const n=multi?"-pos"+(i+1):"";
    const look=await svgPngP($("#look")),sk=await svgPngP($("#sketch"));
    if(look)out.push({name:"ansicht"+n+".png",data:look,cap:(multi?"Position "+(i+1)+": ":"")+"Ansicht"});
