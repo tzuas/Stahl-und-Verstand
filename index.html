@@ -455,9 +455,19 @@ async function laserToggle(){
   const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[LASER_SERVICE]});
   laser.name=device.name||"Laser";
   device.addEventListener("gattserverdisconnected",()=>{laser.state="idle";laser.char=null;laser.msg="Laser getrennt.";laserUiRefresh()});
-  laser.msg="Verbinde mit "+laser.name+" …";laserUiRefresh();
+  laser.msg="Verbinde mit "+laser.name+" … (GATT)";laserUiRefresh();
   const server=await device.gatt.connect();
-  const service=await server.getPrimaryService(LASER_SERVICE);
+  laser.msg="Verbunden, suche Bosch-Dienst (0xFDE8) …";laserUiRefresh();
+  let service;
+  try{service=await server.getPrimaryService(LASER_SERVICE)}
+  catch(e1){
+   /* Dienst evtl. unter anderer UUID - zur Diagnose alle erlaubten
+      Dienste auflisten, die auf diesem Gerät tatsaechlich vorhanden sind. */
+   let list="";
+   try{const all=await server.getPrimaryServices();list=all.map(s=>s.uuid).join(", ")||"(keine)"}catch(e2){list="(Auflistung nicht möglich: "+(e2&&e2.message||e2)+")"}
+   throw new Error("Dienst 0xFDE8 nicht gefunden auf diesem Gerät. Vorhandene Dienste: "+list+" - Ursprungsfehler: "+(e1&&e1.message||e1));
+  }
+  laser.msg="Dienst gefunden, suche Characteristic …";laserUiRefresh();
   const ch=await service.getCharacteristic(LASER_CHAR);
   await ch.startNotifications();
   ch.addEventListener("characteristicvaluechanged",laserOnData);
