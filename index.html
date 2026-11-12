@@ -531,20 +531,25 @@ function laserOnData(e){
  if(calcCrc!==crcByte){laser.msg="CRC passt nicht (erwartet "+calcCrc.toString(16)+", erhalten "+crcByte.toString(16)+"): "+hex;laserUiRefresh();return}
  const payload=bytes.slice(3,3+len);
  if(payload.length<8){laser.msg="Payload zu kurz ("+payload.length+" Byte): "+hex;laserUiRefresh();return}
+ /* Typ-Code ist geräteabhängig (beim Universal Distance 50C z. B. 0x0406
+    statt der beim AD 50C dokumentierten 0x0006) - darum nicht mehr auf
+    einen festen Typ pruefen, sondern jeden Wert akzeptieren, der wie eine
+    plausible Distanz aussieht (0 bis 300 m). CRC ist bereits geprüft,
+    das Rahmenformat (C0 55 ...) ist damit bestätigt korrekt. */
  const type=payload[0]|(payload[1]<<8);
- if(type!==0x0006){laser.msg="Messtyp 0x"+type.toString(16)+" (kein Distanzwert - evtl. Neigungswinkel oder Sondertyp): "+hex;laserUiRefresh();return}
  const pdv=new DataView(payload.buffer,payload.byteOffset+4,4);
  const meters=pdv.getFloat32(0,true);
- if(!isFinite(meters)||meters<0){laser.msg="Ungültiger Distanzwert decodiert: "+hex;laserUiRefresh();return}
- laserApply(meters);
+ if(!isFinite(meters)||meters<0||meters>300){laser.msg="Messtyp 0x"+type.toString(16)+", unplausibler Wert ("+meters+"): "+hex;laserUiRefresh();return}
+ laserApply(meters,type);
 }
-function laserApply(meters){
+function laserApply(meters,type){
+ const typeTag=type!==undefined?" (Typ 0x"+type.toString(16)+")":"";
  const cmVal=meters*100,panel=$("#panel"),el=document.activeElement;
  const ok=el&&panel&&panel.contains(el)&&el.tagName==="INPUT"&&el.type==="number"&&(el.dataset.k!==undefined||el.dataset.len!==undefined||el.dataset.mval!==undefined);
- if(!ok){laser.msg="Messung: "+cmVal.toFixed(1)+" cm - bitte zuerst ins gewünschte Maßfeld tippen.";laserUiRefresh();return}
+ if(!ok){laser.msg="Messung: "+cmVal.toFixed(1)+" cm"+typeTag+" - bitte zuerst ins gewünschte Maßfeld tippen.";laserUiRefresh();return}
  const unitSpan=el.closest(".unit")?.querySelector("span:last-child");
  const unit=((unitSpan&&unitSpan.textContent)||"").trim().toLowerCase();
- if(unit&&unit!=="cm"){laser.msg="Messung: "+cmVal.toFixed(1)+" cm - aktives Feld erwartet "+unit+", nicht übernommen.";laserUiRefresh();return}
+ if(unit&&unit!=="cm"){laser.msg="Messung: "+cmVal.toFixed(1)+" cm"+typeTag+" - aktives Feld erwartet "+unit+", nicht übernommen.";laserUiRefresh();return}
  const elId=el.id;
  el.value=String(Math.round(cmVal*10)/10);
  el.dispatchEvent(new Event("input",{bubbles:true}));
@@ -553,7 +558,7 @@ function laserApply(meters){
     aufbauen (Race-Condition!) - "el" ist danach u.U. ein verwaistes,
     aus dem DOM entferntes Knoten. Deshalb hier ueber die id im FRISCH
     gerenderten DOM nachschlagen statt die alte Referenz weiterzunutzen. */
- laser.msg="Übernommen: "+cmVal.toFixed(1)+" cm";
+ laser.msg="Übernommen: "+cmVal.toFixed(1)+" cm"+typeTag;
  laserUiRefresh();
  laserFocusNext(elId);
 }
