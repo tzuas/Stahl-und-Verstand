@@ -440,6 +440,10 @@ function laserUiRefresh(){
 async function laserToggle(){
  if(laser.state==="connected"){laserDisconnect();return}
  if(!navigator.bluetooth){laser.msg="Web Bluetooth nicht verfügbar. Auf dem iPad bitte die kostenlose App „Bluefy“ installieren und den Kalkulator dort öffnen.";laserUiRefresh();return}
+ /* Nach einem fehlgeschlagenen Versuch kann noch eine halboffene
+    GATT-Verbindung vom vorigen Gerät bestehen, die neue Versuche
+    blockiert - vorsorglich trennen. */
+ try{laser.dev&&laser.dev.gatt&&laser.dev.gatt.disconnect()}catch(e){}
  try{
   laser.state="connecting";laser.msg="Bluetooth-Geräteauswahl wird geöffnet …";laserUiRefresh();
   /* acceptAllDevices statt Filter: Viele BLE-Geräte (auch Bosch-Laser)
@@ -464,7 +468,12 @@ async function laserToggle(){
   laserUiRefresh();
  }catch(err){
   laser.state="idle";
-  laser.msg=err&&err.name==="NotFoundError"?"Keine Auswahl getroffen.":"Verbindung fehlgeschlagen: "+(err&&err.message||err);
+  if(err&&err.name==="NotFoundError"){laser.msg="Keine Auswahl getroffen."}
+  else{
+   const detail=[err&&err.name,err&&err.message].filter(x=>x&&String(x).trim()).join(": ")||String(err);
+   laser.msg="Verbindung fehlgeschlagen ("+detail+"). Tipp: Laser einmal aus- und wieder einschalten (nicht nur die Bluetooth-Taste erneut drücken) und am iPad Bluetooth in der Seitenleiste kurz aus/an schalten - BLE-Geräte "+
+    "denken nach einem fehlgeschlagenen Verbindungsversuch manchmal, sie seien noch verbunden, und lehnen den nächsten Versuch ab. Danach hier erneut auf „Laser verbinden“ tippen.";
+  }
   laserUiRefresh();
  }
 }
