@@ -457,9 +457,10 @@ async function laserToggle(){
   const ch=await service.getCharacteristic(LASER_CHAR);
   await ch.startNotifications();
   ch.addEventListener("characteristicvaluechanged",laserOnData);
-  try{await ch.writeValueWithoutResponse(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]))}catch(e){}
+  let hs="";
+  try{await ch.writeValueWithoutResponse(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]));hs="Start-Befehl ok."}catch(e){hs="Start-Befehl fehlgeschlagen ("+(e&&e.message||e)+") - evtl. nicht nötig."}
   laser.dev=device;laser.char=ch;laser.state="connected";
-  laser.msg="Verbunden mit "+laser.name+". Jetzt messen - der Wert landet im zuletzt angetippten Maßfeld.";
+  laser.msg="Verbunden mit "+laser.name+". "+hs+" Jetzt messen - der Wert landet im zuletzt angetippten Maßfeld.";
   laserUiRefresh();
  }catch(err){
   laser.state="idle";
@@ -468,21 +469,31 @@ async function laserToggle(){
  }
 }
 function laserDisconnect(){try{laser.dev&&laser.dev.gatt&&laser.dev.gatt.disconnect()}catch(e){}laser.state="idle";laser.char=null;laser.msg="Getrennt.";laserUiRefresh()}
+function laserHex(bytes){return Array.from(bytes).map(b=>b.toString(16).padStart(2,"0")).join(" ")}
+/* Diagnose-Modus: Solange nicht sicher ist, dass das Protokoll fuer das
+   Universal Distance 1:1 passt, zeigt jede eingehende Bluetooth-
+   Benachrichtigung ihre Rohdaten direkt unter dem Laser-Button an - auch
+   wenn das Parsen fehlschlaegt. Damit laesst sich der Fehler ohne
+   Entwicklertools auf dem iPad diagnostizieren (Nutzer liest die Meldung
+   ab und gibt sie durch). Sobald das Protokoll bestaetigt ist, kann die
+   ausfuehrliche Meldung wieder auf den reinen Messwert reduziert werden. */
 function laserOnData(e){
  const dv=e.target.value;
  const bytes=new Uint8Array(dv.buffer.slice(dv.byteOffset,dv.byteOffset+dv.byteLength));
- if(bytes.length<12||bytes[0]!==0xC0||bytes[1]!==0x55)return;
+ const hex=laserHex(bytes);
+ console.log("[Laser] Notification ("+bytes.length+" Byte): "+hex);
+ if(bytes.length<12||bytes[0]!==0xC0||bytes[1]!==0x55){laser.msg="Unbekannte Bluetooth-Daten ("+bytes.length+" Byte): "+hex;laserUiRefresh();return}
  const len=bytes[2];
- if(bytes.length<3+len+1)return;
- const crcByte=bytes[3+len];
- if(laserCrc8(bytes.slice(0,3+len))!==crcByte)return;
+ if(bytes.length<3+len+1){laser.msg="Frame zu kurz (len="+len+", "+bytes.length+" Byte): "+hex;laserUiRefresh();return}
+ const crcByte=bytes[3+len],calcCrc=laserCrc8(bytes.slice(0,3+len));
+ if(calcCrc!==crcByte){laser.msg="CRC passt nicht (erwartet "+calcCrc.toString(16)+", erhalten "+crcByte.toString(16)+"): "+hex;laserUiRefresh();return}
  const payload=bytes.slice(3,3+len);
- if(payload.length<8)return;
+ if(payload.length<8){laser.msg="Payload zu kurz ("+payload.length+" Byte): "+hex;laserUiRefresh();return}
  const type=payload[0]|(payload[1]<<8);
- if(type!==0x0006)return;
+ if(type!==0x0006){laser.msg="Messtyp 0x"+type.toString(16)+" (kein Distanzwert - evtl. Neigungswinkel oder Sondertyp): "+hex;laserUiRefresh();return}
  const pdv=new DataView(payload.buffer,payload.byteOffset+4,4);
  const meters=pdv.getFloat32(0,true);
- if(!isFinite(meters)||meters<0)return;
+ if(!isFinite(meters)||meters<0){laser.msg="Ungültiger Distanzwert decodiert: "+hex;laserUiRefresh();return}
  laserApply(meters);
 }
 function laserApply(meters){
