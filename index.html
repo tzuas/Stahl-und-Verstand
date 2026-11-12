@@ -452,11 +452,12 @@ async function laserToggle(){
   laser.state="connecting";laser.msg="Bluetooth-Geräteauswahl wird geöffnet …";laserUiRefresh();
   /* acceptAllDevices statt Filter: Viele BLE-Geräte (auch Bosch-Laser)
      senden ihre Dienst-UUID nicht im Werbepaket, sondern erst nach dem
-     Verbinden - ein Filter nach Dienst/Name hätte das Gerät dann gar
-     nicht erst in der Auswahlliste gezeigt. Darum hier bewusst alle
-     Bluetooth-Geräte in der Nähe anzeigen; der Dienst wird erst nach
-     der Auswahl geprüft (siehe getPrimaryService() unten). */
-  const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[LASER_SERVICE,LASER_SERVICE_ALT]});
+     Verbinden - ein Filter nach Dienst hätte das Gerät darum nicht
+     zuverlässig gezeigt. Jetzt, wo der tatsächliche Gerätename bekannt
+     ist (vom Nutzer bestätigt: "Bosch UD 50C x8252"), wird stattdessen
+     nach Namen gefiltert, damit in der Auswahl nur Bosch-Laser
+     erscheinen und nicht jedes Bluetooth-Gerät in der Nähe. */
+  const device=await navigator.bluetooth.requestDevice({filters:[{namePrefix:"Bosch UD"},{namePrefix:"Bosch GLM"},{namePrefix:"GLM"},{namePrefix:"AD 50"},{namePrefix:"Universal Distance"}],optionalServices:[LASER_SERVICE,LASER_SERVICE_ALT]});
   laser.name=device.name||"Laser";
   device.addEventListener("gattserverdisconnected",()=>{laser.state="idle";laser.char=null;laser.msg="Laser getrennt.";laserUiRefresh()});
   laser.msg="Verbinde mit "+laser.name+" … (GATT)";laserUiRefresh();
