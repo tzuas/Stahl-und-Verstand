@@ -480,9 +480,13 @@ async function laserToggle(){
   const chars=await service.getCharacteristics();
   const propList=c=>Object.keys(c.properties||{}).filter(k=>c.properties[k]).join(",");
   const info=chars.map(c=>c.uuid+" ["+propList(c)+"]").join(" | ");
-  let ch=chars.find(c=>c.properties&&c.properties.notify&&(c.properties.write||c.properties.writeWithoutResponse));
-  if(!ch)ch=chars.find(c=>c.properties&&c.properties.notify);
-  if(!ch)throw new Error("Keine Characteristic mit Notify gefunden im Dienst "+usedUuid+". Vorhanden: "+info);
+  /* "indicate" ist wie "notify" ein abonnierbarer Benachrichtigungstyp
+     (startNotifications() funktioniert fuer beide gleich) - manche
+     Bosch-Geraete (z. B. dieses Universal Distance 50C) nutzen indicate
+     statt notify, darum hier beides akzeptieren. */
+  let ch=chars.find(c=>c.properties&&(c.properties.notify||c.properties.indicate)&&(c.properties.write||c.properties.writeWithoutResponse));
+  if(!ch)ch=chars.find(c=>c.properties&&(c.properties.notify||c.properties.indicate));
+  if(!ch)throw new Error("Keine Characteristic mit Notify/Indicate gefunden im Dienst "+usedUuid+". Vorhanden: "+info);
   await ch.startNotifications();
   ch.addEventListener("characteristicvaluechanged",laserOnData);
   let hs="";
