@@ -412,6 +412,98 @@ function sel(key,label,opts){return `<label class="f">${label}<select id="in-${k
 function check(key,label){return `<label class="ck"><input type="checkbox" id="in-${key}" data-k="${key}" ${S[key]?"checked":""}> ${label}</label>`}
 function area(key,label,ph){return `<label class="f">${label}<textarea id="in-${key}" data-k="${key}" placeholder="${esc(ph)}">${esc(S[key])}</textarea></label>`}
 
+/* Bosch-Laser-Entfernungsmesser per Web Bluetooth (z. B. Universal Distance /
+   GLM-Serie 50C): Protokoll reverse-engineered, Quelle siehe Commit-Notiz.
+   Nicht am echten Gerät getestet - vor Ort einmal ausprobieren.
+   GATT-Dienst 0xFDE8 (Bosch), eine Characteristic für Write + Notify.
+   Frame: C0 55 <len> <payload...> <crc8>. Payload: u16 Typ, u16 Zähler,
+   f32 Wert (LE), 8 Byte reserviert. Typ 0x0006 = Distanz in Metern.
+   CRC-8: Poly 0xA6, Start 0xAA, kein Reflect, kein Final-XOR.
+   Auf iPhone/iPad funktioniert Web Bluetooth nur über die App "Bluefy",
+   nicht in Safari oder Chrome (nutzt dieselbe WebKit-Engine wie Safari). */
+const LASER_SERVICE="0000fde8-0000-1000-8000-00805f9b34fb";
+const LASER_CHAR="02a6c0d2-0451-4000-b000-fb3210111989";
+let laser={state:"idle",name:"",msg:""};
+function laserCrc8(bytes){let crc=0xAA;for(let i=0;i<bytes.length;i++){crc^=bytes[i];for(let b=0;b<8;b++)crc=(crc&0x80)?((crc<<1)^0xA6)&0xFF:(crc<<1)&0xFF}return crc}
+function laserButtonHtml(){
+ const busy=laser.state==="connecting",on=laser.state==="connected";
+ return `<div class="row" style="margin:6px 0 2px"><button type="button" id="btnLaser"${busy?" disabled":""}>${on?`Laser verbunden (${esc(laser.name||"Bosch")}) · trennen`:busy?"Verbinde …":"📡 Laser verbinden (Bluetooth)"}</button></div>
+ <p class="hint" id="laserMsg" style="margin-top:0">${esc(laser.msg||"Bosch-Laser mit Bluetooth: Taste antippen, Gerät auswählen. Danach landet jede Messung automatisch im zuletzt angetippten Maßfeld. Auf iPhone/iPad nur über die kostenlose App „Bluefy“ möglich, nicht in Safari oder Chrome.")}</p>`;
+}
+function laserUiRefresh(){
+ const b=$("#btnLaser");if(!b)return;
+ const busy=laser.state==="connecting",on=laser.state==="connected";
+ b.disabled=busy;
+ b.textContent=on?`Laser verbunden (${laser.name||"Bosch"}) · trennen`:busy?"Verbinde …":"📡 Laser verbinden (Bluetooth)";
+ const m=$("#laserMsg");if(m)m.textContent=laser.msg||"";
+}
+async function laserToggle(){
+ if(laser.state==="connected"){laserDisconnect();return}
+ if(!navigator.bluetooth){laser.msg="Web Bluetooth nicht verfügbar. Auf dem iPad bitte die kostenlose App „Bluefy“ installieren und den Kalkulator dort öffnen.";laserUiRefresh();return}
+ try{
+  laser.state="connecting";laser.msg="Bluetooth-Geräteauswahl wird geöffnet …";laserUiRefresh();
+  const device=await navigator.bluetooth.requestDevice({filters:[{services:[LASER_SERVICE]},{namePrefix:"GLM"},{namePrefix:"AD 50"},{namePrefix:"Universal"}],optionalServices:[LASER_SERVICE]});
+  laser.name=device.name||"Laser";
+  device.addEventListener("gattserverdisconnected",()=>{laser.state="idle";laser.char=null;laser.msg="Laser getrennt.";laserUiRefresh()});
+  laser.msg="Verbinde mit "+laser.name+" …";laserUiRefresh();
+  const server=await device.gatt.connect();
+  const service=await server.getPrimaryService(LASER_SERVICE);
+  const ch=await service.getCharacteristic(LASER_CHAR);
+  await ch.startNotifications();
+  ch.addEventListener("characteristicvaluechanged",laserOnData);
+  try{await ch.writeValueWithoutResponse(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]))}catch(e){}
+  laser.dev=device;laser.char=ch;laser.state="connected";
+  laser.msg="Verbunden mit "+laser.name+". Jetzt messen - der Wert landet im zuletzt angetippten Maßfeld.";
+  laserUiRefresh();
+ }catch(err){
+  laser.state="idle";
+  laser.msg=err&&err.name==="NotFoundError"?"Keine Auswahl getroffen.":"Verbindung fehlgeschlagen: "+(err&&err.message||err);
+  laserUiRefresh();
+ }
+}
+function laserDisconnect(){try{laser.dev&&laser.dev.gatt&&laser.dev.gatt.disconnect()}catch(e){}laser.state="idle";laser.char=null;laser.msg="Getrennt.";laserUiRefresh()}
+function laserOnData(e){
+ const dv=e.target.value;
+ const bytes=new Uint8Array(dv.buffer.slice(dv.byteOffset,dv.byteOffset+dv.byteLength));
+ if(bytes.length<12||bytes[0]!==0xC0||bytes[1]!==0x55)return;
+ const len=bytes[2];
+ if(bytes.length<3+len+1)return;
+ const crcByte=bytes[3+len];
+ if(laserCrc8(bytes.slice(0,3+len))!==crcByte)return;
+ const payload=bytes.slice(3,3+len);
+ if(payload.length<8)return;
+ const type=payload[0]|(payload[1]<<8);
+ if(type!==0x0006)return;
+ const pdv=new DataView(payload.buffer,payload.byteOffset+4,4);
+ const meters=pdv.getFloat32(0,true);
+ if(!isFinite(meters)||meters<0)return;
+ laserApply(meters);
+}
+function laserApply(meters){
+ const cmVal=meters*100,panel=$("#panel"),el=document.activeElement;
+ const ok=el&&panel&&panel.contains(el)&&el.tagName==="INPUT"&&el.type==="number"&&(el.dataset.k!==undefined||el.dataset.len!==undefined||el.dataset.mval!==undefined);
+ if(!ok){laser.msg="Messung: "+cmVal.toFixed(1)+" cm - bitte zuerst ins gewünschte Maßfeld tippen.";laserUiRefresh();return}
+ const unitSpan=el.closest(".unit")?.querySelector("span:last-child");
+ const unit=((unitSpan&&unitSpan.textContent)||"").trim().toLowerCase();
+ if(unit&&unit!=="cm"){laser.msg="Messung: "+cmVal.toFixed(1)+" cm - aktives Feld erwartet "+unit+", nicht übernommen.";laserUiRefresh();return}
+ const elId=el.id;
+ el.value=String(Math.round(cmVal*10)/10);
+ el.dispatchEvent(new Event("input",{bubbles:true}));
+ el.dispatchEvent(new Event("change",{bubbles:true}));
+ /* change-Handler kann refresh(true) ausloesen und #panel komplett neu
+    aufbauen (Race-Condition!) - "el" ist danach u.U. ein verwaistes,
+    aus dem DOM entferntes Knoten. Deshalb hier ueber die id im FRISCH
+    gerenderten DOM nachschlagen statt die alte Referenz weiterzunutzen. */
+ laser.msg="Übernommen: "+cmVal.toFixed(1)+" cm";
+ laserUiRefresh();
+ laserFocusNext(elId);
+}
+function laserFocusNext(elId){
+ const list=Array.from(document.querySelectorAll('#panel input[type="number"]'));
+ const i=elId?list.findIndex(x=>x.id===elId):-1;
+ if(i>-1&&i+1<list.length){const nxt=list[i+1];setTimeout(()=>{nxt.focus();nxt.select&&nxt.select()},50)}
+}
+
 function coatSwatches(opts){
  return `<div class="sw">${opts.map(o=>{const c=o.startsWith("Unbesch")?"linear-gradient(135deg,#5a3220,#b06a3c 60%,#6e4029)":o==="Feuerverzinkt"?"linear-gradient(135deg,#7f888d,#dfe4e6 55%,#8e979c)":o==="Anthrazit DB 703"?"linear-gradient(135deg,#2e3134,#6a6f73 60%,#3d4043)":"conic-gradient(#111214 0 25%,#114232 0 50%,#45322e 0 75%,#e9e0d2 0)";
   return `<button type="button" class="swb" data-k="coat" data-v="${o}" aria-pressed="${S.coat===o}"><i style="background:${c}"></i>${o}</button>`}).join("")}</div>`;
@@ -480,11 +572,13 @@ function renderPanel(){
   ${area("wishText","Persönliche Wünsche, frei formuliert","z. B. Initialen „M&K“ mittig im Tor, Briefkasten links neben dem Schloss, Motiv Olivenzweig")}`;
  }else if(st===4&&isFenster()){
   h=`<h2>Maße aufnehmen</h2><p class="lede">Breite und Höhe des gewünschten Fensters.</p>
+  ${laserButtonHtml()}
   <div class="grid2">${num("total","Breite")}${num("height","Höhe")}</div>
   <div class="note" id="mnote">${measureNote()}</div>`;
  }else if(st===4){
   const L=layout(),p=prod(),gate=L.gate,over=!gate&&L.per>p.max;
   h=`<h2>Maße aufnehmen</h2><p class="lede">${gate?"Lichte Weite = Abstand zwischen den beiden Torpfosten.":"Gesamtstrecke inklusive Pfosten. Die Felder teilt das Tool automatisch auf."}</p>
+  ${laserButtonHtml()}
   <div class="grid2">${L.planned?`<label class="f">Gesamtstrecke<span class="calc">${cm(L.total)}</span><span class="hint">aus dem Grundriss</span></label>`:num("total",gate?"Gesamtbreite inkl. Pfosten":"Gesamtstrecke")}${num("height",isRail()?"Geländerhöhe ab Oberkante Boden":"Höhe")}${gate||L.planned?"":num("fields","Anzahl Felder","Stk.","0 = automatisch")}
    ${isRail()?"":sel("posts","Pfosten",["Zum Einbetonieren","Zum Aufschrauben","Bestehende Pfosten (Montage dazwischen)","Keine Pfosten"])}</div>
   ${isRail()?mountHtml():""}
@@ -979,6 +1073,7 @@ document.addEventListener("click",e=>{
  const b=e.target.closest("button,a");
  if(b&&b.dataset.hnmreset!==undefined){delete S.wishPos;refresh(true);return}
  if(!b)return;
+ if(b.id==="btnLaser"){laserToggle();return}
  if(b.dataset.view){setView(b.dataset.view);save();return}
  if(b.dataset.prod){S.product=b.dataset.prod;S.fields=0;refresh(true);return}
  if(b.dataset.model){S.model=b.dataset.model;refresh(true);return}
