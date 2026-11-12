@@ -423,6 +423,10 @@ function area(key,label,ph){return `<label class="f">${label}<textarea id="in-${
    nicht in Safari oder Chrome (nutzt dieselbe WebKit-Engine wie Safari). */
 const LASER_SERVICE="0000fde8-0000-1000-8000-00805f9b34fb";
 const LASER_CHAR="02a6c0d2-0451-4000-b000-fb3210111989";
+/* Beim Universal Distance 50C des Nutzers live entdeckt (0xFDE8 war nur
+   die Annahme vom AD 50C, trifft hier nicht zu) - als zweiter Versuch: */
+const LASER_SERVICE_ALT="00005301-0000-0041-5253-534f46564000";
+const LASER_STD_SERVICES=new Set(["00001800-0000-1000-8000-00805f9b34fb","00001801-0000-1000-8000-00805f9b34fb","0000180a-0000-1000-8000-00805f9b34fb","0000180f-0000-1000-8000-00805f9b34fb"]);
 let laser={state:"idle",name:"",msg:""};
 function laserCrc8(bytes){let crc=0xAA;for(let i=0;i<bytes.length;i++){crc^=bytes[i];for(let b=0;b<8;b++)crc=(crc&0x80)?((crc<<1)^0xA6)&0xFF:(crc<<1)&0xFF}return crc}
 function laserButtonHtml(){
@@ -452,29 +456,44 @@ async function laserToggle(){
      nicht erst in der Auswahlliste gezeigt. Darum hier bewusst alle
      Bluetooth-Geräte in der Nähe anzeigen; der Dienst wird erst nach
      der Auswahl geprüft (siehe getPrimaryService() unten). */
-  const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[LASER_SERVICE]});
+  const device=await navigator.bluetooth.requestDevice({acceptAllDevices:true,optionalServices:[LASER_SERVICE,LASER_SERVICE_ALT]});
   laser.name=device.name||"Laser";
   device.addEventListener("gattserverdisconnected",()=>{laser.state="idle";laser.char=null;laser.msg="Laser getrennt.";laserUiRefresh()});
   laser.msg="Verbinde mit "+laser.name+" … (GATT)";laserUiRefresh();
   const server=await device.gatt.connect();
-  laser.msg="Verbunden, suche Bosch-Dienst (0xFDE8) …";laserUiRefresh();
-  let service;
-  try{service=await server.getPrimaryService(LASER_SERVICE)}
-  catch(e1){
-   /* Dienst evtl. unter anderer UUID - zur Diagnose alle erlaubten
-      Dienste auflisten, die auf diesem Gerät tatsaechlich vorhanden sind. */
-   let list="";
-   try{const all=await server.getPrimaryServices();list=all.map(s=>s.uuid).join(", ")||"(keine)"}catch(e2){list="(Auflistung nicht möglich: "+(e2&&e2.message||e2)+")"}
-   throw new Error("Dienst 0xFDE8 nicht gefunden auf diesem Gerät. Vorhandene Dienste: "+list+" - Ursprungsfehler: "+(e1&&e1.message||e1));
+  laser.msg="Verbunden, suche Bosch-Dienst …";laserUiRefresh();
+  /* Dienst automatisch finden: zuerst die beiden bekannten Vermutungen
+     (0xFDE8 vom AD 50C, dann die beim Universal Distance 50C live
+     entdeckte UUID), sonst alle erlaubten Dienste auflisten und den
+     ersten nehmen, der kein generischer Standard-Dienst ist. */
+  let service=null,usedUuid="";
+  for(const uuid of [LASER_SERVICE,LASER_SERVICE_ALT]){
+   try{service=await server.getPrimaryService(uuid);usedUuid=uuid;break}catch(e){}
   }
-  laser.msg="Dienst gefunden, suche Characteristic …";laserUiRefresh();
-  const ch=await service.getCharacteristic(LASER_CHAR);
+  if(!service){
+   const all=await server.getPrimaryServices().catch(()=>[]);
+   const custom=all.filter(s=>!LASER_STD_SERVICES.has(s.uuid));
+   if(!custom.length)throw new Error("Kein Bosch-Dienst gefunden. Erlaubte/vorhandene Dienste: "+(all.map(s=>s.uuid).join(", ")||"(keine)"));
+   service=custom[0];usedUuid=service.uuid;
+  }
+  laser.msg="Dienst "+usedUuid+" gefunden, suche Characteristic …";laserUiRefresh();
+  const chars=await service.getCharacteristics();
+  const propList=c=>Object.keys(c.properties||{}).filter(k=>c.properties[k]).join(",");
+  const info=chars.map(c=>c.uuid+" ["+propList(c)+"]").join(" | ");
+  let ch=chars.find(c=>c.properties&&c.properties.notify&&(c.properties.write||c.properties.writeWithoutResponse));
+  if(!ch)ch=chars.find(c=>c.properties&&c.properties.notify);
+  if(!ch)throw new Error("Keine Characteristic mit Notify gefunden im Dienst "+usedUuid+". Vorhanden: "+info);
   await ch.startNotifications();
   ch.addEventListener("characteristicvaluechanged",laserOnData);
   let hs="";
-  try{await ch.writeValueWithoutResponse(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]));hs="Start-Befehl ok."}catch(e){hs="Start-Befehl fehlgeschlagen ("+(e&&e.message||e)+") - evtl. nicht nötig."}
+  try{
+   if(ch.properties.writeWithoutResponse)await ch.writeValueWithoutResponse(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]));
+   else if(ch.properties.write)await ch.writeValue(new Uint8Array([0xC0,0x55,0x02,0x01,0x00,0x1A]));
+   else hs="(keine Schreibrechte, kein Start-Befehl nötig/möglich) ";
+   if(!hs)hs="Start-Befehl ok. ";
+  }catch(e){hs="Start-Befehl fehlgeschlagen ("+(e&&e.message||e)+") - evtl. nicht nötig. "}
   laser.dev=device;laser.char=ch;laser.state="connected";
-  laser.msg="Verbunden mit "+laser.name+". "+hs+" Jetzt messen - der Wert landet im zuletzt angetippten Maßfeld.";
+  laser.msg="Verbunden mit "+laser.name+" (Dienst "+usedUuid+", Characteristic "+ch.uuid+"). Gefundene Characteristics: "+info+". "+hs+"Jetzt messen - der Wert landet im zuletzt angetippten Maßfeld.";
   laserUiRefresh();
  }catch(err){
   laser.state="idle";
