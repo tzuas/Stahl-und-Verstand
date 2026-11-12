@@ -1155,13 +1155,53 @@ function drawWindowPreview(){
 /* Schematische Großansicht für Pavillons (Festgrößen-Katalogware, kein
    Maß-Schritt) - gleicher Aufbau wie drawWindowPreview(), eigene,
    originale Zeichnung je Typ, keine ELEO-Konfigurator-Grafik. */
+/* Gemeinsamer Zeichner für Pavillon-Dach/Pfosten/Bogen, parametrisiert für
+   Thumbnail (klein) und Großansicht (groß) - statt zweier getrennter,
+   grob vereinfachter Zeichnungen: Dach mit sichtbaren Sparren/First statt
+   flacher Dreiecksfläche, Pfosten mit Kopf-/Fußplatte und Glanzkante,
+   Schlagschatten am Boden - angelehnt an den Detailgrad von fence()/
+   buildGeometry() (Pfostenkappe, Aufschraubplatte), keine ELEO-Grafik. */
+function pavGraphic(d,cx,apexY,eaveY,floorY,halfW,fc,hi,uid){
+ const postW=Math.max(2,halfW*.045),shadowRy=(floorY-eaveY)*.14;
+ let g=`<ellipse cx="${cx}" cy="${floorY}" rx="${halfW*1.05}" ry="${shadowRy}" fill="#000" opacity=".15"/>`;
+ if(d==="rund"||d==="eckig"){
+  const hip=d==="eckig",ridgeHalf=hip?halfW*.32:0,apexL=cx-ridgeHalf,apexR=cx+ridgeHalf;
+  const poly=hip?`${apexL},${apexY} ${apexR},${apexY} ${cx+halfW},${eaveY} ${cx-halfW},${eaveY}`:`${cx},${apexY} ${cx+halfW},${eaveY} ${cx-halfW},${eaveY}`;
+  g+=`<defs><linearGradient id="pvr${uid}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${hi}"/><stop offset="1" stop-color="${fc}"/></linearGradient></defs>
+  <polygon points="${poly}" fill="url(#pvr${uid})" stroke="${fc}" stroke-width="2"/>`;
+  const n=hip?5:6;
+  for(let i=0;i<=n;i++){const x=cx-halfW+2*halfW*i/n,apex=hip?(x<cx?apexL:apexR):cx;g+=`<line x1="${apex}" y1="${apexY}" x2="${x}" y2="${eaveY}" stroke="${fc}" stroke-width="1" opacity=".5"/>`}
+  g+=`<line x1="${apexL}" y1="${apexY}" x2="${apexR}" y2="${apexY}" stroke="${fc}" stroke-width="3"/>
+  <rect x="${cx-halfW-halfW*.06}" y="${eaveY}" width="${halfW*2+halfW*.12}" height="${Math.max(3,(eaveY-apexY)*.05)}" fill="${fc}"/>`;
+  const posts=hip?4:6,inset=halfW*.9;
+  for(let i=0;i<posts;i++){
+   const x=cx-inset+2*inset*i/(posts-1);
+   g+=`<rect x="${x-postW/2}" y="${eaveY+4}" width="${postW}" height="${floorY-eaveY-4}" fill="${fc}"/><rect x="${x-postW/2}" y="${eaveY+4}" width="${postW*.35}" height="${floorY-eaveY-4}" fill="${hi}" opacity=".6"/><rect x="${x-postW*1.6}" y="${floorY-postW*.6}" width="${postW*3.2}" height="${postW*.8}" fill="${fc}"/>`;
+  }
+ }else if(d==="pergola"){
+  g+=`<rect x="${cx-halfW-halfW*.03}" y="${apexY}" width="${halfW*2+halfW*.06}" height="${(eaveY-apexY)*.9}" fill="${fc}"/>`;
+  const slats=9;
+  for(let i=0;i<=slats;i++){const x=cx-halfW+2*halfW*i/slats;g+=`<rect x="${x-postW*.45}" y="${apexY}" width="${postW*.9}" height="${(eaveY-apexY)*.9}" fill="${hi}" opacity=".65"/>`}
+  const posts=4,inset=halfW*.9;
+  for(let i=0;i<posts;i++){
+   const x=cx-inset+2*inset*i/(posts-1);
+   g+=`<rect x="${x-postW/2}" y="${eaveY}" width="${postW}" height="${floorY-eaveY}" fill="${fc}"/><rect x="${x-postW/2}" y="${eaveY}" width="${postW*.35}" height="${floorY-eaveY}" fill="${hi}" opacity=".6"/><rect x="${x-postW*1.6}" y="${floorY-postW*.6}" width="${postW*3.2}" height="${postW*.8}" fill="${fc}"/>`;
+  }
+ }else{
+  const archR=halfW;
+  g+=`<path d="M${cx-archR} ${floorY} V${eaveY} Q${cx-archR} ${apexY} ${cx} ${apexY} Q${cx+archR} ${apexY} ${cx+archR} ${eaveY} V${floorY}" fill="none" stroke="${fc}" stroke-width="${postW*1.3}"/>
+  <path d="M${cx-archR} ${floorY} V${eaveY} Q${cx-archR} ${apexY} ${cx} ${apexY} Q${cx+archR} ${apexY} ${cx+archR} ${eaveY} V${floorY}" fill="none" stroke="${hi}" stroke-width="${postW*.5}" opacity=".7"/>`;
+  for(let i=1;i<5;i++){
+   const t=i/5,y=floorY-(floorY-eaveY)*t,dy=(eaveY-apexY)*.16;
+   g+=`<line x1="${cx-archR*.82}" y1="${y}" x2="${cx-archR*.5}" y2="${y-dy}" stroke="${fc}" stroke-width="1" opacity=".4"/><line x1="${cx+archR*.82}" y1="${y}" x2="${cx+archR*.5}" y2="${y-dy}" stroke="${fc}" stroke-width="1" opacity=".4"/>`;
+  }
+  g+=`<circle cx="${cx}" cy="${apexY-postW*.8}" r="${postW*.9}" fill="${hi}" stroke="${fc}" stroke-width="1.4"/>`;
+ }
+ return g;
+}
 function drawPavillonPreview(){
  const m=model(),f=finish(),fc=f.c,hi=f.hi,cx=410,gy=330,d=m.deco;
- let g="";
- if(d==="rund")g=`<polygon points="${cx},70 ${cx+170},190 ${cx-170},190" fill="${hi}" stroke="${fc}" stroke-width="3"/><rect x="${cx-180}" y="190" width="360" height="10" fill="${fc}"/>${[-150,-90,-30,30,90,150].map(dx=>`<line x1="${cx+dx}" y1="200" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="7"/>`).join("")}`;
- else if(d==="eckig")g=`<polygon points="${cx-120},70 ${cx+120},70 ${cx+180},190 ${cx-180},190" fill="${hi}" stroke="${fc}" stroke-width="3"/><rect x="${cx-180}" y="190" width="360" height="10" fill="${fc}"/>${[-150,-90,-30,30,90,150].map(dx=>`<line x1="${cx+dx}" y1="200" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="7"/>`).join("")}`;
- else if(d==="pergola")g=`<rect x="${cx-190}" y="150" width="380" height="14" fill="${fc}"/>${[-170,-120,-70,-20,30,80,130,170].map(dx=>`<line x1="${cx+dx}" y1="150" x2="${cx+dx}" y2="${gy}" stroke="${fc}" stroke-width="8"/>`).join("")}${[0,1,2,3,4,5,6,7,8,9].map(i=>`<line x1="${cx-190+i*38}" y1="150" x2="${cx-190+i*38+20}" y2="130" stroke="${fc}" stroke-width="4"/>`).join("")}`;
- else g=`<path d="M${cx-150} ${gy} V150 Q${cx-150} 60 ${cx} 60 Q${cx+150} 60 ${cx+150} 150 V${gy}" fill="none" stroke="${fc}" stroke-width="16"/><path d="M${cx-150} ${gy} V150 Q${cx-150} 60 ${cx} 60 Q${cx+150} 60 ${cx+150} 150 V${gy}" fill="none" stroke="${hi}" stroke-width="7" opacity=".6"/>`;
+ const g=d==="rund"||d==="eckig"?pavGraphic(d,cx,70,190,gy,170,fc,hi,"lk"):d==="pergola"?pavGraphic(d,cx,112,150,gy,190,fc,hi,"lk"):pavGraphic(d,cx,60,160,gy,140,fc,hi,"lk");
  const sizeTxt=S.pavSize?" · "+S.pavSize:"";
  const head=`<rect x="16" y="14" width="${Math.max(220,coatLabel().length*8+40)}" height="46" rx="4" fill="#ffffff" opacity=".88"/>
  <text x="28" y="34" style="font:700 16px 'Archivo','Arial Narrow',sans-serif;text-transform:uppercase;fill:#1d2328">${esc("Pavillon "+m.n+sizeTxt)}</text>
@@ -1202,11 +1242,8 @@ function windowThumb(m){
    Rosenbogen-Kurve) - keine ELEO-Konfigurator-Grafik oder Foto übernommen,
    vgl. die Eigenständigkeits-Konvention bei modelThumb()/fence(). */
 function pavilionThumb(m){
- const d=m.deco,c="#3d4043";let g="";
- if(d==="rund")g=`<polygon points="80,18 128,54 32,54" fill="#8a8f93" stroke="${c}" stroke-width="2"/><rect x="34" y="54" width="92" height="4" fill="${c}"/>${[40,56,72,88,104,120].map(x=>`<line x1="${x}" y1="58" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}`;
- else if(d==="eckig")g=`<polygon points="46,18 114,18 128,50 32,50" fill="#8a8f93" stroke="${c}" stroke-width="2"/><rect x="34" y="50" width="92" height="4" fill="${c}"/>${[40,56,72,88,104,120].map(x=>`<line x1="${x}" y1="54" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}`;
- else if(d==="pergola")g=`<rect x="30" y="38" width="100" height="6" fill="${c}"/>${[36,52,68,84,100,116,124].map(x=>`<line x1="${x}" y1="38" x2="${x}" y2="86" stroke="${c}" stroke-width="3"/>`).join("")}${[0,1,2,3,4,5,6].map(i=>`<line x1="${28+i*14}" y1="32" x2="${42+i*14}" y2="42" stroke="${c}" stroke-width="2"/>`).join("")}`;
- else g=`<path d="M34 86 V46 Q34 16 80 16 Q126 16 126 46 V86" fill="none" stroke="${c}" stroke-width="6"/><path d="M34 86 V54 Q34 30 80 30 Q126 30 126 54 V86" fill="none" stroke="${c}" stroke-width="3" opacity=".55"/>`;
+ const d=m.deco,f=finish(),uid="th"+m.n.replace(/[^A-Za-z0-9]/g,"");
+ const g=d==="rund"||d==="eckig"?pavGraphic(d,80,18,58,86,46,f.c,f.hi,uid):d==="pergola"?pavGraphic(d,80,34,58,86,48,f.c,f.hi,uid):pavGraphic(d,80,14,50,86,26,f.c,f.hi,uid);
  return `<svg class="thumb" viewBox="0 0 160 100" aria-hidden="true"><rect width="160" height="100" fill="#e7edf0"/><rect y="86" width="160" height="14" fill="#7ea35f"/>${g}</svg>`;
 }
 function modelThumb(m){
