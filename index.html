@@ -316,9 +316,68 @@ const DEF=()=>({mplan:null,positions:[],shipTo:"Montageort (Endkunde)",step:0,pr
 let S=DEF();
 function load(k,d){try{const v=JSON.parse(localStorage.getItem(k)||"null");return v??d}catch(e){return d}}
 function store(k,v){try{localStorage.setItem(k,JSON.stringify(v))}catch(e){}}
-S=Object.assign(DEF(),load("sv-draft",{}));
+/* Laufender Entwurf (sv-draft) bewusst in sessionStorage statt
+   localStorage: Nutzer-Wunsch "vor Ort soll alles am Anfang anfangen,
+   nicht beim letzten Kunden vorher" - ein neuer App-Start (App/Browser
+   komplett geschlossen und neu geöffnet) soll immer bei Schritt 1 mit
+   leerem Kundenfeld beginnen, nicht automatisch die Daten des letzten
+   Kunden laden. sessionStorage übersteht aber ein versehentliches
+   Neuladen INNERHALB desselben Tabs/derselben Sitzung, damit man bei
+   einem Reload mitten in der Aufnahme nicht alles verliert. Explizit
+   gespeicherte Beratungen (sv-list, über "Beratung speichern") bleiben
+   dauerhaft in localStorage und lassen sich jederzeit gezielt öffnen. */
+function loadSess(k,d){try{const v=JSON.parse(sessionStorage.getItem(k)||"null");return v??d}catch(e){return d}}
+function storeSess(k,v){try{sessionStorage.setItem(k,JSON.stringify(v))}catch(e){}}
+S=Object.assign(DEF(),loadSess("sv-draft",{}));
 if(!COATS.includes(S.coat))S.coat="Anthrazit DB 703";
-function save(){store("sv-draft",S)}
+function save(){storeSess("sv-draft",S)}
+/* Übergabe-Link zwischen Browsern/Apps (z. B. Bluefy <-> Safari): Bluefy
+   kann Web Bluetooth, aber kein Live-Kamera/getUserMedia; normales
+   Safari/Chrome auf dem iPad umgekehrt kein Web Bluetooth. Da beide Apps
+   getrennten Speicher haben, wird der Stand (ohne Foto, das waere zu
+   gross fuer eine URL) als base64-JSON im Link kcodiert und beim Laden
+   wieder eingelesen. */
+function stateExportUrl(){
+ const data=Object.assign({},S);delete data.photo;delete data._id;
+ const json=JSON.stringify(data);
+ const b64=btoa(unescape(encodeURIComponent(json)));
+ const u=new URL(location.href);u.search="";u.hash="";
+ u.searchParams.set("import",b64);
+ return u.toString();
+}
+(function importFromLink(){
+ const params=new URLSearchParams(location.search);
+ const imp=params.get("import");
+ if(imp){
+  try{
+   const json=decodeURIComponent(escape(atob(imp)));
+   const data=JSON.parse(json);
+   if(confirm("Übernommenen Stand von einem anderen Gerät/Browser laden (Produkt, Maße, Kunde)? Der aktuelle Entwurf hier wird dabei ersetzt.")){
+    const fotoStep=STEPS.indexOf("Foto");
+    S=Object.assign(DEF(),data,{step:fotoStep>=0?fotoStep:data.step||0});
+    storeSess("sv-draft",S);
+   }
+  }catch(e){}
+  params.delete("import");
+  const qs=params.toString();
+  history.replaceState(null,"",location.pathname+(qs?"?"+qs:"")+location.hash);
+ }
+})();
+/* Gespeicherte Beratungen (sv-list) nach 4 Wochen automatisch löschen
+   (Kunden-Datenhygiene, Nutzer-Wunsch). Einträge ohne Zeitstempel
+   (von vor diesem Update) werden einmalig auf "jetzt" gesetzt statt
+   sofort gelöscht zu werden. */
+(function cleanupOldConsultations(){
+ const FOUR_WEEKS=28*24*3600*1000,now=Date.now();
+ const list=load("sv-list",[]);
+ let changed=false;
+ const kept=list.filter(e=>{
+  if(!e.ts){e.ts=now;changed=true;return true}
+  if(now-e.ts>FOUR_WEEKS){changed=true;return false}
+  return true;
+ });
+ if(changed)store("sv-list",kept);
+})();
 
 const isScreen=()=>S.product==="Sichtschutz";
 const isFenster=()=>S.product==="Fenster";
@@ -734,12 +793,19 @@ function photoStepHtml(){
  <p id="liveMsg" class="warn" role="status"></p>
  
  ${live?"":`<fieldset class="arcard" style="margin-top:14px"><legend>Echtes AR auf dem iPad</legend><p>Die Anlage steht in Originalgröße auf dem Boden und bleibt an ihrem Platz, wenn Sie mit dem iPad herumgehen. Mit Ecken aus dem Grundriss, in der gewählten Farbe.</p>${arButton()}<p class="hint" data-arhint hidden style="margin-top:10px">AR öffnet Apples AR-Ansicht. Das klappt in Safari auf iPad oder iPhone, wenn die Seite als eigene Datei über https geöffnet ist. In der Claude-Ansicht steht es nicht zur Verfügung.</p></fieldset>`}
+ ${live?"":exportHandoffHtml()}
  <div id="partBar" style="margin-top:12px"></div>
  <div class="stage" id="stage" hidden><img id="photoImg" alt="Foto des Grundstücks"><video id="liveVid" playsinline muted autoplay hidden></video><div id="layers"></div><svg id="handles" aria-label="Eckpunkte ziehen"></svg>${live?'<span class="livebadge">LIVE</span>':""}</div>
  ${S.photo||live?`<div class="row" style="margin-top:10px"><button type="button" class="primary" id="aiDetectBtn">KI: Aufmaß planen</button><span class="hint">Die KI zeigt im Foto, welche Maße du messen musst. Danach erstellt sie den Zaun genau mit diesen Maßen.</span></div><div id="aiDetect"></div>`:""}
  ${S.photo&&!live?`<div class="row" style="margin-top:12px"><button type="button" id="photoPng">Fotomontage als Bild erzeugen</button></div><div id="photoOut" class="pngs"></div>`:live?"":'<p class="hint">Tipp: Möglichst gerade auf die Linie halten, an der der Zaun stehen soll. Bei mehreren Seiten platzieren Sie jede Seite einzeln.</p>'}`;
 }
 
+function exportHandoffHtml(){
+ return `<fieldset style="margin-top:14px"><legend>Auf einem anderen Gerät/Browser weitermachen (z. B. für Live-Kamera)</legend>
+ <p class="hint" style="margin-top:0">In Bluefy gibt es kein Live-Kamera-Bild. Für die Live-Ansicht vor Ort: Link erzeugen, in Safari/Chrome öffnen - Produkt, Maße und Kunde werden dort automatisch übernommen (Fotos nicht, die beginnen Sie dort neu).</p>
+ <div class="row"><button type="button" id="btnHandoffLink">Link für Safari erzeugen</button></div>
+ <div id="handoffOut"></div></fieldset>`;
+}
 function arButton(){return `<a class="arbtn" rel="ar" data-ar><img alt="" width="26" height="26" src="data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 24 24%22 fill=%22none%22 stroke=%22white%22 stroke-width=%222%22%3E%3Cpath d=%22M12 2l9 5v10l-9 5-9-5V7z M12 12l9-5 M12 12v10 M12 12L3 7%22/%3E%3C/svg%3E"><span>AR wird vorbereitet …</span></a>`}
 
 function positionsHtml(){
@@ -1139,6 +1205,12 @@ document.addEventListener("click",e=>{
  if(b&&b.dataset.hnmreset!==undefined){delete S.wishPos;refresh(true);return}
  if(!b)return;
  if(b.id==="btnLaser"){laserToggle();return}
+ if(b.id==="btnHandoffLink"){
+  const url=stateExportUrl(),out=$("#handoffOut");
+  let copied=false;try{navigator.clipboard&&navigator.clipboard.writeText(url);copied=true}catch(e){}
+  if(out)out.innerHTML=`<p class="hint">${copied?"Link wurde kopiert. ":""}In Safari öffnen (Adresse einfügen oder diesen Link antippen):</p><p class="out" style="word-break:break-all"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></p>`;
+  return;
+ }
  if(b.dataset.view){setView(b.dataset.view);save();return}
  if(b.dataset.prod){S.product=b.dataset.prod;S.fields=0;refresh(true);return}
  if(b.dataset.model){S.model=b.dataset.model;refresh(true);return}
@@ -1149,7 +1221,7 @@ document.addEventListener("click",e=>{
  if(b.dataset.del){if(b.dataset.armed){store("sv-list",load("sv-list",[]).filter(x=>x.id!==b.dataset.del));refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich?"}return}
  if(b.id==="btnNew"){if(b.dataset.armed){S=DEF();delete b.dataset.armed;b.textContent="Neue Beratung";refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich neu beginnen?";setTimeout(()=>{delete b.dataset.armed;b.textContent="Neue Beratung"},4000)}return}
  if(b.id==="btnSave"){const list=load("sv-list",[]),id=S._id||("b"+Date.now());S._id=id;
-  const entry={id,date:new Date().toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}),name:custName(),product:S.product,model:modelLabel(),state:JSON.parse(JSON.stringify(S))};
+  const entry={id,ts:Date.now(),date:new Date().toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}),name:custName(),product:S.product,model:modelLabel(),state:JSON.parse(JSON.stringify(S))};
   const i=list.findIndex(x=>x.id===id);if(i>=0)list[i]=entry;else list.unshift(entry);store("sv-list",list);save();$("#copyMsg").textContent="Beratung gespeichert.";return}
  if(b.id==="btnCopy"){const t=requestText(),msg=$("#copyMsg");
   const fb=()=>{const r=document.createRange();r.selectNodeContents($("#out"));const s=getSelection();s.removeAllRanges();s.addRange(r);msg.textContent="Text markiert. Jetzt kopieren."};
