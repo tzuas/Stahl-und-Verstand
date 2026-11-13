@@ -400,8 +400,8 @@ function save(){storeSess("sv-draft",S)}
    getrennten Speicher haben, wird der Stand (ohne Foto, das waere zu
    gross fuer eine URL) als base64-JSON im Link kcodiert und beim Laden
    wieder eingelesen. */
-function stateExportUrl(){
- const data=Object.assign({},S);delete data.photo;delete data._id;
+function stateExportUrl(src){
+ const data=Object.assign({},src||S);delete data.photo;delete data._id;
  const json=JSON.stringify(data);
  const b64=btoa(unescape(encodeURIComponent(json)));
  const u=new URL(location.href);u.search="";u.hash="";
@@ -737,7 +737,7 @@ function renderPanel(){
   const np=(S.positions||[]).length;
   h=`${np?`<div class="posnote">Angebot mit mehreren Positionen: ${np} schon gespeichert. Du legst jetzt <b>Position ${np+1}</b> an. Kundendaten bleiben erhalten.</div>`:""}<h2>Was soll entstehen?</h2><p class="lede">Tippen Sie auf die Art der Anlage. Die Ansicht rechts zeigt sie sofort in Farbe.</p>
   <div class="tiles prod">${PRODUCTS.map(p=>`<button type="button" class="tile" data-prod="${p.id}" aria-pressed="${S.product===p.id}">${miniIcon(p.id)}<strong>${p.name}</strong><span>${p.d}</span></button>`).join("")}</div>
-  <fieldset style="margin-top:24px"><legend>Gespeicherte Beratungen</legend>${list.length?`<ul class="saved">${list.map(e=>`<li><span><b>${esc(e.name||"Ohne Namen")}</b> · ${esc(e.product)} ${esc(e.model)}<small>${esc(e.date)}</small></span><span class="row"><button type="button" data-open="${e.id}">Öffnen</button><button type="button" data-del="${e.id}">Löschen</button></span></li>`).join("")}</ul>`:'<p class="hint">Noch keine. Im letzten Schritt speichern Sie eine Beratung mit dem Kundennamen.</p>'}</fieldset>`;
+  <fieldset style="margin-top:24px"><legend>Gespeicherte Beratungen</legend>${list.length?`<p class="hint" style="margin-top:0">Diese Liste liegt im Speicher dieses Browsers/dieser App und ist in Bluefy und Safari jeweils getrennt. Zum Wechseln bei „Für anderen Browser“ einen Link erzeugen und dort öffnen.</p><ul class="saved">${list.map(e=>`<li><span><b>${esc(e.name||"Ohne Namen")}</b> · ${esc(e.product)} ${esc(e.model)}<small>${esc(e.date)}</small></span><span class="row"><button type="button" data-open="${e.id}">Öffnen</button><button type="button" data-handoff="${e.id}">Für anderen Browser</button><button type="button" data-del="${e.id}">Löschen</button></span><div data-handoffout="${e.id}" style="flex-basis:100%"></div></li>`).join("")}</ul>`:'<p class="hint">Noch keine. Im letzten Schritt speichern Sie eine Beratung mit dem Kundennamen.</p>'}</fieldset>`;
  }else if(st===1){
   const ms=modelsFor(S.product);
   h=`<h2>Modell wählen</h2><p class="lede">${ms.length} Modelle als <b>${esc(prod().name)}</b>, gezeigt in ${esc(coatLabel())}.</p>
@@ -1410,8 +1410,9 @@ document.addEventListener("click",e=>{
  if(b.id==="btnLaser"){laserToggle();return}
  if(b.id==="btnHandoffLink"){
   const url=stateExportUrl(),out=$("#handoffOut");
-  let copied=false;try{navigator.clipboard&&navigator.clipboard.writeText(url);copied=true}catch(e){}
-  if(out)out.innerHTML=`<p class="hint">${copied?"Link wurde kopiert. ":""}In Safari öffnen (Adresse einfügen oder diesen Link antippen):</p><p class="out" style="word-break:break-all"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></p>`;
+  const render=copied=>{if(out)out.innerHTML=`<p class="hint">${copied?"Link wurde kopiert. ":""}In Safari öffnen (Adresse einfügen oder diesen Link antippen):</p><p class="out" style="word-break:break-all"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></p>`};
+  render(false);
+  try{navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>render(true)).catch(()=>{})}catch(e){}
   return;
  }
  if(b.dataset.view){setView(b.dataset.view);save();return}
@@ -1430,6 +1431,15 @@ document.addEventListener("click",e=>{
  }
  if(b.dataset.open){const e2=load("sv-list",[]).find(x=>x.id===b.dataset.open);if(e2){S=Object.assign(DEF(),e2.state,{step:1});refresh(true)}return}
  if(b.dataset.del){if(b.dataset.armed){store("sv-list",load("sv-list",[]).filter(x=>x.id!==b.dataset.del));refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich?"}return}
+ if(b.dataset.handoff){
+  const e3=load("sv-list",[]).find(x=>x.id===b.dataset.handoff),out=document.querySelector(`[data-handoffout="${b.dataset.handoff}"]`);
+  if(!e3||!out)return;
+  const url=stateExportUrl(e3.state);
+  const render=copied=>{out.innerHTML=`<p class="hint">${copied?"Link wurde kopiert. ":""}Im anderen Browser (Bluefy/Safari) öffnen (Adresse einfügen oder Link antippen) - Kunde, Produkt und Maße werden dort automatisch übernommen (Fotos nicht, die neu aufnehmen):</p><p class="out" style="word-break:break-all"><a href="${esc(url)}" target="_blank" rel="noopener">${esc(url)}</a></p>`};
+  render(false);
+  try{navigator.clipboard&&navigator.clipboard.writeText(url).then(()=>render(true)).catch(()=>{})}catch(e){}
+  return;
+ }
  if(b.id==="btnNew"){if(b.dataset.armed){S=DEF();delete b.dataset.armed;b.textContent="Neue Beratung";refresh(true)}else{b.dataset.armed=1;b.textContent="Wirklich neu beginnen?";setTimeout(()=>{delete b.dataset.armed;b.textContent="Neue Beratung"},4000)}return}
  if(b.id==="btnSave"){const list=load("sv-list",[]),id=S._id||("b"+Date.now());S._id=id;
   const entry={id,ts:Date.now(),date:new Date().toLocaleString("de-DE",{dateStyle:"short",timeStyle:"short"}),name:custName(),product:S.product,model:modelLabel(),state:JSON.parse(JSON.stringify(S))};
